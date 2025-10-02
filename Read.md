@@ -454,3 +454,15 @@ Do you want me to also show you a **step-by-step guide to connect your Spring Bo
 16) ![img_34.png](img_34.png)
 17) ![img_35.png](img_35.png)
 
+## --- setting up postGreSQL database remotely -----
+1) go to https://neon.com/ and signup
+2) ![img_36.png](img_36.png)
+3) ![img_37.png](img_37.png)
+4) ![img_38.png](img_38.png)
+5) ![img_39.png](img_39.png)
+6) ![img_40.png](img_40.png)
+7) ![img_41.png](img_41.png)
+8) ![img_42.png](img_42.png)
+9) ![img_43.png](img_43.png)
+
+## ---------- 
