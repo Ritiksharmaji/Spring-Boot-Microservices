@@ -465,4 +465,18 @@ Do you want me to also show you a **step-by-step guide to connect your Spring Bo
 8) ![img_42.png](img_42.png)
 9) ![img_43.png](img_43.png)
 
-## ---------- 
+## ---------- final databases ----------------
+1) for user
+2) ![img_44.png](img_44.png)
+3) ![img_45.png](img_45.png)
+4) for product
+5) ![img_46.png](img_46.png)
+6) ![img_47.png](img_47.png)
+7) for order
+8) ![img_48.png](img_48.png)
+9) ![img_49.png](img_49.png)
+10) ![img_50.png](img_50.png)
+11) ![img_51.png](img_51.png)
+
+
+----------
