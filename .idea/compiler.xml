@@ -12,6 +12,12 @@
         </processorPath>
         <module name="ecom-application" />
       </profile>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="SpringCloudConfigServer" />
+      </profile>
       <profile name="Annotation profile for ConfifurationDemo" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
@@ -28,6 +34,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="ConfifurationDemo" options="-parameters" />
+      <module name="SpringCloudConfigServer" options="-parameters" />
       <module name="ecom-application" options="-parameters" />
       <module name="ecom-application (1)" options="-parameters" />
       <module name="ecom-application (2)" options="-parameters" />
