@@ -17,14 +17,26 @@ public class BuildInfoController {
 //    private String buildName;
 
     // other ways with default value it selph from here
-    @Value("${OS:default}")
+//    @Value("${OS:default}")
+//    private String buildId;
+//
+//    @Value("${USERPROFILE:default}")
+//    private String buildVersion;
+//
+//    @Value("${JAVA_HOME:default}")
+//    private String buildName;
+
+    // commnad lne
+    // Using default values if not provided externally
+    @Value("${build.id:1001}")
     private String buildId;
 
-    @Value("${USERPROFILE:default}")
+    @Value("${build.version:1.0.0}")
     private String buildVersion;
 
-    @Value("${JAVA_HOME:default}")
+    @Value("${build.name:Default-Build}")
     private String buildName;
+
 
     @GetMapping("/build-info")
     public String getBuildInfo() {

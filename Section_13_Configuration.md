@@ -947,3 +947,353 @@ When Spring Boot starts, it loads properties in this order (highest to lowest):
 ---
 
 Would you like me to show you how to use **`application.yml`** format (instead of `.properties`) with **multiple profiles in a single file** — a cleaner and more professional approach for microservices?
+
+## --------- give example to set the environment variable trow the command line ---
+Excellent question 👏 — this is **one of the most important Spring Boot skills** — setting environment variables **from the command line** (for different environments like dev, test, prod).
+
+Let’s go step by step 🔽
+
+---
+
+## 🧩 1️⃣ Why use environment variables?
+
+In Spring Boot, **externalized configuration** lets you override settings from:
+
+* `application.yml` or `application.properties`
+* Environment variables
+* Command-line arguments
+* System properties (`-Dkey=value`)
+* `.env` files (if using Docker)
+
+---
+
+## 🧩 2️⃣ Example: Default config in `application.yml`
+
+```yaml
+spring:
+  application:
+    name: ConfifurationDemo
+  profiles:
+    active: dev
+
+server:
+  port: 8080
+
+build:
+  id: 1
+  version: 1.0.0
+  name: default
+  type: development
+```
+
+---
+
+## 🧩 3️⃣ ✅ Example — Set Environment Variables via Command Line
+
+### 🧠 Option 1: Using **temporary environment variable (PowerShell / Bash)**
+
+### For **Windows PowerShell**
+
+```bash
+$env:SPRING_PROFILES_ACTIVE="prod"
+$env:SERVER_PORT="9090"
+$env:BUILD_ID="500"
+mvn spring-boot:run
+```
+
+### For **Linux / macOS / Git Bash**
+
+```bash
+export SPRING_PROFILES_ACTIVE=prod
+export SERVER_PORT=9090
+export BUILD_ID=500
+mvn spring-boot:run
+```
+
+These will override any values from `application.yml`.
+
+---
+
+## 🧩 4️⃣ Option 2: Pass environment variables **inline**
+
+You can pass them **directly** in one line:
+
+### Windows:
+
+```bash
+set SPRING_PROFILES_ACTIVE=prod && mvn spring-boot:run
+```
+
+### Linux / macOS:
+
+```bash
+SPRING_PROFILES_ACTIVE=prod SERVER_PORT=9090 mvn spring-boot:run
+```
+
+---
+
+## 🧩 5️⃣ Option 3: Using **System Properties**
+
+You can also use `-D` syntax (Java system property):
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=prod -Dspring-boot.run.arguments="--server.port=9090 --build.id=500"
+```
+
+or
+
+```bash
+java -jar target/ConfifurationDemo.jar --spring.profiles.active=prod --server.port=9090
+```
+
+---
+
+## 🧩 6️⃣ Verify
+
+If your `application-prod.yml` has:
+
+```yaml
+build:
+  id: ${BUILD_ID:101}
+  version: 1.2.3
+  name: default-build
+  type: production
+```
+
+Then when you run:
+
+```bash
+export BUILD_ID=999
+mvn spring-boot:run
+```
+
+👉 Output in logs or `/build-info` endpoint:
+
+```
+Build ID: 999
+Version: 1.2.3
+Name: default-build
+Type: production
+```
+
+---
+
+## ✅ Summary
+
+| Method                  | Example Command                                   | When to Use              |
+| ----------------------- | ------------------------------------------------- | ------------------------ |
+| **PowerShell Variable** | `$env:SPRING_PROFILES_ACTIVE="prod"`              | For local dev on Windows |
+| **export (Linux/Mac)**  | `export SPRING_PROFILES_ACTIVE=prod`              | For terminals & servers  |
+| **Inline**              | `SPRING_PROFILES_ACTIVE=prod mvn spring-boot:run` | For quick one-liners     |
+| **System property**     | `java -jar app.jar --spring.profiles.active=prod` | When deploying JARs      |
+
+---
+
+1) ![img_81.png](img_81.png)
+2) 
+Got it 👍 — this error means **Maven is not installed** or **not added to your system PATH** yet.
+
+Let’s fix this completely 👇 (takes ~5 minutes)
+
+---
+
+## 🧩 Step-by-Step: Install Maven on Windows (PowerShell)
+
+### **1️⃣ Download Maven**
+
+Go to the official Apache Maven site:
+👉 [https://maven.apache.org/download.cgi](https://maven.apache.org/download.cgi)
+
+Scroll down to **"Files" → Binary zip archive**, and click:
+➡️ **apache-maven-3.9.9-bin.zip**
+
+Direct link (official mirror):
+🔗 [https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.zip](https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.zip)
+
+---
+
+### **2️⃣ Extract Maven**
+
+After downloading, extract the ZIP file to a simple location like:
+
+```
+C:\Program Files\Apache\maven-3.9.9
+```
+
+or
+
+```
+C:\maven
+```
+
+Make sure inside that folder, you see:
+
+```
+bin\
+boot\
+conf\
+lib\
+README.txt
+```
+
+---
+
+### **3️⃣ Set Environment Variables**
+
+1. Open **Start → Search “Environment Variables” → Click “Edit the system environment variables”**
+2. In the dialog, click **Environment Variables...**
+
+#### Create MAVEN_HOME:
+
+* Under **System variables**, click **New**
+* Variable name: `MAVEN_HOME`
+* Variable value: `C:\Program Files\Apache\maven-3.9.9`
+  *(or your path)*
+
+#### Add Maven to PATH:
+
+* Under **System variables**, find `Path` → select → **Edit**
+* Click **New**
+* Add:
+
+  ```
+  %MAVEN_HOME%\bin
+  ```
+
+Click **OK** on all dialogs to save.
+
+---
+
+### **4️⃣ Verify Installation**
+
+Now **close PowerShell** completely and reopen it (to reload PATH).
+Then type:
+
+```powershell
+mvn -version
+```
+
+✅ If installed correctly, you’ll see:
+
+```
+Apache Maven 3.9.9 (...)
+Java version: 17.0.x
+```
+
+---
+
+### **5️⃣ Run Your Spring Boot App**
+
+Once `mvn` works, navigate to your project folder:
+
+```powershell
+cd D:\Personal\CODE\Java-Code\MicroService\ConfigurationDemo
+mvn spring-boot:run
+```
+
+---
+1) ![img_82.png](img_82.png)
+2) ![img_83.png](img_83.png)
+3) now by running we will get the jar file then we have to run that jar file
+4) ![img_84.png](img_84.png)
+5) ![img_85.png](img_85.png)
+   Perfect — this is a **common Maven packaging issue**, and you’re very close to running your Spring Boot app 🚀
+
+Let’s fix the error:
+
+> `no main manifest attribute, in target/ConfifurationDemo-0.0.1-SNAPSHOT.jar.original`
+
+---
+
+### 🧩 Why This Happens
+
+When you run:
+
+```
+java -jar target/ConfifurationDemo-0.0.1-SNAPSHOT.jar.original
+```
+
+you’re trying to execute the **intermediate JAR** file that **doesn’t have the Spring Boot manifest** (the main class info).
+
+Spring Boot creates **two JARs** when using Maven:
+
+* `ConfifurationDemo-0.0.1-SNAPSHOT.jar` ✅ (the runnable JAR)
+* `ConfifurationDemo-0.0.1-SNAPSHOT.jar.original` ❌ (the plain, non-executable one)
+
+---
+
+### ✅ **Fix: Run the Correct JAR**
+
+Try this command instead:
+
+```powershell
+java -jar target/ConfifurationDemo-0.0.1-SNAPSHOT.jar
+```
+
+That’s the **Spring Boot executable JAR** containing:
+
+* `META-INF/MANIFEST.MF` with the `Main-Class`
+* Embedded Tomcat server
+* Your compiled code
+
+---
+
+### ⚙️ If the Correct JAR Isn’t There
+
+If you only see the `.jar.original` file, it means the **Spring Boot repackage step didn’t run**.
+
+Fix it by running:
+
+```powershell
+mvn clean package
+```
+
+After build success, you’ll see:
+
+```
+target/
+ ├── ConfifurationDemo-0.0.1-SNAPSHOT.jar   ✅
+ └── ConfifurationDemo-0.0.1-SNAPSHOT.jar.original
+```
+
+Now execute:
+
+```powershell
+java -jar target/ConfifurationDemo-0.0.1-SNAPSHOT.jar
+```
+
+---
+
+### 🧠 Optional: Verify the Main Class Exists
+
+You can check what main class Maven put inside the JAR:
+
+```powershell
+jar tf target/ConfifurationDemo-0.0.1-SNAPSHOT.jar | findstr Main
+```
+
+If it’s missing, your `pom.xml` may not have the `spring-boot-maven-plugin`.
+
+---
+![img_86.png](img_86.png)
+![img_87.png](img_87.png)
+
+## -------- other and easy way -------
+1) ![img_88.png](img_88.png)
+2) ![img_89.png](img_89.png)
+3) ![img_90.png](img_90.png)
+4) ![img_91.png](img_91.png)
+5) ![img_92.png](img_92.png)
+6) 
+Would you like me to show you **what your `pom.xml` should contain** to ensure Maven always builds an executable JAR?
+
+Would you like me to give you a **visual step-by-step screenshot guide** for setting Maven in environment variables? It’ll make it easier to follow.
+
+Would you like me to show how to do the same using a **`.env` file** (for Docker or local development)?
+
+
+## --------------- setting up .env file for spring boot -----------
+1) ![img_93.png](img_93.png)
+2) ![img_94.png](img_94.png)
+3) ![img_95.png](img_95.png)
+4) 
