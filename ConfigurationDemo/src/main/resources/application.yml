@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: ConfifurationDemo
+
+#  profiles:
+#    active: prod
+
+server:
+  port: 8081
+
+# build info (root-level, not inside 'spring')
+#build:
+#  id: 101
+#  version: 1.2.3
+#  name: default-build
+#  type: default Build
