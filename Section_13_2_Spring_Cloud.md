@@ -724,3 +724,298 @@ Would you like me to verify your repo’s structure now?
 
 
 ## -------- Setting Up a spring CLoud config client for Microservices ------
+1) so first we need to encloud the spring cloud based maven configuration as below
+   ```
+   	<properties>
+		<java.version>21</java.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
+	</properties>
+     <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+        </dependency>
+   <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+2) then  we need to add the spring cloud config details into applocation.yml of clientConfig project
+3) ![img_118.png](img_118.png)
+
+```declarative
+22:19:01.554 [main] ERROR org.springframework.boot.diagnostics.LoggingFailureAnalysisReporter -- 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Failed to bind properties under 'spring.config' to org.springframework.boot.context.config.ConfigDataProperties:
+
+    Reason: org.springframework.core.convert.ConverterNotFoundException: No converter found capable of converting from type [java.lang.String] to type [org.springframework.boot.context.config.ConfigDataProperties]
+
+Action:
+
+Update your application's configuration
+
+
+Process finished with exit code 1  while making the 
+spring:
+  application:
+    name:SpringConfigDemo
+  config:
+    import:SpringCloudConfigServer:http://localhost:8888
+
+#  profiles:
+#    active: prod
+
+server:
+  port: ${SERVER_PORT:8080}
+build:
+  id: ${BUILD_ID:000}
+  version: ${BUILD_VERSION:1.0.0}
+  name: ${BUILD_NAME:default}
+  
+
+Excellent — you’re **very close**, but this error:
+
+> `No converter found capable of converting from type [java.lang.String] to type [org.springframework.boot.context.config.ConfigDataProperties]`
+
+means that the syntax in your YAML is **slightly wrong** for importing a config server.
+Let’s fix it properly 👇
+
+---
+
+## ❌ Your Current YAML (has syntax issues)
+
+```yaml
+spring:
+  application:
+    name:SpringConfigDemo
+  config:
+    import:SpringCloudConfigServer:http://localhost:8888
+```
+
+### Issues:
+
+1. Missing **space after colons** (`name: SpringConfigDemo`).
+2. The value of `spring.config.import` is **missing quotes**.
+3. The correct import key should include `optional:` if you don’t want startup to fail when server is down.
+4. You used **SpringCloudConfigServer:** — but it should be **configserver:** (lowercase, no space).
+
+---
+
+## ✅ Corrected `application.yml`
+
+```yaml
+spring:
+  application:
+    name: SpringConfigDemo
+
+  config:
+    import: "optional:configserver:http://localhost:8888"
+
+server:
+  port: ${SERVER_PORT:8080}
+
+build:
+  id: ${BUILD_ID:000}
+  version: ${BUILD_VERSION:1.0.0}
+  name: ${BUILD_NAME:default}
+```
+
+---
+
+### 🧠 Why This Works
+
+* `spring.config.import` tells your Spring Boot app to **fetch configuration** from the Config Server.
+* The syntax must be:
+
+  ```
+  spring.config.import: "optional:configserver:<url>"
+  ```
+* The `optional:` prefix makes startup succeed even if config server is temporarily unreachable.
+* `configserver:` is the fixed keyword — not your project name.
+
+---
+
+### ✅ Extra Checks
+
+* Ensure your **Config Server** is already running on port `8888`.
+  Test in browser:
+
+  ```
+  http://localhost:8888/SpringConfigDemo/default
+  ```
+
+  It should return a JSON with configuration data.
+
+* In your **Config Server repo**, make sure you have a file:
+
+  ```
+  SpringConfigDemo.yml
+  ```
+
+  or
+
+  ```
+  SpringConfigDemo.properties
+  ```
+
+---
+
+### ⚙ Example `SpringConfigDemo.yml` (in your Git repo)
+
+```yaml
+server:
+  port: 9090
+
+message:
+  text: "Hello from Config Server!"
+```
+
+---
+
+Once everything is correct:
+
+1. Start your **Config Server** first.
+2. Then start your **SpringConfigDemo** app.
+
+It should fetch configs automatically 🎯
+
+---
+1) ![img_119.png](img_119.png)
+2) ![img_120.png](img_120.png)
+3) ![img_121.png](img_121.png)
+4) 
+
+Got it ✅ — you want your **Spring Cloud Config Client** setup fixed so that:
+
+* It properly fetches data from the **Spring Cloud Config Server** at `http://localhost:8888`.
+* It correctly uses fallback values if the config server or environment variables are not available.
+
+Here’s the **fixed, working version** 👇
+
+---
+
+### ✅ 1️⃣ `BuildInfoController.java`
+
+```java
+package config_info.ConfifurationDemo;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class BuildInfoController {
+
+    // These values will come from Config Server if available, otherwise default values will be used
+    @Value("${build.id:1001}")
+    private String buildId;
+
+    @Value("${build.version:1.0.0}")
+    private String buildVersion;
+
+    @Value("${build.name:Default-Build}")
+    private String buildName;
+
+    @GetMapping("/build-info")
+    public String getBuildInfo() {
+        return "BuildId: " + buildId + ", version: " + buildVersion + ", build name: " + buildName;
+    }
+}
+```
+
+---
+
+### ✅ 2️⃣ `bootstrap.yml` (place in `src/main/resources/`)
+
+```yaml
+spring:
+  application:
+    name: SpringConfigDemo   # must match the file name in Git repo (SpringConfigDemo.yml)
+  config:
+    import: "optional:configserver:http://localhost:8888"
+
+server:
+  port: 8080
+
+# Optional fallback values (only used if config server not reachable)
+build:
+  id: 1001
+  version: 1.0.0
+  name: Default-Build
+```
+
+---
+
+### ✅ 3️⃣ Ensure your Config Server is running
+
+Start your **Spring Cloud Config Server** (port 8888) first.
+Then check in your browser:
+
+```
+http://localhost:8888/SpringConfigDemo/default
+```
+
+You should see something like:
+
+```json
+{
+  "propertySources": [
+    {
+      "source": {
+        "build.id": 500,
+        "build.version": "1.0.0",
+        "build.name": "Dev Build git"
+      }
+    }
+  ]
+}
+```
+
+---
+
+### ✅ 4️⃣ Then start your Client project
+
+Run your **Config Client** (`ConfifurationDemoApplication`).
+Now visit:
+
+```
+http://localhost:8080/build-info
+```
+
+If config server is connected →
+👉 `BuildId: 500, version: 1.0.0, build name: Dev Build git`
+
+If not →
+👉 `BuildId: 1001, version: 1.0.0, build name: Default-Build`
+
+---
+
+Would you like me to also show how to print **which source** (Git vs local fallback) the properties came from in your response?
+1) ![img_122.png](img_122.png)
+2) ![img_123.png](img_123.png)
+3) ![img_124.png](img_124.png)
+4) if you want to change the profile then
+5) ![img_125.png](img_125.png)
+6) ![img_126.png](img_126.png)
+7) ![img_127.png](img_127.png)
+8) there will be a possibility the config server is down then your application will cresh to ovide that we use "optional:configserver:http://localhost:8888" option where Optional fallback values (only used if config server not reachable)
+9) ![img_128.png](img_128.png)
+10) see on above image config server is stoped now we are going to start the config client
+11) ![img_129.png](img_129.png)
+12) ![img_130.png](img_130.png)
+13) ![img_131.png](img_131.png)
+14) ![img_132.png](img_132.png)
+
+

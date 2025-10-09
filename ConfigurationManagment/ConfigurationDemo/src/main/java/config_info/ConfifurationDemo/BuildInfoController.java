@@ -7,27 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class BuildInfoController {
 
-//    @Value("${build.id}")
-//    private String buildId;
-//
-//    @Value("${build.version}")
-//    private String buildVersion;
-//
-//    @Value("${build.name}")
-//    private String buildName;
-
-    // other ways with default value it selph from here
-//    @Value("${OS:default}")
-//    private String buildId;
-//
-//    @Value("${USERPROFILE:default}")
-//    private String buildVersion;
-//
-//    @Value("${JAVA_HOME:default}")
-//    private String buildName;
-
-    // commnad lne
-    // Using default values if not provided externally
+    // These values will come from Config Server if available, otherwise default values will be used
     @Value("${build.id:1001}")
     private String buildId;
 
@@ -36,7 +16,6 @@ public class BuildInfoController {
 
     @Value("${build.name:Default-Build}")
     private String buildName;
-
 
     @GetMapping("/build-info")
     public String getBuildInfo() {

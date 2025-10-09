@@ -1,14 +1,14 @@
-
 spring:
   application:
-    name:SpringConfigDemo
-
-#  profiles:
-#    active: prod
-
+    name: SpringConfigDemo
+  config:
+    import: "optional:configserver:http://localhost:8888"
+  profiles:
+    active: dev
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT:8080}   # fallback if env var not set
+
 build:
-  id: ${BUILD_ID:000}
+  id: ${BUILD_ID:1001}
   version: ${BUILD_VERSION:1.0.0}
-  name: ${BUILD_NAME:default}
+  name: ${BUILD_NAME:Default-Build}
