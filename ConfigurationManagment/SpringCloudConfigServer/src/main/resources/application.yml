@@ -27,3 +27,19 @@ spring:
         jdbc:
           sql: SELECT PROPERTY_KEY, PROPERTY_VALUE FROM PROPERTIES WHERE APPLICATION=? AND PROFILE=? AND LABEL=?
           default-label: main
+
+#encrypt:
+#  key: "0E329232EA6D0D73"
+#encrypt:
+#  key-store:
+#    location: config-server.jks
+#    password: mypass
+#    alias: config-server-key
+
+encrypt:
+  key-store:
+    location: classpath:config-server.p12
+    alias: config-server-key
+    password: mypass
+    key-password: mypass
+    type: PKCS12

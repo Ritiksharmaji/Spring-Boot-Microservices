@@ -2092,5 +2092,516 @@ Would you like me to show you **how to build the UI dashboard (Admin panel)** to
 15) ![img_164.png](img_164.png)
 16) ![img_165.png](img_165.png)
 17) ![img_166.png](img_166.png)
-18) 
-7) now 
+
+## ------------- Securing Sensitive Configuration Using AES algorithm with config server ---
+1) ![img_167.png](img_167.png)
+2) ![img_168.png](img_168.png)
+3) ![img_169.png](img_169.png)
+4) ![img_170.png](img_170.png)
+
+Nice — I’ll give you a practical, hands-by-step guide to **secure sensitive configuration with AES** when using a Spring Cloud Config Server. I’ll cover two safe, commonly used approaches (built-in Config Server encrypt/decrypt and a Jasypt-based approach), show exact configuration and commands you can run, and finish with **best practices** (key storage, rotation, TLS, auditing).
+
+---
+
+# Option A — Use Spring Cloud Config Server’s built-in encrypt/decrypt endpoints (symmetric AES)
+
+**Overview:** Spring Cloud Config Server can act as an encryptor: you provide a symmetric secret (password/key) to the server, use its `/encrypt` endpoint to encrypt plaintext, and then commit the resulting `{cipher}…` value to your repository. Clients get decrypted values automatically when fetching from the server.
+
+## 1) Enable dependencies (Config Server)
+
+Add these dependencies to the Config Server `pom.xml` (or Gradle):
+
+```xml
+<!-- spring-cloud-config-server + actuator -->
+<dependency>
+  <groupId>org.springframework.cloud</groupId>
+  <artifactId>spring-cloud-starter-config</artifactId>
+</dependency>
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+```
+
+## 2) Configure the Config Server
+
+`application.yml` for the config server (example):
+
+```yaml
+server:
+  port: 8888
+
+spring:
+  application:
+    name: SpringCloudConfigServer
+
+# enable the encrypt/decrypt actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,refresh,encrypt,decrypt
+
+# DO NOT put your encrypt key in the git config repository!
+# Set it as an environment variable or VM arg on the server process.
+# The common environment variable name is: ENCRYPT_KEY (or spring.cloud.config.server.encrypt.key)
+```
+
+**Set the symmetric key on the Config Server host** (example; run on the machine where Config Server runs):
+
+Windows PowerShell:
+
+```powershell
+$env:ENCRYPT_KEY = "my-very-strong-secret-phrase"
+# or pass as JVM arg when launching:
+# -DENCRYPT_KEY=my-very-strong-secret-phrase
+```
+
+Linux:
+
+```bash
+export ENCRYPT_KEY="my-very-strong-secret-phrase"
+# or java -DENCRYPT_KEY=my-very-strong-secret-phrase -jar config-server.jar
+```
+
+> The server will use that key to encrypt/decrypt using a JCE cipher (AES under the hood). Keep the key out of the repository!
+
+## 3) Encrypt a secret (use the server’s `/encrypt` endpoint)
+
+Encrypt plaintext using the Config Server:
+
+```bash
+# plaintext "s3cr3tpassword"
+curl -X POST -H "Content-Type: text/plain" --data 's3cr3tpassword' http://localhost:8888/encrypt
+```
+
+Response will be something like:
+
+```
+{cipher}AQB8...base64...
+```
+
+Commit the `{cipher}...` value in your config repo:
+
+```yaml
+# application-dev.yml in your git repo
+spring:
+  datasource:
+    password: '{cipher}AQB8...'
+```
+
+## 4) Client configuration
+
+Client `bootstrap` or `application.yml` should import the config server (and must include the client starter):
+
+```yaml
+spring:
+  application:
+    name: my-app
+  config:
+    import: "optional:configserver:http://localhost:8888"
+
+# nothing else required — the config server will decrypt the {cipher} value before returning to client
+```
+
+When the client requests config, the server will decrypt the stored ciphertext using the ENCRYPT_KEY and return plaintext to the client.
+
+## 5) Use `/decrypt` (for debugging only)
+
+You can also test by sending ciphertext to `/decrypt`:
+
+```bash
+curl -X POST -H "Content-Type:text/plain" --data '{cipher}AQB8...' http://localhost:8888/decrypt
+# returns the plaintext
+```
+
+---
+
+# Option B — Encrypt values offline using Jasypt (AES) and decrypt in client at runtime
+
+**Overview:** Instead of relying on a server endpoint, encrypt properties locally before committing (so no `/encrypt` endpoint exposure). Use **Jasypt** (well-known library) to AES-encrypt values, commit `{cipher}...` in config, and configure each client to decrypt using a secret that is set as an environment variable on the client host.
+
+## 1) Add Jasypt to client (and/or server)
+
+Client `pom.xml`:
+
+```xml
+<dependency>
+  <groupId>com.github.ulisesbocchio</groupId>
+  <artifactId>jasypt-spring-boot-starter</artifactId>
+  <version>3.0.5</version>
+</dependency>
+```
+
+## 2) Encrypt offline (Java code or jasypt CLI)
+
+Example using Java snippet or jasypt CLI to produce AES encrypted string. Using the `jasypt` CLI (if installed) or a small Java util:
+
+Java (one-off tool):
+
+```java
+import org.jasypt.util.text.AES256TextEncryptor;
+AES256TextEncryptor enc = new AES256TextEncryptor();
+enc.setPassword("my-jasypt-secret");
+String cipher = enc.encrypt("s3cr3tpassword");
+System.out.println(cipher);
+```
+
+Result: `Zq3...` — store as `ENC(Zq3...)` or `{cipher}Zq3...` per your convention.
+
+## 3) Client config to decrypt
+
+Set environment variable on each client host:
+
+```bash
+export JASYPT_ENCRYPTOR_PASSWORD="my-jasypt-secret"
+```
+
+Then in `application.yml` store:
+
+```yaml
+spring:
+  datasource:
+    password: ENC(Zq3...encrypted...)
+```
+
+`jasypt-spring-boot` will automatically decrypt fields beginning with `ENC(...)`.
+
+**Advantage:** you never run an encrypt endpoint on a running server; secrets are decrypted only on the client and the key is never in git.
+
+---
+
+# Security & operational best practices (do these!)
+
+1. **Never store encryption keys/passwords in Git** — store them as environment variables, cloud KMS secrets manager, HashiCorp Vault, AWS Secrets Manager, or an HSM.
+2. **Use TLS** for all traffic between clients and Config Server (HTTPS) so config (even decrypted) isn’t sniffed.
+3. **Limit the `/encrypt` and `/decrypt` endpoints** — do not expose them publicly. Restrict via network/firewall and require authentication (actuator endpoints protected).
+4. **Use RSA for public encryption** (optional) — if you want clients to be able to decrypt without sharing symmetric key, use the RSA flow: server holds private key; you encrypt in git with public key; server decrypts with private key. That avoids storing symmetric key on server processes.
+5. **Key rotation** — implement a key-rotation plan. For symmetric keys: re-encrypt secrets with new key and roll out. For RSA: rotate keys and deploy new public keys to encryptors.
+6. **Audit & logging** — log access and changes to config; audit decrypt usage.
+7. **Least privilege** — only allow specific services to fetch certain application configs; use finer-grained access control in your config repo or the environment that stores keys.
+8. **Prefer a secrets manager for highly sensitive data** — Config Server is convenient for config, but for extremely sensitive secrets (payment, PII keys) prefer a vault/KMS.
+
+---
+
+# Example: full quick recipe (Config Server + AES encrypt endpoint + client)
+
+1. Start Config Server with `ENCRYPT_KEY` exported:
+
+   ```bash
+   export ENCRYPT_KEY="super-strong-passphrase"
+   mvn spring-boot:run -Dspring-boot.run.profiles=jdbc
+   ```
+2. Use `/encrypt` to encrypt `s3cr3t`:
+
+   ```bash
+   curl -X POST -H "Content-Type:text/plain" --data 's3cr3t' http://localhost:8888/encrypt
+   # -> {cipher}A...Base64...
+   ```
+3. Put the returned `{cipher}...` into your git config `application-dev.yml`:
+
+   ```yaml
+   secret.api.key: "{cipher}A...Base64..."
+   ```
+4. Run client (which imports configserver). Client will get plaintext `secret.api.key`.
+
+---
+
+# Which approach to choose?
+
+* **Want quick built-in support and centralized encryption?** Use **Config Server encrypt/decrypt** endpoints (Option A) but secure ENCRYPT_KEY and endpoints.
+* **Want encryption done offline, and not exposing encrypt endpoints?** Use **Jasypt** (Option B). Good for teams that encrypt secrets before committing.
+* **Very sensitive secrets / enterprise-grade:** Use a **secrets store** (Vault, AWS KMS, Azure Key Vault) and reference secrets from config instead of storing encrypted values in git.
+
+---
+
+If you want, I can now:
+
+* Provide a **copy-pasteable Config Server app** that exposes `/encrypt`/`/decrypt` and shows how to set `ENCRYPT_KEY`, or
+* Provide a **Jasypt CLI/Java tool** to encrypt values, and sample client wiring to decrypt, or
+* Show how to use **RSA** with the Config Server (generate keypair, encrypt with public key, server decrypts with private key).
+
+Which would you like me to generate next?
+## ---------- RSA -------
+1) ![img_171.png](img_171.png)
+2) ![img_172.png](img_172.png)
+3) ![img_173.png](img_173.png)
+4) ![img_174.png](img_174.png)
+5) ![img_175.png](img_175.png)
+6) now we will open the command in that same directory to generate and store the key (generates a public/private key pair inside a Java KeyStore (.jks) file)
+``` 
+keytool -genkeypair -alias config-server-key -keyalg RSA -dname "CN=Config Server,OU=Spring Cloud,O=Company" -keypass mypass -keystore D://config-server.jks -storepass mypass
+
+```
+7) ![img_176.png](img_176.png)
+8) ![img_177.png](img_177.png)
+9) now we need to move it to project folder of resources folder
+10) ![img_178.png](img_178.png)
+11) then start servers
+12) then getting error as : java.io.IOException: Invalid keystore format
+
+Ah! That exception is clear:
+
+```
+java.io.IOException: Invalid keystore format
+```
+
+This means **Spring Boot cannot read your JKS file**. Most likely causes:
+
+---
+
+## **1️⃣ Problem: Keytool generated JKS is **JKS** but Spring Boot expects **PKCS12** by default**
+
+* Newer Spring Boot versions (3.x / 4.x Cloud) **prefer PKCS12** format.
+* `.jks` from your command is in **JKS format**, which may cause `Invalid keystore format` if not explicitly specified.
+
+---
+
+## **2️⃣ Fix: Convert or generate a PKCS12 keystore**
+
+### Option A: Generate PKCS12 directly
+
+```bash
+keytool -genkeypair \
+  -alias config-server-key \
+  -keyalg RSA \
+  -dname "CN=Config Server,OU=Spring Cloud,O=Company" \
+  -keystore config-server.p12 \
+  -storetype PKCS12 \
+  -storepass mypass \
+  -keypass mypass
+```
+
+> Note: `-storetype PKCS12` is the key change.
+
+---
+
+### Option B: Convert existing JKS to PKCS12
+
+```bash
+keytool -importkeystore \
+  -srckeystore config-server.jks \
+  -destkeystore config-server.p12 \
+  -deststoretype PKCS12 \
+  -srcstorepass mypass \
+  -deststorepass mypass \
+  -srcalias config-server-key \
+  -destalias config-server-key \
+  -srckeypass mypass \
+  -destkeypass mypass
+```
+or use this for window as window not support multiline
+```declarative
+keytool -genkeypair -alias config-server-key -keyalg RSA -dname "CN=Config Server,OU=Spring Cloud,O=Company" -keystore config-server.p12 -storetype PKCS12 -storepass mypass -keypass mypass
+
+```
+---
+
+## **3️⃣ Update `application.yml`**
+
+```yaml
+encrypt:
+  key-store:
+    location: classpath:config-server.p12   # updated filename
+    alias: config-server-key
+    password: mypass
+    key-password: mypass
+    type: PKCS12
+```
+
+> Always make sure the keystore is in **resources folder** or in the classpath.
+
+---
+
+## **4️⃣ Verify**
+
+1. Put the keystore in `src/main/resources/`
+2. Run Config Server
+3. It should **start without "Invalid keystore format"**
+4. You can now use `{cipher}` encrypted properties in Git repo.
+
+---
+
+### ✅ Key Points
+
+* Spring Boot 3+ prefers **PKCS12**, not JKS.
+* Use `type: PKCS12` explicitly.
+* Passwords for **keystore** (`password`) and **key** (`key-password`) must match the ones used in keytool.
+
+---
+
+If you want, I can provide a **ready-to-use Spring Cloud Config Server `application.yml` with RSA encryption using PKCS12**, so you can just drop the keystore in `resources` and run it successfully.
+
+Do you want me to do that?
+
+Perfect! Let’s create a **ready-to-run Spring Cloud Config Server setup with RSA encryption using PKCS12**. I’ll provide the full structure, `application.yml`, and instructions so you can run it locally without errors.
+
+---
+
+## **1️⃣ Generate PKCS12 Keystore**
+
+Run this command to generate a keystore with RSA keypair:
+
+```bash
+keytool -genkeypair \
+  -alias config-server-key \
+  -keyalg RSA \
+  -dname "CN=Config Server,OU=Spring Cloud,O=Company" \
+  -keystore config-server.p12 \
+  -storetype PKCS12 \
+  -storepass mypass \
+  -keypass mypass
+```
+
+* `config-server.p12` → place this in `src/main/resources/` of your **Config Server** project.
+* Passwords (`storepass` and `keypass`) are `mypass`.
+
+---
+
+## **2️⃣ Project Structure**
+
+```
+spring-cloud-config-server/
+ ├─ src/main/java/com/example/configserver/
+ │    └─ ConfigServerApplication.java
+ ├─ src/main/resources/
+ │    ├─ application.yml
+ │    └─ config-server.p12
+ └─ pom.xml
+```
+
+---
+
+## **3️⃣ pom.xml**
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-config-server</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter</artifactId>
+    </dependency>
+</dependencies>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-dependencies</artifactId>
+            <version>2023.0.3</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+---
+
+## **4️⃣ ConfigServerApplication.java**
+
+```java
+package com.example.configserver;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.config.server.EnableConfigServer;
+
+@EnableConfigServer
+@SpringBootApplication
+public class ConfigServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServerApplication.class, args);
+    }
+}
+```
+
+---
+
+## **5️⃣ application.yml**
+
+```yaml
+server:
+  port: 8888
+
+spring:
+  application:
+    name: SpringCloudConfigServer
+
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/Ritiksharmaji/SpringBoot-Cloud-Config-Server
+          default-label: main
+          clone-on-start: true
+
+encrypt:
+  key-store:
+    location: classpath:config-server.p12
+    alias: config-server-key
+    password: mypass
+    key-password: mypass
+    type: PKCS12
+```
+
+> ✅ Important: `location: classpath:config-server.p12` points to the keystore inside `resources`.
+> `type: PKCS12` is critical for Spring Boot 3+.
+
+---
+
+## **6️⃣ Git Repo Configuration Example**
+
+In your Git repo (e.g., `SpringBoot-Cloud-Config-Server`):
+
+`SpringConfigDemo.yml`
+
+```yaml
+db:
+  username: admin
+  password: "{cipher}AQB2...encrypted_data...=="
+```
+
+* Encrypt values using **public key** (extracted from PKCS12) or via Config Server `/encrypt` endpoint.
+* Always prefix with `{cipher}` for Spring to detect encrypted values.
+
+---
+
+## **7️⃣ Run Config Server**
+
+```bash
+mvn spring-boot:run
+```
+
+* Server will start on port **8888**.
+* Test endpoint in browser:
+
+```
+http://localhost:8888/SpringConfigDemo/default
+```
+
+You should see decrypted properties in JSON format.
+
+---
+
+## ✅ **Summary**
+
+* PKCS12 keystore (`config-server.p12`) with RSA keypair
+* `application.yml` configured for encryption
+* Git repo stores encrypted values prefixed with `{cipher}`
+* Config Server decrypts automatically using private key
+
+---
+
+If you want, I can also provide a **Config Client project** that connects to this Config Server and prints the decrypted password using `@Value("${db.password}")`.
+
+Do you want me to create the client as well?
+![img_179.png](img_179.png)
+![img_180.png](img_180.png)
+![img_181.png](img_181.png)
+![img_182.png](img_182.png)
+
+## -- file based configuration management -------
