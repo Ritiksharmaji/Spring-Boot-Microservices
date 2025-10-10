@@ -1,10 +1,12 @@
 package config_info.ConfifurationDemo;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RefreshScope
 public class BuildInfoController {
 
     // These values will come from Config Server if available, otherwise default values will be used
