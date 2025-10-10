@@ -4,12 +4,26 @@ server:
 spring:
   application:
     name: SpringCloudConfigServer
+#  cloud:
+#    config:
+#      server:
+#        git:
+#          uri: https://github.com/Ritiksharmaji/SpringBoot-Cloud-Config-Server
+#          clone-on-start: true
+#          default-label: main
+#          username: ${GIT_USER}
+#          password: ${GIT_PASSWORD}
+
+  profiles:
+    active: jdbc
+  datasource:
+    url: jdbc:mysql://localhost:3306/serverconfig
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
   cloud:
     config:
       server:
-        git:
-          uri: https://github.com/Ritiksharmaji/SpringBoot-Cloud-Config-Server
-          clone-on-start: true
+        jdbc:
+          sql: SELECT PROPERTY_KEY, PROPERTY_VALUE FROM PROPERTIES WHERE APPLICATION=? AND PROFILE=? AND LABEL=?
           default-label: main
-          username: ${GIT_USER}
-          password: ${GIT_PASSWORD}

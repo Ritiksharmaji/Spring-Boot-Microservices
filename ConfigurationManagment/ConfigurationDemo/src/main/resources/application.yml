@@ -4,7 +4,7 @@ spring:
   config:
     import: "optional:configserver:http://localhost:8888"
   profiles:
-    active: dev
+    active: prod
 server:
   port: ${SERVER_PORT:8080}   # fallback if env var not set
 
