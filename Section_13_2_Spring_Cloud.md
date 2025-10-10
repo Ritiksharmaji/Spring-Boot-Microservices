@@ -1623,3 +1623,169 @@ POST http://localhost:8888/actuator/busrefresh/springconfigdemo:8081
 ---
 
 Would you like me to show you how to **automate the Git webhook trigger** so that even step 3 (`/busrefresh`) happens automatically whenever you push a commit? That makes it 100% automatic end-to-end.
+
+
+## ------ Accessing Configurations from Private GitHube Repository ---
+1) first convert the public repo to private and then the server project 
+2) ![img_146.png](img_146.png)
+3) so see when you start your server then it will throw the error as below
+4) ![img_147.png](img_147.png)
+5) now we will add the username and password to server yml file as below
+6) ![img_148.png](img_148.png) 
+7) now we need to define actually value for this username and password for that
+8) ![img_149.png](img_149.png) in the password we will generate the token and that we will put here.
+9) ![img_150.png](img_150.png)
+10) after setup the token then run the applications
+11) ![img_151.png](img_151.png)
+12) ![img_152.png](img_152.png)
+13) ![img_153.png](img_153.png)
+14) now start the springCLoudconfigClient as well
+15) ![img_154.png](img_154.png)
+16) ![img_155.png](img_155.png)
+
+Excellent 💪 — you’ve got everything working with a **public GitHub repo**, so now let’s upgrade it to use a **private GitHub repository** for your Spring Cloud Config Server.
+
+This is a **very common production setup** — companies often store configuration in **private GitHub repos** for security reasons.
+
+---
+
+## 🧩 1️⃣ Why Authentication Is Needed
+
+When your config server connects to a **private** GitHub repo, GitHub will **block anonymous access**.
+You need to provide credentials — typically a **Personal Access Token (PAT)** — to allow your Spring Cloud Config Server to fetch configuration files.
+
+---
+
+## 🔑 2️⃣ Generate a Personal Access Token (PAT)
+
+1. Go to **GitHub → Settings → Developer Settings → Personal access tokens → Tokens (classic)**
+2. Click **“Generate new token (classic)”**
+3. Give a name like `spring-config-access`
+4. **Select scopes:**
+
+    * ✅ `repo` (full control of private repositories)
+    * ✅ `read:packages` *(optional)*
+5. Generate it and **copy the token** — you won’t see it again!
+
+---
+
+## ⚙️ 3️⃣ Configure Your `application.yml` (Config Server)
+
+In your **Config Server** project:
+
+```yaml
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/ritiksharmaji/PrivateConfigRepo
+          default-label: main
+          username: ritiksharmaji
+          password: ghp_xxxxxxxxxxxxxxxxxxxxxxxx   # your token here
+```
+
+### ⚠️ Important:
+
+* Use the **token** in the `password` field.
+* The `username` can be your GitHub username.
+* GitHub PAT tokens work like a password for HTTPS-based authentication.
+
+---
+
+## 🧠 4️⃣ Securely Store Credentials (Best Practice)
+
+Instead of hardcoding tokens in YAML files, use **environment variables** or **Spring Boot placeholders**:
+
+### `application.yml`
+
+```yaml
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/ritiksharmaji/PrivateConfigRepo
+          default-label: main
+          username: ${GIT_USERNAME}
+          password: ${GIT_PASSWORD}
+```
+
+### Set the environment variables:
+
+#### 🪟 Windows (PowerShell)
+
+```bash
+$env:GIT_USERNAME="ritiksharmaji"
+$env:GIT_PASSWORD="ghp_xxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+#### 🐧 Linux / macOS
+
+```bash
+export GIT_USERNAME=ritiksharmaji
+export GIT_PASSWORD=ghp_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+---
+
+## 🧩 5️⃣ Verify Access
+
+Start the **Config Server**, then open in browser:
+
+```
+http://localhost:8888/SpringConfigDemo/default
+```
+
+If authentication works, you’ll see your configuration JSON loaded from your **private repo** 🎉
+If not, you’ll get a 401 Unauthorized or connection error.
+
+---
+
+## 🧰 6️⃣ (Optional) Use `.env` with Spring Dotenv
+
+If you prefer storing secrets in a `.env` file (and not in your system environment), you can use your existing `spring-dotenv` dependency:
+
+### `.env`
+
+```
+GIT_USERNAME=ritiksharmaji
+GIT_PASSWORD=ghp_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Then your YAML stays the same:
+
+```yaml
+username: ${GIT_USERNAME}
+password: ${GIT_PASSWORD}
+```
+
+✅ When the server starts, Spring Dotenv automatically loads `.env` variables.
+
+---
+
+## 🧪 7️⃣ Test It All
+
+1. Start Config Server:
+
+   ```bash
+   mvn spring-boot:run
+   ```
+2. Visit:
+
+   ```
+   http://localhost:8888/SpringConfigDemo/default
+   ```
+3. Start your **Config Client** again, and it’ll now fetch from your private repo via the Config Server.
+
+---
+
+Would you like me to show how to **refresh the Config Server automatically** when you push changes to your private GitHub repo (using **webhooks** or **Spring Cloud Bus**) next?
+
+## -------- Storing Configurations in a database for Dynamic updates ----
+

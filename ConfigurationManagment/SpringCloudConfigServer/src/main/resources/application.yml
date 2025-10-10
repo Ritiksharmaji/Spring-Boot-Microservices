@@ -11,3 +11,5 @@ spring:
           uri: https://github.com/Ritiksharmaji/SpringBoot-Cloud-Config-Server
           clone-on-start: true
           default-label: main
+          username: ${GIT_USER}
+          password: ${GIT_PASSWORD}
