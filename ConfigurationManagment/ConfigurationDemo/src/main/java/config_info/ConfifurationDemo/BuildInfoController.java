@@ -8,9 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RefreshScope
 public class BuildInfoController {
-
-    // These values will come from Config Server if available, otherwise default values will be used
-    @Value("${build.id:1001}")
+    @Value("${build.id:100}")
     private String buildId;
 
     @Value("${build.version:1.0.0}")
@@ -19,8 +17,12 @@ public class BuildInfoController {
     @Value("${build.name:Default-Build}")
     private String buildName;
 
+    @Value("${build.type:Default}")
+    private String buildType;
+
     @GetMapping("/build-info")
     public String getBuildInfo() {
-        return "BuildId: " + buildId + ", version: " + buildVersion + ", build name: " + buildName;
+        return String.format("BuildId: %s | Version: %s | Name: %s | Type: %s",
+                buildId, buildVersion, buildName, buildType);
     }
 }

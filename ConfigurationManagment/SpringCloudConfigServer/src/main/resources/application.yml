@@ -57,18 +57,81 @@
 
 
 # ---------this is for RabbitMQ Example  with file system ----------
+#server:
+#  port: 8888
+#spring:
+#  application:
+#    name: SpringCloudConfigServer
+#  profiles:
+#    active: native
+#  cloud:
+#    config:
+#      server:
+#        native:
+#          search-locations: file:///D:\Personal\CODE\Java-Code\MicroService\ConfigurationManagment\SpringCloudConfigServer\src\main\resources\config
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: busrefresh, refresh, health, info
+#
+
+# -------------- this is for RabbitMQ Example  with database-----------------
+#server:
+#  port: 8888
+#
+#spring:
+#  application:
+#    name: SpringCloudConfigServer
+#  profiles:
+#    active: jdbc    # use database backend
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/serverconfig2
+#    username: root
+#    password: root
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#  cloud:
+#    config:
+#      server:
+#        jdbc:
+#          sql: SELECT PROPERTY_KEY, PROPERTY_VALUE FROM PROPERTIES WHERE APPLICATION=? AND PROFILE=? AND LABEL=?
+#
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: busrefresh, refresh, health, info
+
+##------------ with githube -----------
+
 server:
   port: 8888
+
 spring:
   application:
     name: SpringCloudConfigServer
-  profiles:
-    active: native
   cloud:
     config:
       server:
-        native:
-          search-locations: file:///D:\Personal\CODE\Java-Code\MicroService\ConfigurationManagment\SpringCloudConfigServer\src\main\resources\config
+        git:
+          uri: https://github.com/Ritiksharmaji/SpringBoot-Cloud-Config-Server
+          default-label: main
+          clone-on-start: true
+          username: ${GIT_USER}
+          password: ${GIT_PASSWORD}
+
   rabbitmq:
     host: localhost
     port: 5672
@@ -79,7 +142,4 @@ management:
   endpoints:
     web:
       exposure:
-        include: busrefresh, refresh, health, info
-
-
-# -------------- this is for RabbitMQ Example  with database-----------------
+        include: busrefresh, health, info

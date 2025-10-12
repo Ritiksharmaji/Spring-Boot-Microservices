@@ -20,8 +20,65 @@
 
 ## --------- this is for RabbitMQ Example -----------------
 
+#server:
+#  port: ${SERVER_PORT:8080}   # default fallback
+#
+#spring:
+#  application:
+#    name: SpringConfigDemo
+#  config:
+#    import: "optional:configserver:http://localhost:8888"
+#  profiles:
+#    active: prod
+#
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: refresh, busrefresh, health, info
+#  endpoint:
+#    health:
+#      show-details: always
+
+## --------- with database -------
+#server:
+#  port: ${SERVER_PORT:8080}   # fallback port
+#
+#spring:
+#  application:
+#    name: SpringConfigDemo
+#  profiles:
+#    active: prod
+#
+#  # 👈 Config Server import must be defined
+#  config:
+#    import: "optional:configserver:http://localhost:8888"
+#
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: refresh, busrefresh, health, info
+#  endpoint:
+#    health:
+#      show-details: always
+
+
+# -------- with git ---------------
 server:
-  port: ${SERVER_PORT:8080}   # default fallback
+  port: 8080
 
 spring:
   application:
@@ -29,8 +86,7 @@ spring:
   config:
     import: "optional:configserver:http://localhost:8888"
   profiles:
-    active: prod
-
+    active: prod   # change to dev when testing dev configs
   rabbitmq:
     host: localhost
     port: 5672
@@ -42,6 +98,3 @@ management:
     web:
       exposure:
         include: refresh, busrefresh, health, info
-  endpoint:
-    health:
-      show-details: always

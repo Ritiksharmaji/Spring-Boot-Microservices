@@ -3092,4 +3092,546 @@ I can provide exact folder structure, config, and test flow.
 22) ![img_199.png](img_199.png)
 23) ![img_200.png](img_200.png)
 24) ![img_201.png](img_201.png)
-25) 
+
+## ---------- with database and git of configuation with autostart --------
+Perfect! Let me lay out a clear **architecture diagram** for a production-ready Spring Cloud Config setup using **Git + Database + RabbitMQ**. I’ll also explain the workflow.
+
+---
+
+## **Architecture Diagram**
+
+```
+                       +----------------+
+                       |   Git Repo     |   <-- Primary source of config
+                       |  (YAML/Properties)
+                       +----------------+
+                               |
+                               v
++----------------------+    Spring Cloud Config Server     +-------------------+
+|                      |  (fetches configs from Git & DB) |                   |
+|  Admin Dashboard     |  +-----------------------------+ |   RabbitMQ Broker  |
+|  (Optional)          |  | JDBC / Database             | |   (Spring Cloud    |
+|  Dynamic Config UI   |  | (Optional overrides)        | |    Bus messages)  |
++----------------------+  +-----------------------------+ +-------------------+
+                               |
+                               v
+             +------------------------------------+
+             |            Microservices           |
+             |  Service 1, Service 2, Service 3  |
+             |  Auto-refresh configs via RabbitMQ |
+             +------------------------------------+
+```
+
+---
+
+## **Workflow**
+
+1. **Git as source of truth:**
+
+    * Primary configs stored in Git repo (YAML or properties).
+    * Each microservice has its environment-specific configs (`dev`, `prod`, `qa`).
+
+2. **Optional Database for dynamic overrides:**
+
+    * Admins can override certain properties without touching Git.
+    * Database entries are merged with Git configs at runtime.
+
+3. **Spring Cloud Config Server:**
+
+    * Fetches configs from **Git** and **Database**.
+    * Exposes `/config` endpoints to microservices.
+
+4. **RabbitMQ + Spring Cloud Bus:**
+
+    * Config Server publishes a **refresh event** to RabbitMQ.
+    * All microservices listening on the bus automatically refresh their configs.
+
+5. **Microservices:**
+
+    * Fetch configs on startup from Config Server.
+    * Refresh automatically when a change occurs (triggered via RabbitMQ).
+
+---
+
+### **Advantages of this Setup**
+
+* **Versioned and auditable** via Git.
+* **Dynamic updates** possible via Database.
+* **Automatic propagation** using RabbitMQ / Spring Cloud Bus.
+* **Supports multiple environments** (profiles).
+* **Production-ready** architecture used by real-world enterprises.
+
+---
+
+If you want, I can also **give you a step-by-step setup with sample SQL table, Git repo structure, and YAML configs** for this complete setup so you can run it locally and see it working.
+
+Do you want me to do that next?
+
+
+Perfect! Let’s create a **full working setup** for a Spring Cloud Config Server with **Git + Database + RabbitMQ** and a client microservice. I’ll guide you step by step with Git repo structure, DB table, YAMLs, and sample microservice code.
+
+---
+
+# **Step 1: Git Repository Structure**
+
+Create a Git repo (e.g., `spring-config-repo`) with environment-specific config files:
+
+```
+spring-config-repo/
+├── SpringConfigDemo.yml         # default/global configs
+├── SpringConfigDemo-prod.yml    # production configs
+├── SpringConfigDemo-dev.yml     # development configs
+```
+
+**Example: `SpringConfigDemo-prod.yml`**
+
+```yaml
+server:
+  port: 9090
+
+build:
+  id: 301
+  version: 2.0.1
+  name: Database Build
+  type: JDBC Production
+```
+
+---
+
+# **Step 2: Database Table**
+
+Create a database `serverconfig2` in MySQL:
+
+```sql
+CREATE DATABASE serverconfig2;
+
+USE serverconfig2;
+
+CREATE TABLE PROPERTIES (
+    APPLICATION VARCHAR(100),
+    PROFILE VARCHAR(50),
+    LABEL VARCHAR(50),
+    PROPERTY_KEY VARCHAR(100),
+    PROPERTY_VALUE VARCHAR(255),
+    PRIMARY KEY (APPLICATION, PROFILE, LABEL, PROPERTY_KEY)
+);
+```
+
+**Insert sample overrides:**
+
+```sql
+INSERT INTO PROPERTIES (APPLICATION, PROFILE, LABEL, PROPERTY_KEY, PROPERTY_VALUE) VALUES
+('SpringConfigDemo', 'prod', 'main', 'server.port', '8085'),
+('SpringConfigDemo', 'prod', 'main', 'build.name', 'DB Override Build');
+```
+
+> ✅ Here, DB overrides the Git configs when both exist.
+
+---
+
+# **Step 3: Config Server Application (`application.yml`)**
+
+```yaml
+server:
+  port: 8888
+
+spring:
+  application:
+    name: SpringCloudConfigServer
+  profiles:
+    active: jdbc    # use database backend
+  datasource:
+    url: jdbc:mysql://localhost:3306/serverconfig2
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  cloud:
+    config:
+      server:
+        jdbc:
+          sql: SELECT PROPERTY_KEY, PROPERTY_VALUE
+               FROM PROPERTIES
+               WHERE APPLICATION=? AND PROFILE=? AND LABEL=?
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: busrefresh, refresh, health, info
+```
+
+**Enable Config Server:**
+
+```java
+@SpringBootApplication
+@EnableConfigServer
+public class SpringCloudConfigServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(SpringCloudConfigServerApplication.class, args);
+    }
+}
+```
+
+---
+
+# **Step 4: Client Microservice (`bootstrap.yml`)**
+
+```yaml
+spring:
+  application:
+    name: SpringConfigDemo
+  config:
+    import: "optional:configserver:http://localhost:8888"
+
+server:
+  port: 0   # will get port from config server
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health
+```
+
+**Example Client Service:**
+
+```java
+@RestController
+public class DemoController {
+
+    @Value("${server.port}")
+    private String serverPort;
+
+    @Value("${build.name}")
+    private String buildName;
+
+    @GetMapping("/info")
+    public String info() {
+        return "Port: " + serverPort + ", Build: " + buildName;
+    }
+}
+```
+
+---
+
+# **Step 5: Using Spring Cloud Bus with RabbitMQ**
+
+1. Add dependencies:
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-bus-amqp</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-amqp</artifactId>
+</dependency>
+```
+
+2. Start **RabbitMQ** locally (default guest/guest).
+
+3. When you update config in **Git or DB**, you can refresh all clients by calling:
+
+```bash
+POST http://localhost:8888/actuator/busrefresh
+```
+
+* All microservices listening on the bus automatically reload the new config.
+
+---
+
+# **Step 6: Summary of Workflow**
+
+1. **Git = main source**, DB = optional dynamic overrides.
+2. **Config Server** merges both sources.
+3. **Clients** fetch configs on startup and auto-refresh via RabbitMQ.
+4. **Actuator endpoints** allow manual refresh if needed.
+
+---
+
+I can also provide a **ready-to-run SQL + Git repo + Maven project zip** so you can test everything on your PC **with one command**, including bus refresh propagation.
+
+Do you want me to prepare that?
+
+## ------- with git -----------------
+Perfect ⚡ — let’s build a **production-grade, auto-refresh Spring Cloud Config setup** — using **Git + RabbitMQ + Spring Cloud Bus** — exactly how it’s done in real companies.
+
+---
+
+## 🧱 1️⃣ Project Structure (3 Parts)
+
+You’ll have **3 projects** working together:
+
+```
+spring-config/
+├── config-server/          # Central config server (fetches configs from Git)
+├── config-client/          # Your microservice (Spring Boot app)
+└── config-repo/            # Separate Git repo for configuration files
+```
+
+---
+
+## 🗂️ 2️⃣ config-repo (the Git repository)
+
+> This is your configuration source.
+> It can be a **separate GitHub repo** or a **local folder** when testing.
+
+**Folder structure:**
+
+```
+config-repo/
+├── application.yml                  # shared defaults
+├── SpringConfigDemo-dev.yml         # dev profile configs
+└── SpringConfigDemo-prod.yml        # prod profile configs
+```
+
+### 🧾 Example Files
+
+**application.yml**
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+```
+
+**SpringConfigDemo-dev.yml**
+
+```yaml
+server:
+  port: 8081
+
+build:
+  id: 101
+  version: 1.0.1
+  name: Dev Build
+  type: Development
+```
+
+**SpringConfigDemo-prod.yml**
+
+```yaml
+server:
+  port: 9090
+
+build:
+  id: 501
+  version: 2.1.0
+  name: Production Build
+  type: Production
+```
+
+---
+
+## ☁️ 3️⃣ Config Server Setup
+
+**Project:** `config-server`
+
+**Dependencies:**
+
+* `Spring Boot Web`
+* `Spring Cloud Config Server`
+* `Spring Boot Actuator`
+* `Spring Cloud Bus`
+* `Spring AMQP` (RabbitMQ)
+
+### `application.yml`
+
+```yaml
+server:
+  port: 8888
+
+spring:
+  application:
+    name: SpringCloudConfigServer
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/<your-username>/config-repo
+          default-label: main
+          clone-on-start: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: busrefresh, health, info
+```
+
+### `Main Class`
+
+```java
+@SpringBootApplication
+@EnableConfigServer
+public class ConfigServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServerApplication.class, args);
+    }
+}
+```
+
+---
+
+## 🧩 4️⃣ Config Client Setup
+
+**Project:** `config-client`
+
+**Dependencies:**
+
+* `Spring Boot Web`
+* `Spring Boot Actuator`
+* `Spring Cloud Starter Config`
+* `Spring Cloud Bus`
+* `Spring AMQP`
+
+### `application.yml`
+
+```yaml
+server:
+  port: 8080
+
+spring:
+  application:
+    name: SpringConfigDemo
+  config:
+    import: "optional:configserver:http://localhost:8888"
+  profiles:
+    active: prod   # change to dev when testing dev configs
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, busrefresh, health, info
+```
+
+---
+
+## 💻 5️⃣ Client Controller
+
+```java
+@RestController
+@RefreshScope
+public class BuildInfoController {
+
+    @Value("${build.id:100}")
+    private String buildId;
+
+    @Value("${build.version:1.0.0}")
+    private String buildVersion;
+
+    @Value("${build.name:Default-Build}")
+    private String buildName;
+
+    @Value("${build.type:Default}")
+    private String buildType;
+
+    @GetMapping("/build-info")
+    public String getBuildInfo() {
+        return String.format("BuildId: %s | Version: %s | Name: %s | Type: %s",
+                buildId, buildVersion, buildName, buildType);
+    }
+}
+```
+
+---
+
+## 🚀 6️⃣ Run Order
+
+1. ✅ Start **RabbitMQ** (default port 5672)
+
+   ```bash
+   rabbitmq-server
+   ```
+
+2. ✅ Start **Config Server**
+
+   ```bash
+   mvn spring-boot:run
+   ```
+
+3. ✅ Start **Config Client**
+
+   ```bash
+   mvn spring-boot:run
+   ```
+
+4. ✅ Test Config Fetching
+   Open in browser:
+
+   ```
+   http://localhost:8888/SpringConfigDemo/prod
+   ```
+
+   You’ll see config data from your Git repo.
+
+5. ✅ Test Client Endpoint
+
+   ```
+   http://localhost:8080/build-info
+   ```
+
+---
+
+## 🔁 7️⃣ Dynamic Auto Refresh (with Bus)
+
+1. Go to your **config-repo** (Git repo).
+2. Change a property (for example `build.version: 2.2.0` in `SpringConfigDemo-prod.yml`).
+3. **Commit & push** the change to Git.
+4. Trigger a refresh event from the Config Server:
+
+   ```bash
+   POST http://localhost:8888/actuator/busrefresh
+   ```
+5. The client automatically reloads new values!
+   Test again:
+
+   ```
+   http://localhost:8080/build-info
+   ```
+
+   → You’ll see updated configuration instantly (no restart, no manual refresh).
+
+---
+
+## 🧠 8️⃣ Why This Is Best Practice
+
+| Feature                         | Reason                                       |
+| ------------------------------- | -------------------------------------------- |
+| **Git-based config**            | Versioned, auditable, rollback-ready         |
+| **Spring Cloud Bus + RabbitMQ** | Auto-refresh across all services             |
+| **Profiles per env**            | Easy environment isolation (dev, test, prod) |
+| **Actuator endpoints**          | Health, info, and refresh monitoring         |
+| **@RefreshScope beans**         | Live reload without downtime                 |
+
+---
+1) ![img_202.png](img_202.png)
+2) ![img_203.png](img_203.png)
+3) ![img_204.png](img_204.png)
+4) after applying the change
+5) ![img_205.png](img_205.png)
+6) ![img_206.png](img_206.png)
+7) ![img_207.png](img_207.png)
+8) ![img_208.png](img_208.png)
+9) ![img_209.png](img_209.png)
+Would you like me to show how to **add AES encryption for sensitive properties (like DB passwords)** on top of this exact setup next?
