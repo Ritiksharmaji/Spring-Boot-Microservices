@@ -1,17 +1,17 @@
-server:
-  port: 8888
-
-spring:
-  application:
-    name: SpringCloudConfigServer
-# ------------- with localfile system --------------
-  profiles:
-    active: native
-    cloud:
-      config:
-        server:
-          native:
-            search-location: classpath:/config
+#server:
+#  port: 8888
+#
+#spring:
+#  application:
+#    name: SpringCloudConfigServer
+## ------------- with localfile system --------------
+#  profiles:
+#    active: native
+#    cloud:
+#      config:
+#        server:
+#          native:
+#            search-location: classpath:/config
 
 # ------------------ the lelow is related to githube configuration
 #  cloud:
@@ -47,10 +47,39 @@ spring:
 #    password: mypass
 #    alias: config-server-key
 
-encrypt:
-  key-store:
-    location: classpath:config-server.p12
-    alias: config-server-key
-    password: mypass
-    key-password: mypass
-    type: PKCS12
+#encrypt:
+#  key-store:
+#    location: classpath:config-server.p12
+#    alias: config-server-key
+#    password: mypass
+#    key-password: mypass
+#    type: PKCS12
+
+
+# ---------this is for RabbitMQ Example  with file system ----------
+server:
+  port: 8888
+spring:
+  application:
+    name: SpringCloudConfigServer
+  profiles:
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: file:///D:\Personal\CODE\Java-Code\MicroService\ConfigurationManagment\SpringCloudConfigServer\src\main\resources\config
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: busrefresh, refresh, health, info
+
+
+# -------------- this is for RabbitMQ Example  with database-----------------

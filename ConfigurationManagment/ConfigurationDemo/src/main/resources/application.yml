@@ -1,3 +1,28 @@
+#spring:
+#  application:
+#    name: SpringConfigDemo
+#  config:
+#    import: "optional:configserver:http://localhost:8888"
+#  profiles:
+#    active: prod
+#server:
+#  port: ${SERVER_PORT:8080}   # fallback if env var not set
+#
+#build:
+#  id: ${BUILD_ID:1001}
+#  version: ${BUILD_VERSION:1.0.0}
+#  name: ${BUILD_NAME:Default-Build}
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: refresh
+
+## --------- this is for RabbitMQ Example -----------------
+
+server:
+  port: ${SERVER_PORT:8080}   # default fallback
+
 spring:
   application:
     name: SpringConfigDemo
@@ -5,15 +30,18 @@ spring:
     import: "optional:configserver:http://localhost:8888"
   profiles:
     active: prod
-server:
-  port: ${SERVER_PORT:8080}   # fallback if env var not set
 
-build:
-  id: ${BUILD_ID:1001}
-  version: ${BUILD_VERSION:1.0.0}
-  name: ${BUILD_NAME:Default-Build}
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
 management:
   endpoints:
     web:
       exposure:
-        include: refresh
+        include: refresh, busrefresh, health, info
+  endpoint:
+    health:
+      show-details: always

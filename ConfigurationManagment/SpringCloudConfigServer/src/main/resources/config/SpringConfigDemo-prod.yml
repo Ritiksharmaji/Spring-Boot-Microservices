@@ -2,6 +2,6 @@ server:
   port: 9090
 build:
   id: 301
-  version: 2.0.0
-  name: Native Prod Build
-  type: Native Production
+  version: 2.0.0.3.2
+  name: Native Prod Build with autostart
+  type: Native Production wit autostart
