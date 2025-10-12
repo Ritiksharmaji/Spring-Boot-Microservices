@@ -3,5 +3,5 @@ server:
 build:
   id: 201
   version: 1.0.0
-  name: Dev Build
-  type: Development
+  name: Native Dev Build
+  type: Native Development
