@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: user-service
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/userdb
+      database: userdb
+      # For Atlas connection, uncomment below and comment the local URI
+      # uri: mongodb+srv://ritik:ritik@cluster0.78zdwsn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    shutdown:
+      enabled: true
+
+info:
+  app:
+    name: E-Commerce-App-userModel
+    description: Spring Boot Actuator Info Example
+    version: 1.0.0
+  developer:
+    name: Ritik Sharma
+    email: ritik@example.com

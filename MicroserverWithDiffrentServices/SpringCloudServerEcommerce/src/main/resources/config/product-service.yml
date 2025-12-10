@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: product-service
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/product
+      database: product
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/product?stringtype=unspecified&currentSchema=public&ApplicationName=ecom-application&TimeZone=Asia/Kolkata
+#    username: embarkx
+#    password: embarkx
+
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+#    database: postgresql
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.PostgreSQLDialect
+#        jdbc:
+#          time_zone: Asia/Kolkata
+
+server:
+  port: 8082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    shutdown:
+      enabled: true
+
+info:
+  app:
+    name: E-Commerce-App-productModel
+    description: Spring Boot Actuator Info Example
+    version: 1.0.0
+  developer:
+    name: Ritik Sharma
+    email: ritik@example.com
