@@ -10,6 +10,10 @@
         <option value="$PROJECT_DIR$/ConfigurationDemo/pom.xml" />
         <option value="$PROJECT_DIR$/ConfigurationManagment/SpringCloudConfigServer/pom.xml" />
         <option value="$PROJECT_DIR$/ConfigurationManagment/ConfigurationDemo/pom.xml" />
+        <option value="$PROJECT_DIR$/MicroserverWithDiffrentServices/SpringCloudConfigServerEcommerce/pom.xml" />
+        <option value="$PROJECT_DIR$/MicroserverWithDiffrentServices/user-model/pom.xml" />
+        <option value="$PROJECT_DIR$/MicroserverWithDiffrentServices/product-model/pom.xml" />
+        <option value="$PROJECT_DIR$/MicroserverWithDiffrentServices/order-model/pom.xml" />
       </list>
     </option>
   </component>

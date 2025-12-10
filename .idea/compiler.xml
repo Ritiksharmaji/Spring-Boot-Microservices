@@ -8,6 +8,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="SpringCloudConfigServer" />
+        <module name="SpringCloudServerEcommerce" />
       </profile>
       <profile name="Annotation profile for ConfifurationDemo" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -19,17 +20,43 @@
         </processorPath>
         <module name="ConfifurationDemo" />
       </profile>
+      <profile name="Annotation profile for ecom-application" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.34/lombok-1.18.34.jar" />
+        </processorPath>
+        <module name="ecom-application" />
+      </profile>
+      <profile name="Annotation profile for ecom-application (1)" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.40/lombok-1.18.40.jar" />
+        </processorPath>
+        <module name="ecom-application (1)" />
+      </profile>
+      <profile name="Annotation profile for ecom-application (2)" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.40/lombok-1.18.40.jar" />
+        </processorPath>
+        <module name="ecom-application (2)" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="ecom-application" target="21" />
-      <module name="ecom-application (1)" target="21" />
-      <module name="ecom-application (2)" target="21" />
+      <module name="ecom-application (3)" target="21" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="ConfifurationDemo" options="-parameters" />
       <module name="SpringCloudConfigServer" options="-parameters" />
+      <module name="SpringCloudServerEcommerce" options="-parameters" />
       <module name="ecom-application" options="-parameters" />
       <module name="ecom-application (1)" options="-parameters" />
       <module name="ecom-application (2)" options="-parameters" />
