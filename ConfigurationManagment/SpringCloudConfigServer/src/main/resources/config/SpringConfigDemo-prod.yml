@@ -3,5 +3,5 @@ server:
 build:
   id: 301
   version: 2.0.0.3.2
-  name: Native Prod Build with autostart
+  name: Native Prod Build with autostart with ritik
   type: Native Production wit autostart
