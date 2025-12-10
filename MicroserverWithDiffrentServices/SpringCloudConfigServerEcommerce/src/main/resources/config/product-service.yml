@@ -3,8 +3,8 @@ spring:
     name: product-service
   data:
     mongodb:
-      uri: mongodb://localhost:27017/product
-      database: product
+      uri: ${SPRING_DATA_MONGODB_URI}
+      database: ${SPRING_DATA_MONGODB_DATABASE}
 #  datasource:
 #    url: jdbc:postgresql://localhost:5432/product?stringtype=unspecified&currentSchema=public&ApplicationName=ecom-application&TimeZone=Asia/Kolkata
 #    username: embarkx

@@ -34,3 +34,68 @@
 17) ![img_11.png](img_11.png)
 18) so now all the services working fine ...
 
+## ----------- 155. Challenge: Externalizing Configuration Using .env Files or Environment Variables --
+1) so now we are going to Externalizing all the configuration as .env file and we may can use the git as well
+2) so now we have to create all .env files for all the projects
+
+Here are the **.env files** for both **Order Service** and **Product Service**, based on your Spring Cloud Config YAML.
+
+---
+
+# ✅ **Order Service – `.env` file**
+
+```
+SERVER_PORT=8083
+
+SPRING_DATA_MONGODB_URI=mongodb://localhost:27017/order
+SPRING_DATA_MONGODB_DATABASE=order
+```
+
+✔ Matches your YAML
+✔ Works with Spring Boot if you use `@ConfigurationProperties` OR load `.env` using `spring-dotenv` or Docker compose.
+
+---
+
+# ✅ **Product Service – `.env` file**
+
+You asked to include **only MongoDB properties**:
+
+```
+SPRING_DATA_MONGODB_URI=mongodb://localhost:27017/product
+SPRING_DATA_MONGODB_DATABASE=product
+```
+
+---
+
+# ⚠️ **Important Notes**
+
+* Spring Boot **does not read `.env` files by default**.
+* Use one of the following:
+
+    1. **`spring-boot-dotenv`** dependency
+
+       ```
+       <dependency>
+           <groupId>me.paulschwarz</groupId>
+           <artifactId>spring-dotenv</artifactId>
+           <version>3.0.0</version>
+       </dependency>
+       ```
+    2. OR use Docker Compose `env_file:`
+    3. OR manually map environment variables using your OS or deployment platform.
+
+---
+
+If you want, I can generate:
+
+✅ Docker Compose for both services
+✅ Spring Cloud Config Server `.yml`
+✅ Kubernetes secrets/config maps
+✅ Complete microservice folder structure
+
+Just tell me!
+1) not working that depedencies so adding .env
+2) ![img_12.png](img_12.png)
+3) ![img_13.png](img_13.png)
+
+## ---------- 156. Challenge: Dynamically Refresh Configurations with Spring Cloud Bus (No Restart)---

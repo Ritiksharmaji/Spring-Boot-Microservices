@@ -1,11 +1,11 @@
-server:
-  port: 8083
-
-spring:
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/order
-      database: order
+    #server:
+#  port: 8083
+#
+#spring:
+#  data:
+#    mongodb:
+#      uri: mongodb://localhost:27017/order
+#      database: order
 #  datasource:
     # url: jdbc:postgresql://localhost:5432/ecomdb
 #    url: jdbc:postgresql://localhost:5432/order?stringtype=unspecified&currentSchema=public&ApplicationName=ecom-application&TimeZone=Asia/Kolkata
@@ -22,6 +22,16 @@ spring:
 #        dialect: org.hibernate.dialect.PostgreSQLDialect
 #        jdbc:
 #          time_zone: Asia/Kolkata
+server:
+  port: ${SERVER_PORT}
+
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME}
+
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
 
 management:
   endpoints:
