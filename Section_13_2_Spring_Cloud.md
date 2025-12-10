@@ -3593,7 +3593,10 @@ public class BuildInfoController {
 
 ---
 
-## 🔁 7️⃣ Dynamic Auto Refresh (with Bus)
+## 🔁 7️⃣ Dynamic Auto Refresh (with Bus) 
+# --- leacture:152. Dynamically Refresh Configurations with Spring Cloud Bus (No Restart Required) ----
+
+
 
 1. Go to your **config-repo** (Git repo).
 2. Change a property (for example `build.version: 2.2.0` in `SpringConfigDemo-prod.yml`).
