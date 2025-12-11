@@ -4,7 +4,11 @@ server:
 spring:
   application:
     name: SpringCloudServerEcommerce
-
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
   profiles:
     active: native
 
@@ -12,4 +16,16 @@ spring:
     config:
       server:
         native:
-          search-locations: classpath:/config
+          search-locations: file:///D:\Personal\CODE\Java-Code\MicroService\MicroserverWithDiffrentServices\SpringCloudConfigServerEcommerce\src\main\resources\config
+
+## ------- actuar related configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    shutdown:
+      enabled: true

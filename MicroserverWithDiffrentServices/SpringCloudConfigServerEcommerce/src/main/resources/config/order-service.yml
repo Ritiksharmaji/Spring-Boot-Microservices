@@ -28,11 +28,17 @@ server:
 spring:
   application:
     name: ${SPRING_APPLICATION_NAME}
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 
   data:
     mongodb:
       uri: ${MONGODB_URI}
-
+#      uri: mongodb://localhost:27017/order
+# the below credintaion is for actucter that management one
 management:
   endpoints:
     web:
@@ -43,7 +49,7 @@ management:
       show-details: always
     shutdown:
       enabled: true
-
+# ----- end of actular configuration ------------
 info:
   app:
     name: E-Commerce-App-OrderModel
@@ -52,3 +58,6 @@ info:
   developer:
     name: Ritik Sharma
     email: ritik@example.com
+
+app:
+  message: "Hello-order-auto-refresh"

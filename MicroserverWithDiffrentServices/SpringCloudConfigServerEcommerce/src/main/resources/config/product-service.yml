@@ -1,6 +1,12 @@
 spring:
   application:
     name: product-service
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI}
@@ -43,3 +49,5 @@ info:
   developer:
     name: Ritik Sharma
     email: ritik@example.com
+app:
+  message: "Hello-product-auto-refresh"

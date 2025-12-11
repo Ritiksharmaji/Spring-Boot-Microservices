@@ -99,3 +99,172 @@ Just tell me!
 3) ![img_13.png](img_13.png)
 
 ## ---------- 156. Challenge: Dynamically Refresh Configurations with Spring Cloud Bus (No Restart)---
+1) now we need to add the actucter to all four project
+```declarative
+<dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+```
+2) then add dependeies for rabitMQ into all
+```declarative
+ <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bus-amqp</artifactId>
+</dependency>
+```
+3) one important thing the above dependeies comming from spring cloud so make should you should have version of spring cloud in pom.xml
+```declarative
+<spring-cloud.version>2025.0.0</spring-cloud.version>
+```
+as like:
+```declarative
+<properties>
+		<java.version>21</java.version>
+		<spring-cloud.version>2025.0.0</spring-cloud.version>
+</properties>
+```
+4) and also you must include spring cloud as below
+```declarative
+<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+```
+5) then we need to add some additional configuration to all the application.properties (.yml )file. to connect with rabirMQ
+6) ![img_14.png](img_14.png)
+7) copy the command and paste to order-service.yml
+8) so copy and paster configuration code of actular and rabitMQ to all four( order-service.yml, user-service.yml, product-service.yml and application.yml of spring coudConfigServer).
+9) ![img_15.png](img_15.png)
+10) so in to get the config we are using
+```declarative
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/config
+
+```
+so after making any change in .ynl file and you want to read it without restart the application then we need to make little bit change we need to use the external file not the classpath
+so configserver will read it so we need to give the file path
+11) ![img_16.png](img_16.png)
+12) now we need to rin the RabirMQ 
+13) ![img_17.png](img_17.png)
+14) to run the :
+    You already have a RabbitMQ container running with the **name `rabbitmq`**, so Docker will not allow starting another container with the same name.
+
+Here are the ways to fix it:
+
+---
+
+# ✅ **Option 1: Stop and Remove the Existing RabbitMQ Container**
+
+Run these commands:
+
+```bash
+docker stop rabbitmq
+docker rm rabbitmq
+```
+
+Then run your new container:
+
+```bash
+docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:4-management
+```
+
+---
+
+# ✅ **Option 2: Start the Existing Container (if it is stopped)**
+
+Check if it's stopped:
+
+```bash
+docker ps -a
+```
+
+If it’s stopped, start it:
+
+```bash
+docker start rabbitmq
+```
+
+---
+
+# ✅ **Option 3: Run New RabbitMQ Container With a Different Name**
+
+If you want to keep the existing container:
+
+```bash
+docker run -it --rm --name rabbitmq2 -p 5673:5672 -p 15673:15672 rabbitmq:4-management
+```
+
+But usually **Option 1** is best.
+
+---
+
+# ⚠️ Why This Error Happens?
+
+Docker does not allow two containers with the same name:
+
+```
+Conflict. The container name "/rabbitmq" is already in use
+```
+
+You must stop, remove, or rename the old one before creating a new one.
+
+---
+
+If you want, I can also give you:
+
+✅ Docker Compose for RabbitMQ
+✅ Commands to check logs
+✅ How to integrate RabbitMQ with Spring Boot microservices
+
+Just tell me!
+13) ![img_18.png](img_18.png)
+14) ![img_19.png](img_19.png)
+15) ![img_20.png](img_20.png)
+16) started those three project
+17) ![img_21.png](img_21.png)
+18) ![img_22.png](img_22.png)
+19) we can add the configuration of rabitMQ into docker-compose.yml file but for now all application working so we will not but if in later come any issuse then we will add as below image
+20) ![img_23.png](img_23.png)
+21) so aout springCloudConfigServer is running on 8888, user on:8081, product on: 8082, and order on:8083 
+22) so now we will run the http://localhost:8081/actuator/busrefresh throw the post man then user service will refresh
+23) ![img_24.png](img_24.png)
+24) ![img_25.png](img_25.png)
+25) ![img_26.png](img_26.png)
+26) now we will change something then call the http://localhost:8081/actuator/busrefresh so
+27) ![img_27.png](img_27.png)
+28) without restart the application run the http://localhost:8081/actuator/busrefresh then see the logs
+29) ![img_28.png](img_28.png)
+30) now are creating a controller to send the respose if any change happend 
+31) we have create one same controller to two service(product and order)
+32) ![img_29.png](img_29.png)
+33) and we are getting value from oder-service.yml and product-service.yml 
+34) ![img_30.png](img_30.png)
+35) ![img_31.png](img_31.png)
+36) now after running all service 
+37) ![img_32.png](img_32.png)
+38) ![img_33.png](img_33.png)
+39) now change the valude as 
+40) ![img_34.png](img_34.png)
+41) then run http://localhost:8083/actuator/busrefresh on postman
+42) ![img_35.png](img_35.png)
+43) now we have run the servcie 8083 on which order running but all the services will run with respect to there change it will show keys refreshed
+44) ![img_36.png](img_36.png)
+44) ![img_37.png](img_37.png)
+45) ![img_38.png](img_38.png)
+46) ![img_39.png](img_39.png)
+47) call the browser request:
+48) ![img_40.png](img_40.png)
+49) ![img_41.png](img_41.png)
+50) 
