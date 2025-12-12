@@ -610,4 +610,40 @@ If you want, send me the **error message** you are getting — I will fix it qui
 
 3) creating servcie
 4) ![img_74.png](img_74.png)
-5) 
+
+## ---------- 164. Spring Cloud OpenFeign: The Declarative Way to Call Microservices --------
+1) https://spring.io/projects/spring-cloud
+2) ![img_75.png](img_75.png)
+3) ![img_76.png](img_76.png)
+4) adding dependeies of openFeign 
+5) ![img_77.png](img_77.png)
+```declarative
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-openfeign</artifactId>
+    </dependency>
+```
+so add this into consumer project beacuse it is going to make api call
+6) be remember it is dependeies from spring cloud so
+7) add required dependeies
+8) ![img_78.png](img_78.png)
+9) ![img_79.png](img_79.png)
+```declarative
+<properties>
+    <java.version>21</java.version>
+    <spring-cloud.version>2025.1.0</spring-cloud.version>
+  </properties>
+
+  <dependencyManagement>
+  <dependencies>
+<dependency>
+<groupId>org.springframework.cloud</groupId>
+<artifactId>spring-cloud-dependencies</artifactId>
+<version>${spring-cloud.version}</version>
+<type>pom</type>
+<scope>import</scope>
+</dependency>
+</dependencies>
+</dependencyManagement>
+```
+![img_80.png](img_80.png)
