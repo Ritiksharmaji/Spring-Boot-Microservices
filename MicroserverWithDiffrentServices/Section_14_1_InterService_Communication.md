@@ -653,4 +653,16 @@ so add this into consumer project beacuse it is going to make api call
 2) ![img_81.png](img_81.png)
 3) ![img_82.png](img_82.png)
 4) ![img_83.png](img_83.png)
-5) 
+
+## --------- 166. Using WebClient for Non-Blocking, Reactive Communication in Microservices --
+1) https://docs.spring.io/spring-framework/reference/integration/rest-clients.html
+2) ![img_84.png](img_84.png)
+3) add the dependeies
+4) ![img_85.png](img_85.png)
+```declarative
+ <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
+```
+![img_86.png](img_86.png)
