@@ -647,3 +647,10 @@ so add this into consumer project beacuse it is going to make api call
 </dependencyManagement>
 ```
 ![img_80.png](img_80.png)
+
+## ----- 165. RestClient – The Modern Alternative to RestTemplate---
+1) https://docs.spring.io/spring-framework/reference/integration/rest-clients.html
+2) ![img_81.png](img_81.png)
+3) ![img_82.png](img_82.png)
+4) ![img_83.png](img_83.png)
+5) 
