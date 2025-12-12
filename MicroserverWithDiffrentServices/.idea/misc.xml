@@ -8,6 +8,8 @@
         <option value="$PROJECT_DIR$/order-model/pom.xml" />
         <option value="$PROJECT_DIR$/product-model/pom.xml" />
         <option value="$PROJECT_DIR$/SpringCloudServerEcommerce/pom.xml" />
+        <option value="$PROJECT_DIR$/InterServices/consumer/pom.xml" />
+        <option value="$PROJECT_DIR$/InterServices/provider/pom.xml" />
       </list>
     </option>
   </component>
