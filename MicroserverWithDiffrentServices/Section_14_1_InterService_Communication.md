@@ -666,3 +666,16 @@ so add this into consumer project beacuse it is going to make api call
     </dependency>
 ```
 ![img_86.png](img_86.png)
+
+## ---------- 167. HTTP Interfaces in Spring Boot 3 – Type-Safe API Calls for Microservices---
+1) ![img_87.png](img_87.png)
+2) ![img_88.png](img_88.png)
+3) ![img_89.png](img_89.png)
+
+## --- 168. What Should You Use? Comparing all REST Clients ---
+1) ![img_90.png](img_90.png)
+2) ![img_91.png](img_91.png)
+3) ![img_92.png](img_92.png)
+4) ![img_93.png](img_93.png)
+5) ![img_94.png](img_94.png)
+6) 
