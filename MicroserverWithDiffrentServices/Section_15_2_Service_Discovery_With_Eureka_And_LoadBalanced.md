@@ -479,3 +479,191 @@ If you want next:
 * ✅ Distributed Tracing
 
 Just tell me 👍
+
+You’re almost there 👍
+Let’s clean this up **properly** and show **both correct ways** (with and without Eureka / LoadBalancer), and also explain **why your earlier errors happened**.
+
+---
+
+## 1️⃣ Problem in your current code
+
+You wrote:
+
+```java
+//  WebClient...
+public WebClient webClientnew(){
+
+}
+```
+
+This method:
+
+* has **no return**
+* is **not a @Bean**
+* does not configure load balancing
+
+Also, when using **Eureka service name (`http://provider`)**, **plain `WebClient.create()` will NOT work** unless you use **Spring Cloud LoadBalancer**.
+
+---
+
+## 2️⃣ Correct Way (WITHOUT Eureka – hardcoded URL)
+
+Use this if you are calling:
+
+```
+http://localhost:8081
+```
+
+### ✅ WebClient + HttpInterface (No LoadBalancer)
+
+```java
+@Configuration
+public class WebClientConfig {
+
+    @Bean
+    public WebClient webClient() {
+        return WebClient.builder()
+                .baseUrl("http://localhost:8081")
+                .build();
+    }
+
+    @Bean
+    public ProviderHttpInterface webClientHttpInterface(WebClient webClient) {
+
+        WebClientAdapter adapter = WebClientAdapter.create(webClient);
+
+        HttpServiceProxyFactory factory =
+                HttpServiceProxyFactory.builderFor(adapter).build();
+
+        return factory.createClient(ProviderHttpInterface.class);
+    }
+}
+```
+
+✔ Works **without Eureka**
+✔ Simple and clean
+
+---
+
+## 3️⃣ Correct Way (WITH Eureka – service name `provider`)
+
+Since your Eureka dashboard shows:
+
+```
+PROVIDER  UP  provider:8081
+```
+
+You **must use LoadBalancer**.
+
+---
+
+### ✅ Dependencies (IMPORTANT)
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-webflux</artifactId>
+</dependency>
+```
+
+---
+
+### ✅ LoadBalanced WebClient + HttpInterface
+
+```java
+@Configuration
+public class WebClientConfig {
+
+    @Bean
+    @LoadBalanced
+    public WebClient.Builder webClientBuilder() {
+        return WebClient.builder();
+    }
+
+    @Bean
+    public ProviderHttpInterface webClientHttpInterface(
+            WebClient.Builder webClientBuilder) {
+
+        WebClient webClient = webClientBuilder
+                .baseUrl("http://provider") // Eureka service name
+                .build();
+
+        WebClientAdapter adapter = WebClientAdapter.create(webClient);
+
+        HttpServiceProxyFactory factory =
+                HttpServiceProxyFactory.builderFor(adapter).build();
+
+        return factory.createClient(ProviderHttpInterface.class);
+    }
+}
+```
+
+✔ Uses **Eureka**
+✔ Uses **LoadBalancer**
+✔ No `UnknownHostException`
+
+---
+
+## 4️⃣ Provider Http Interface (Correct)
+
+```java
+@HttpExchange
+public interface ProviderHttpInterface {
+
+    @GetExchange("/instance-info")
+    String getInstanceInfo();
+}
+```
+
+---
+
+## 5️⃣ Why you were getting `UnknownHostException`
+
+```
+No such host is known (provider)
+```
+
+Because:
+
+❌ `WebClient.create("http://provider")`
+❌ No LoadBalancer
+❌ JVM tried DNS lookup instead of Eureka
+
+✅ **Fix:** `@LoadBalanced WebClient.Builder`
+
+---
+
+## 6️⃣ Rule of Thumb (IMPORTANT)
+
+| Client Type   | Eureka Required?  | Annotation                        |
+| ------------- | ----------------- | --------------------------------- |
+| RestTemplate  | Yes               | `@LoadBalanced`                   |
+| WebClient     | Yes               | `@LoadBalanced WebClient.Builder` |
+| Feign         | Yes               | Built-in                          |
+| HttpInterface | Depends on client | LoadBalanced builder              |
+
+---
+
+## 7️⃣ Recommendation (BEST PRACTICE)
+
+For **Spring Boot 3.x + Microservices**:
+
+1️⃣ **Feign Client** → declarative & simplest
+2️⃣ **Http Interface + WebClient** → modern & reactive
+3️⃣ **RestTemplate** → ❌ deprecated
+
+---
+
+If you want next, I can give you:
+
+* ✅ **One single project structure**
+* ✅ **Which client to use when**
+* ✅ **Complete Consumer → Provider flow**
+* ✅ **Diagram of Eureka + LoadBalancer**
+
+Just tell me 👍
