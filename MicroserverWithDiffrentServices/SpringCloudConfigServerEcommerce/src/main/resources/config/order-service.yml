@@ -27,7 +27,7 @@ server:
 
 spring:
   application:
-    name: ${SPRING_APPLICATION_NAME}
+    name: ORDER-SERVICE
   rabbitmq:
     host: localhost
     port: 5672
@@ -61,3 +61,9 @@ info:
 
 app:
   message: "Hello-order-auto-refresh"
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
