@@ -4,7 +4,9 @@
     <file url="file://$PROJECT_DIR$/InterServices/EurekaServer/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/InterServices/consumer/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/InterServices/provider/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/SpringCloudConfigServerEcommerce/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/SpringCloudServerEcommerce/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/eurekaEcommerce/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/order-model/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/product-model/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/user-model/src/main/java" charset="UTF-8" />

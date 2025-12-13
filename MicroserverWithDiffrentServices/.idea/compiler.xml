@@ -17,7 +17,9 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="EurekaServer" />
+        <module name="SpringCloudServerEcommerce" />
         <module name="consumer" />
+        <module name="eurekaEcommerce" />
       </profile>
       <profile name="Annotation profile for ecom-application (1)" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -47,9 +49,6 @@
         <module name="provider" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="SpringCloudServerEcommerce" target="21" />
-    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
@@ -60,6 +59,7 @@
       <module name="ecom-application (1)" options="-parameters" />
       <module name="ecom-application (2)" options="-parameters" />
       <module name="ecom-application (3)" options="-parameters" />
+      <module name="eurekaEcommerce" options="-parameters" />
       <module name="provider" options="-parameters" />
     </option>
   </component>

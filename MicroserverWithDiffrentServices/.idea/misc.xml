@@ -11,6 +11,8 @@
         <option value="$PROJECT_DIR$/InterServices/consumer/pom.xml" />
         <option value="$PROJECT_DIR$/InterServices/provider/pom.xml" />
         <option value="$PROJECT_DIR$/InterServices/EurekaServer/pom.xml" />
+        <option value="$PROJECT_DIR$/eurekaEcommerce/pom.xml" />
+        <option value="$PROJECT_DIR$/SpringCloudConfigServerEcommerce/pom.xml" />
       </list>
     </option>
   </component>
