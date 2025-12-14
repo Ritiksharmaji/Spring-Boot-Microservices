@@ -1,17 +1,17 @@
-    #server:
-#  port: 8083
-#
-#spring:
-#  data:
-#    mongodb:
-#      uri: mongodb://localhost:27017/order
-#      database: order
+#    #server:
+##  port: 8083
+##
+##spring:
+##  data:
+##    mongodb:
+##      uri: mongodb://localhost:27017/order
+##      database: order
 #  datasource:
-    # url: jdbc:postgresql://localhost:5432/ecomdb
+#    # url: jdbc:postgresql://localhost:5432/ecomdb
 #    url: jdbc:postgresql://localhost:5432/order?stringtype=unspecified&currentSchema=public&ApplicationName=ecom-application&TimeZone=Asia/Kolkata
 #    username: embarkx
 #    password: embarkx
-
+#
 #  jpa:
 #    hibernate:
 #      ddl-auto: update
@@ -22,23 +22,86 @@
 #        dialect: org.hibernate.dialect.PostgreSQLDialect
 #        jdbc:
 #          time_zone: Asia/Kolkata
+#server:
+#  port: ${SERVER_PORT}
+#
+#spring:
+#  application:
+#    name: ORDER-SERVICE
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
+#
+##  data:
+##    mongodb:
+##      uri: ${MONGODB_URI}
+##      uri: mongodb://localhost:27017/order
+## the below credintaion is for actucter that management one
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+#  endpoint:
+#    health:
+#      show-details: always
+#    shutdown:
+#      enabled: true
+## ----- end of actular configuration ------------
+#info:
+#  app:
+#    name: E-Commerce-App-OrderModel
+#    description: Spring Boot Actuator Info Example
+#    version: 1.0.0
+#  developer:
+#    name: Ritik Sharma
+#    email: ritik@example.com
+#
+#app:
+#  message: "Hello-order-auto-refresh"
+#eureka:
+#  client:
+#    serviceUrl:
+#      defaultZone: http://localhost:8761/eureka/
+#    register-with-eureka: true
+#    fetch-registry: true
+
 server:
-  port: ${SERVER_PORT}
+  port: ${SERVER_PORT:8083}
 
 spring:
   application:
     name: ORDER-SERVICE
+
   rabbitmq:
     host: localhost
     port: 5672
     username: guest
     password: guest
 
-  data:
-    mongodb:
-      uri: ${MONGODB_URI}
-#      uri: mongodb://localhost:27017/order
-# the below credintaion is for actucter that management one
+  datasource:
+    url: jdbc:mysql://localhost:3306/ecomdb
+    username: root          # 🔁 change if different
+    password: root          # 🔁 change if different
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database: mysql
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        jdbc:
+          time_zone: UTC
+        format_sql: true
+
 management:
   endpoints:
     web:
@@ -49,7 +112,7 @@ management:
       show-details: always
     shutdown:
       enabled: true
-# ----- end of actular configuration ------------
+
 info:
   app:
     name: E-Commerce-App-OrderModel
@@ -61,6 +124,7 @@ info:
 
 app:
   message: "Hello-order-auto-refresh"
+
 eureka:
   client:
     serviceUrl:

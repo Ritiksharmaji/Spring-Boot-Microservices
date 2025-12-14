@@ -29,6 +29,7 @@ public class ProductController {
         return new ResponseEntity<ProductResponse>(productService.createProduct(productRequest),
                 HttpStatus.CREATED);
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Long id,  @RequestBody ProductRequest productRequest){
@@ -40,6 +41,13 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<List<ProductResponse>>getProducts(){
         return  ResponseEntity.ok(productService.getAllProducts());
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
+
+        return productService.getProductById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")

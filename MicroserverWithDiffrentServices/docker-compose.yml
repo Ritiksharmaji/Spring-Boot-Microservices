@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   postgres:
@@ -8,9 +8,10 @@ services:
       POSTGRES_USER: embarkx
       POSTGRES_PASSWORD: embarkx
       POSTGRES_DB: ecomdb
-      PGDATA: /data/postgres
+      TZ: UTC          # ✅ FIXED
+      PGTZ: UTC        # ✅ FIXED
     volumes:
-      - postgres_data:/data/postgres
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
@@ -19,11 +20,11 @@ services:
 
   pgadmin:
     container_name: pgadmin_container
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4:8
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@pgadmin.org}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_DEFAULT_EMAIL: admin@pgadmin.org
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     ports:

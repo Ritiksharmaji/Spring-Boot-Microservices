@@ -81,4 +81,10 @@ public class ProductService {
                 .map(this::mapToProductResponse)
                 .collect((Collectors.toList()));
     }
+
+    public Optional<ProductResponse> getProductById(Long id) {
+        return productRepository.findById(id)
+                .filter(Product::getActive)   // ensure active product only
+                .map(this::mapToProductResponse);
+    }
 }

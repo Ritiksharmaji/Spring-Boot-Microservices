@@ -21,8 +21,9 @@ public class CartContoller {
     @PostMapping
     public ResponseEntity<String> addToCart(@RequestHeader("X-User-ID") String userId,
                                             @RequestBody CartItemRequest request){
+        System.out.println("received body as:"+ request);
         if(!cartService.addToCart(Long.valueOf(userId), request)){
-            return ResponseEntity.badRequest().body("Product out of stock or ");
+            return ResponseEntity.badRequest().body("Product out of stock or product not there or user not found ");
         }
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
