@@ -22,7 +22,7 @@ public class CartContoller {
     public ResponseEntity<String> addToCart(@RequestHeader("X-User-ID") String userId,
                                             @RequestBody CartItemRequest request){
         System.out.println("received body as:"+ request);
-        if(!cartService.addToCart(Long.valueOf(userId), request)){
+        if(!cartService.addToCart(userId, request)){
             return ResponseEntity.badRequest().body("Product out of stock or product not there or user not found ");
         }
         return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -32,7 +32,7 @@ public class CartContoller {
     public ResponseEntity<Void> removeFromCart(
             @RequestHeader("X-User-ID") String userId,
             @PathVariable String productId) {
-        boolean deleted = cartService.deleteItemFromCart(Long.valueOf(userId), Long.valueOf(productId));
+        boolean deleted = cartService.deleteItemFromCart(userId, Long.valueOf(productId));
         return deleted ? ResponseEntity.noContent().build()
                 : ResponseEntity.notFound().build();
     }

@@ -223,3 +223,21 @@ Just tell me 👍
 3) ![img_198.png](img_198.png)
 4) then change the cod for addToCart service method
 5) ![img_199.png](img_199.png)
+
+
+## ----------- 189. Challenge: Validate User via User Microservice ----
+1) run all the servvices
+2) ![img_200.png](img_200.png)
+3) ![img_201.png](img_201.png)
+4) ![img_202.png](img_202.png)
+5) ![img_203.png](img_203.png)
+6) ![img_204.png](img_204.png)
+7) ![img_205.png](img_205.png)
+8) ![img_206.png](img_206.png)
+9) ![img_207.png](img_207.png)
+10) ![img_208.png](img_208.png) 
+11) which is not good practies so for that
+12) ![img_209.png](img_209.png)
+13) ![img_210.png](img_210.png)
+14) ![img_211.png](img_211.png)
+15) 

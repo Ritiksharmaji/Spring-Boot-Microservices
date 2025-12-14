@@ -22,7 +22,7 @@ public class CartItem {
 //    @ManyToOne
 //    @JoinColumn(name = "user_id", nullable = false)
 //    private User user;
-    private Long userId;
+    private String userId;
 
 //    @ManyToOne
 //    @JoinColumn(name = "product_id", nullable = false)

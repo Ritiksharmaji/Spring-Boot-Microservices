@@ -14,12 +14,6 @@ import java.util.Optional;
 public class ProductServiceClientConfig {
 
     @Bean
-    @LoadBalanced
-    public RestClient.Builder restClientBuilder(){
-        return RestClient.builder();
-    }
-
-    @Bean
     public ProductServiceClient restClientInteface(RestClient.Builder restClientBuilder){
             RestClient restClient = restClientBuilder.baseUrl("http://product-service")
                                     .defaultStatusHandler(HttpStatusCode::is4xxClientError, ((request, response) -> Optional.empty()))
