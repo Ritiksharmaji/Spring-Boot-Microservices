@@ -861,3 +861,36 @@ Just tell me 👍
 5) https://grafana.com/docs/grafana-cloud/send-data/logs/collect-logs-with-alloy/
 
 ## ------ 197. Implementing Centralized Logging For Docker Containers With Grafana---
+1) https://grafana.com/docs/enterprise-logs/latest/get-started/quick-start/quick-start/
+2) ![img_261.png](img_261.png)
+3) ![img_262.png](img_262.png)
+4) ![img_263.png](img_263.png)
+```declarative
+wget https://raw.githubusercontent.com/grafana/loki/main/examples/getting-started/loki-config.yaml -O loki-config.yaml
+wget https://raw.githubusercontent.com/grafana/loki/main/examples/getting-started/alloy-local-config.yaml -O alloy-local-config.yaml
+wget https://raw.githubusercontent.com/grafana/loki/main/examples/getting-started/docker-compose.yaml -O docker-compose.yaml
+```
+5) then start the dicker on that directory
+6) ![img_265.png](img_265.png)
+6) ![img_264.png](img_264.png)
+7) ![img_266.png](img_266.png)
+8) ![img_267.png](img_267.png)
+9) ![img_268.png](img_268.png)
+10) ![img_269.png](img_269.png)
+11) ![img_270.png](img_270.png)
+12) ![img_271.png](img_271.png)
+13) ![img_272.png](img_272.png)
+14) ![img_273.png](img_273.png)
+15) ![img_274.png](img_274.png)
+16) ![img_275.png](img_275.png)
+17) ![img_276.png](img_276.png)
+18) ![img_277.png](img_277.png)
+19) if you see the above image one datasource is already configure
+20) ![img_278.png](img_278.png)
+21) ![img_279.png](img_279.png)
+22) then run the run query 
+23) ![img_280.png](img_280.png)
+24) ![img_281.png](img_281.png)
+25) ![img_282.png](img_282.png)
+26) ![img_283.png](img_283.png)
+27) 
