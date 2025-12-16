@@ -423,3 +423,441 @@ If you want next:
 * ✅ **Production logging checklist**
 
 Just tell me 👍
+
+## -------------------- 195. Introduction to Grafana for Logging & Monitoring --------
+1) ![img_251.png](img_251.png)
+2) ![img_252.png](img_252.png)
+# --------- notes on grafana with 0 to 100 -----
+Below are **complete, structured notes** on **Grafana from 0 → 100**, written in a **beginner → intermediate → advanced** flow, especially useful for **Spring Boot & Microservices** 🚀
+(Perfect for interviews + real projects)
+
+---
+
+# 📊 GRAFANA – COMPLETE NOTES (0 to 100)
+
+---
+
+## 1️⃣ What is Grafana?
+
+**Grafana** is an **open-source visualization and observability platform** used to:
+
+✅ Visualize metrics
+✅ Create dashboards
+✅ Monitor applications & infrastructure
+✅ Analyze logs & traces
+
+👉 Grafana **does NOT store data**
+👉 It **queries data sources** like Prometheus, Loki, Elasticsearch, etc.
+
+---
+
+## 2️⃣ Why Grafana is Important in Microservices?
+
+In microservices:
+
+* Many services
+* Distributed systems
+* Hard to debug issues
+
+Grafana helps to:
+✔ Monitor service health
+✔ Detect failures early
+✔ Track performance
+✔ Observe system behavior visually
+
+---
+
+## 3️⃣ Grafana in Observability Stack
+
+Grafana is part of **3 pillars of Observability**:
+
+| Pillar  | Tool           |
+| ------- | -------------- |
+| Logs    | Loki           |
+| Metrics | Prometheus     |
+| Tracing | Tempo / Jaeger |
+
+👉 Grafana acts as the **single UI** for all three.
+
+---
+
+## 4️⃣ Grafana Architecture (Simple)
+
+```
+Application → Metrics / Logs / Traces
+        ↓
+Data Source (Prometheus, Loki, etc.)
+        ↓
+Grafana
+        ↓
+Dashboards & Alerts
+```
+
+---
+
+## 5️⃣ Grafana Key Components
+
+### 🔹 Data Sources
+
+Where data comes from:
+
+* Prometheus
+* Loki
+* Elasticsearch
+* MySQL / PostgreSQL
+* CloudWatch
+* InfluxDB
+
+### 🔹 Dashboards
+
+Visual panels showing:
+
+* Graphs
+* Tables
+* Heatmaps
+* Gauges
+
+### 🔹 Panels
+
+Single visualization unit (CPU graph, memory usage, etc.)
+
+### 🔹 Alerts
+
+Triggers notifications based on conditions
+
+---
+
+## 6️⃣ Installing Grafana (Basics)
+
+### Docker (Recommended)
+
+```bash
+docker run -d -p 3000:3000 grafana/grafana
+```
+
+👉 Access:
+
+```
+http://localhost:3000
+```
+
+Default login:
+
+```
+username: admin
+password: admin
+```
+
+---
+
+## 7️⃣ Grafana UI Overview
+
+* **Left Menu**
+
+    * Dashboards
+    * Explore
+    * Alerting
+    * Configuration
+
+* **Explore**
+
+    * Query logs & metrics in real time
+
+---
+
+## 8️⃣ Grafana + Prometheus (Most Common)
+
+### Prometheus = Metrics Provider
+
+### Grafana = Visualization Tool
+
+Typical metrics:
+
+* CPU usage
+* Memory usage
+* HTTP requests
+* Response time
+* Error rate
+
+---
+
+## 9️⃣ Grafana with Spring Boot (Micrometer)
+
+Spring Boot exposes metrics using **Micrometer**.
+
+### Add Dependency
+
+```xml
+<dependency>
+  <groupId>io.micrometer</groupId>
+  <artifactId>micrometer-registry-prometheus</artifactId>
+</dependency>
+```
+
+### Enable Metrics
+
+```properties
+management.endpoints.web.exposure.include=*
+management.endpoint.prometheus.enabled=true
+```
+
+👉 Metrics URL:
+
+```
+/actuator/prometheus
+```
+
+---
+
+## 🔟 Grafana Metrics Examples
+
+| Metric                       | Meaning           |
+| ---------------------------- | ----------------- |
+| jvm_memory_used_bytes        | JVM memory        |
+| http_server_requests_seconds | API response time |
+| system_cpu_usage             | CPU usage         |
+| process_uptime_seconds       | App uptime        |
+
+---
+
+## 1️⃣1️⃣ Grafana Dashboards
+
+### Types
+
+* **Custom dashboards**
+* **Pre-built dashboards** (from Grafana Labs)
+
+Example:
+
+* Spring Boot JVM Dashboard
+* Kubernetes Cluster Dashboard
+
+---
+
+## 1️⃣2️⃣ Panels in Grafana
+
+Common panel types:
+
+* 📈 Time series
+* 📊 Bar chart
+* 🧮 Stat
+* 🔔 Gauge
+* 📋 Table
+* 🌡 Heatmap
+
+---
+
+## 1️⃣3️⃣ Grafana Queries (PromQL)
+
+Example:
+
+```promql
+rate(http_server_requests_seconds_count[5m])
+```
+
+👉 Shows request rate per second.
+
+---
+
+## 1️⃣4️⃣ Grafana Variables
+
+Variables allow:
+
+* Dynamic dashboards
+* Filter by service, instance, environment
+
+Example:
+
+```
+$service_name
+```
+
+---
+
+## 1️⃣5️⃣ Grafana Alerts
+
+### Why Alerts?
+
+To notify when something goes wrong.
+
+### Alert Channels:
+
+* Email
+* Slack
+* Webhook
+* PagerDuty
+
+Example:
+
+* CPU > 80% for 5 minutes
+* Error rate > 5%
+
+---
+
+## 1️⃣6️⃣ Grafana Alert Rule Example
+
+```text
+IF cpu_usage > 80%
+FOR 5 minutes
+THEN send alert
+```
+
+---
+
+## 1️⃣7️⃣ Grafana + Loki (Logs)
+
+Loki is:
+
+* Log aggregation system
+* Label-based (like Prometheus)
+
+Spring Boot logs → Loki → Grafana
+
+### Query Example
+
+```logql
+{app="order-service"} |= "ERROR"
+```
+
+---
+
+## 1️⃣8️⃣ Grafana + Tempo (Tracing)
+
+Distributed tracing:
+
+* Request flow across services
+
+Example:
+
+```
+API Gateway → Order → Payment → Inventory
+```
+
+Grafana shows:
+
+* Latency
+* Errors
+* Dependencies
+
+---
+
+## 1️⃣9️⃣ Grafana Explore Mode
+
+Used for:
+
+* Debugging
+* Query testing
+* Log searching
+
+Very useful during production issues 🔥
+
+---
+
+## 2️⃣0️⃣ Grafana Dashboards for Microservices
+
+Key dashboards:
+✔ JVM Metrics
+✔ HTTP Latency
+✔ Error Rates
+✔ Service Availability
+✔ Database Metrics
+
+---
+
+## 2️⃣1️⃣ Best Practices in Grafana
+
+✔ Use meaningful dashboard names
+✔ Use variables
+✔ Avoid too many panels
+✔ Set alert thresholds wisely
+✔ Separate dashboards per environment
+
+---
+
+## 2️⃣2️⃣ Grafana Security
+
+* Authentication (LDAP, OAuth, SSO)
+* Role-based access
+* Read-only users
+* Dashboard permissions
+
+---
+
+## 2️⃣3️⃣ Grafana in Production
+
+✔ High availability setup
+✔ Backup dashboards
+✔ External DB (MySQL/Postgres)
+✔ Load balancer
+
+---
+
+## 2️⃣4️⃣ Grafana Interview Questions
+
+**Q:** Grafana vs Prometheus?
+➡ Prometheus stores metrics, Grafana visualizes.
+
+**Q:** Does Grafana store data?
+➡ No.
+
+**Q:** What is a panel?
+➡ Single visualization unit.
+
+**Q:** How Grafana helps microservices?
+➡ Observability, monitoring, debugging.
+
+---
+
+## 2️⃣5️⃣ Grafana Real-World Use Case
+
+📌 Production issue:
+
+* Users complain app is slow
+* Grafana shows:
+
+    * High latency
+    * One service consuming more CPU
+    * Error spike in logs
+* Root cause found quickly
+
+---
+
+## 2️⃣6️⃣ Grafana Learning Path (You)
+
+Since you are a **Microservices & Spring Boot developer**, focus on:
+
+1️⃣ Prometheus + Grafana
+2️⃣ Loki for logs
+3️⃣ Alerting
+4️⃣ Dashboards for APIs
+5️⃣ Distributed tracing
+
+---
+
+## 2️⃣7️⃣ Summary (0 → 100)
+
+✔ Grafana = Visualization & Observability Tool
+✔ Works with metrics, logs, traces
+✔ Essential for microservices
+✔ Integrates perfectly with Spring Boot
+✔ Industry standard monitoring tool
+
+---
+
+If you want next:
+
+* 🔥 **Grafana + Prometheus FULL setup**
+* 🔥 **Grafana dashboards for Spring Boot**
+* 🔥 **Grafana + Loki logging setup**
+* 🔥 **Interview Q&A PDF-style notes**
+
+Just tell me 👍
+
+## ------------ 196. Centralized Logging with Grafana--------
+1) ![img_253.png](img_253.png)
+2) ![img_254.png](img_254.png)
+3) ![img_255.png](img_255.png)
+4) ![img_256.png](img_256.png)
+5) https://grafana.com/docs/grafana-cloud/send-data/logs/collect-logs-with-alloy/
+
+## ------ 197. Implementing Centralized Logging For Docker Containers With Grafana---

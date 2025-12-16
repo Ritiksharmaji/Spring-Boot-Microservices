@@ -82,8 +82,8 @@ public class OrderService {
                                 orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity()))
                         ))
                         .toList())
-                .createAt(order.getCreateAt())
-                .updateAt(order.getUpdateAt())
+//                .createAt(order.getCreatedAt())
+//                .updateAt(order.getUpdatedAt())
                 .build();
     }
 

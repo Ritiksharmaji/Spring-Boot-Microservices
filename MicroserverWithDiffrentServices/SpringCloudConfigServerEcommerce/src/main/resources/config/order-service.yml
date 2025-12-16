@@ -1,14 +1,7 @@
-#    #server:
-##  port: 8083
-##
-##spring:
-##  data:
-##    mongodb:
-##      uri: mongodb://localhost:27017/order
-##      database: order
+#spring:
 #  datasource:
 #    # url: jdbc:postgresql://localhost:5432/ecomdb
-#    url: jdbc:postgresql://localhost:5432/order?stringtype=unspecified&currentSchema=public&ApplicationName=ecom-application&TimeZone=Asia/Kolkata
+#    url: jdbc:postgresql://localhost:5432/ecomdb?stringtype=unspecified&currentSchema=public&ApplicationName=ecom-application&TimeZone=Asia/Kolkata
 #    username: embarkx
 #    password: embarkx
 #
@@ -20,12 +13,12 @@
 #    properties:
 #      hibernate:
 #        dialect: org.hibernate.dialect.PostgreSQLDialect
-#        jdbc:
-#          time_zone: Asia/Kolkata
+#      jdbc:
+#        time_zone: Asia/Kolkata
 #server:
 #  port: ${SERVER_PORT}
 #
-#spring:
+##spring:
 #  application:
 #    name: ORDER-SERVICE
 #  rabbitmq:
@@ -67,7 +60,84 @@
 #      defaultZone: http://localhost:8761/eureka/
 #    register-with-eureka: true
 #    fetch-registry: true
+# ============= above is for docker with postgree ==========
+# ========== below is for mysql with local ===============
+#server:
+#  port: ${SERVER_PORT:8083}
+#
+#spring:
+#  application:
+#    name: ORDER-SERVICE
+#
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
+#
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/ecomdb
+#    username: root          # 🔁 change if different
+#    password: root          # 🔁 change if different
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    hikari:
+#      maximum-pool-size: 10
+#      connection-timeout: 30000
+#
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+#    database: mysql
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.MySQLDialect
+#        jdbc:
+#          time_zone: UTC
+#        format_sql: true
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+#  endpoint:
+#    health:
+#      show-details: always
+#    shutdown:
+#      enabled: true
+#
+#info:
+#  app:
+#    name: E-Commerce-App-OrderModel
+#    description: Spring Boot Actuator Info Example
+#    version: 1.0.0
+#  developer:
+#    name: Ritik Sharma
+#    email: ritik@example.com
+#
+#app:
+#  message: "Hello-order-auto-refresh"
+#
+#eureka:
+#  client:
+#    serviceUrl:
+#      defaultZone: http://localhost:8761/eureka/
+#    register-with-eureka: true
+#    fetch-registry: true
 
+#logging:
+#  level:
+#    root: INFO
+#    com.app_ecom.user: TRACE
+#  file:
+#    name: logs/${spring.application.name}.log
+#  logback:
+#    rollingpolicy:
+#      max-file-size: 5MB
+#      max-history: 7
+
+## ============= below is for mysql with docker ===============
 server:
   port: ${SERVER_PORT:8083}
 
@@ -75,20 +145,11 @@ spring:
   application:
     name: ORDER-SERVICE
 
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-
   datasource:
-    url: jdbc:mysql://localhost:3306/ecomdb
-    username: root          # 🔁 change if different
-    password: root          # 🔁 change if different
+    url: jdbc:mysql://localhost:3308/ecomdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+    username: embarkx
+    password: embarkx
     driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      maximum-pool-size: 10
-      connection-timeout: 30000
 
   jpa:
     hibernate:
@@ -97,10 +158,14 @@ spring:
     database: mysql
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        jdbc:
-          time_zone: UTC
+        dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 
 management:
   endpoints:
