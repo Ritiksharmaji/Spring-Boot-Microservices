@@ -893,4 +893,66 @@ wget https://raw.githubusercontent.com/grafana/loki/main/examples/getting-starte
 24) ![img_281.png](img_281.png)
 25) ![img_282.png](img_282.png)
 26) ![img_283.png](img_283.png)
-27) 
+
+## =========== 198. Implementing Centralized Logging For Local Log Files With Grafana =====
+1) basically we have evaluater-loki into additional folder where docker-compose.yaml for it and we are storing logs into  logs which has directory on equal to additional but inside it so we need to give the part of it by alloy
+2) ![img_284.png](img_284.png)
+3) after that we need to define some configuration in alloy-local-config.yaml file 
+```declarative
+local.file_match "system_logs" {
+	path_targets = [{"__path__" = "/var/log/*.log"}]
+	sync_period  = "5s"
+}
+
+loki.source.file "system_file_scrape" {
+	targets       = local.file_match.system_logs.targets
+	forward_to    = [loki.write.default.receiver]
+	tail_from_end = true
+}
+
+
+local.file_match "loki_app_logs" {
+	path_targets = [{"__path__" = "/logs/*.log"}]
+	sync_period  = "5s"
+}
+
+loki.source.file "loki_app_file_scrape" {
+	targets       = local.file_match.loki_app_logs.targets
+	forward_to    = [loki.write.default.receiver]
+	tail_from_end = true
+}
+
+
+local.file_match "parent_app_logs" {
+	path_targets = [{"__path__" = "/logs-parent/*.log"}]
+	sync_period  = "5s"
+}
+
+loki.source.file "parent_app_file_scrape" {
+	targets       = local.file_match.parent_app_logs.targets
+	forward_to    = [loki.write.default.receiver]
+	tail_from_end = true
+}
+```
+5) now down the docker with all running images
+6) the restart them 
+7) ![img_285.png](img_285.png)
+8) after re-start go to grafana localhost then click on explore and in the lable filter you must see the file name option
+9) ![img_286.png](img_286.png)
+10) then based on that you can select that particular file 
+11) ![img_287.png](img_287.png)
+12) ![img_288.png](img_288.png)
+13) ![img_289.png](img_289.png)
+
+## --------- 199. Few Things About Grafana, Alloy and Loki --------
+1) Alloy is the logs collecter for our system 
+2) ![img_290.png](img_290.png)
+3) ![img_291.png](img_291.png)
+4) ![img_292.png](img_292.png)
+
+## --------- 200. Metrics & Monitoring in Microservices with Grafana----
+1) ![img_293.png](img_293.png)
+2) ![img_294.png](img_294.png)
+3) ![img_295.png](img_295.png)
+4) to collect these metrics we use tools two things grafana and prometheus
+5) ![img_296.png](img_296.png)
