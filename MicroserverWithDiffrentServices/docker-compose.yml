@@ -64,5 +64,34 @@ services:
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
 
+# define the service
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq_container
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - backend
+
+#  zipkin:
+#    image: openzipkin/zipkin
+#    container_name: zipkin
+#    restart: unless-stopped
+#    ports:
+#      - "9411:9411"
+#    networks:
+#      - backend
+
 volumes:
   mysql_data:
+networks:
+  backend:
+    driver: bridge
+#networks:
+#  postgres_network:
+#    driver: bridge
