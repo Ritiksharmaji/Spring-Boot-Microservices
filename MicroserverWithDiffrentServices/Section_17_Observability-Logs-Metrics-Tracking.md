@@ -956,3 +956,132 @@ loki.source.file "parent_app_file_scrape" {
 3) ![img_295.png](img_295.png)
 4) to collect these metrics we use tools two things grafana and prometheus
 5) ![img_296.png](img_296.png)
+
+## -------- 201. Setting Up Micrometer and Prometheus with Grafana for Metrics Collection --------
+1) now basically we need to add the two dependeces into our services(order,product and user) those are Prometheus dependeies and Spring Boot Actuator but as prevoius we have already add the Spring Boot Actuator dependecy into those three as you can see the below image so we need to just the Prometheus  from https://start.spring.io/
+2) ![img_297.png](img_297.png)
+2) ![img_298.png](img_298.png)
+3) ![img_299.png](img_299.png)
+4) so now just add the ![img_300.png](img_300.png)
+```declarative
+ <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+```
+to all the three
+5) ![img_301.png](img_301.png)
+6) now after adding dependeies we need to expose the actuater endpoint of prometheus to our springCloudConfigServer
+7) ![img_302.png](img_302.png)
+8) we have already expose all so no need for it
+9) now currenly we are getting only logs so to gets matrices with logs we will create a folder with name as evaluate-prometheus into the additional as evaluate-loki we created and just copy the alloy-local-config.yaml , docker-compose.yaml, and loki-config.yaml file into it
+10) then create grafana folder/datasources/datasources.yml file
+11) then create prometheus/prometheus.yml inside that only
+12) ![img_303.png](img_303.png)
+11) then first we will add the configuration details of prometheus into that docker-compose.yml file
+```declarative
+services:
+    prometheus:
+    image: prom/prometheus:v2.44.0
+    container_name: prometheus
+    ports:
+    - "9090:9090"
+    volumes:
+    - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+    - loki
+```
+12) ![img_304.png](img_304.png)
+13) then update the prometheus.yml as 
+14) ![img_305.png](img_305.png)
+15) check the port properlly
+16) ![img_306.png](img_306.png)
+17) be remember when we configured the grafana then by-default datasource came as loki configured for grafana but for prometheus  we need t0 define the datasource
+18) into evaluate-prometheus/grafana/datasources/datasources.yml 
+19) ![img_307.png](img_307.png)
+20) be remember the loki came by-dafult because it is defined into docker-compose.yaml file 
+21) ![img_308.png](img_308.png)
+22) now we need to mount the datasource to docker-compose.yaml so use the 
+23) ![img_309.png](img_309.png)
+```declarative
+    volumes:
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+```
+24) so basically we can also shift the loki datasource configure to that datasources direclty because we are already mouting all the datasouce from that directory
+25) ![img_310.png](img_310.png)
+26) ![img_311.png](img_311.png)
+27) go to that folder direcoty and stop the running containers
+28) ![img_312.png](img_312.png)
+29) now we have stoped the docker containers which was running for evaluate-loki directory now we will run the docker for evaluate-prometheus for that 
+30) ![img_313.png](img_313.png)
+31) ![img_314.png](img_314.png)
+32) ![img_315.png](img_315.png)
+
+## ------- 202. Exploring Actuator Endpoints in Spring Boot ------
+1) now start all the application
+2) ![img_316.png](img_316.png)
+3) after running all the application 
+4) ![img_317.png](img_317.png)
+5) ![img_318.png](img_318.png)
+6) ![img_319.png](img_319.png)
+7) now if you want to see any sort of metrics details so you can
+8) ![img_320.png](img_320.png)
+9) ![img_321.png](img_321.png)
+10) now exposing those metrics by prometheus 
+11) ![img_322.png](img_322.png)
+
+## ---------- 203. How Prometheus Collects Metrics -----
+1) we can see all the metrics which is created by prometheus by calling it URL/metrics it is running on port: 9090 as we can see the docker so 
+2) ![img_323.png](img_323.png)
+2)  we can also search the metric from the prometheus dashboard 
+3) just call the http://localhost:9090/ it is convert autometically as below image
+4) ![img_324.png](img_324.png)
+5) ![img_325.png](img_325.png)
+6) ![img_326.png](img_326.png)
+
+## ----------- 204. Visualizing Metrics in Grafana Dashboards-------
+1) to visualize the grafaza dashboard we need to call the url on which it is running that is you can see from the docker which is: 3000 so URL is http://localhost:3000/
+2) ![img_327.png](img_327.png)
+3) now see two datasource are comming 
+4) ![img_328.png](img_328.png)
+5) for loki 
+6) ![img_329.png](img_329.png)
+7) for promethics
+8) select any one metric
+9) ![img_330.png](img_330.png)
+10) ![img_331.png](img_331.png)
+11) ![img_332.png](img_332.png)
+
+## --------- 205. Creating Beautiful Dashboards with Grafana and Spring Boot -----
+1) start all the services(projects)
+2) then start the docker instance 
+3) ![img_333.png](img_333.png)
+4) grafana has pre-debuild dashboard we can also create new one 
+5) ![img_334.png](img_334.png)
+6) we can import the dashboard by prometheus for grafana as well https://prometheus.io/docs/visualization/grafana/
+7) ![img_335.png](img_335.png)
+8) after clicking on that link ![img_336.png](img_336.png)
+9) there is lot of type dashboard there
+10) ![img_337.png](img_337.png)
+11) then go back the grafana dashboard make click on create dashboard:
+12) ![img_338.png](img_338.png)
+13) ![img_339.png](img_339.png)
+14) then write the coped id and we can also download that json and paste here
+15) ![img_340.png](img_340.png)
+16) ![img_341.png](img_341.png)
+17) then set the source as prometheus then click on import 
+18) ![img_342.png](img_342.png)
+19) ![img_343.png](img_343.png)
+20) 
+## ------ 206. Custom Dashboards in Grafana ---------
+1) so so far we have imported the created dashboard into our grafana but we can also create custom specific dashboard as well
+2) ![img_344.png](img_344.png)
+3) ![img_345.png](img_345.png)
+4) ![img_346.png](img_346.png)
+5) ![img_347.png](img_347.png)
+6) ![img_348.png](img_348.png)
+7) then click on save dashboard and give the name and descriotion
+8) ![img_349.png](img_349.png)
+9) ![img_350.png](img_350.png)
+10) 
