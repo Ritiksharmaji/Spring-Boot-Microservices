@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="11bb4f24-49a4-40fa-a822-fb039513c5c3" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Interface" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="36eYr3xB0czGvCcX9jxZ9VCDt9V" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.ConsumerApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Application.EcomApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Application.EurekaEcommerceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Application.EurekaServer.executor&quot;: &quot;Run&quot;,
+    &quot;Application.ProviderApplication-8082.executor&quot;: &quot;Run&quot;,
+    &quot;Application.ProviderApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Application.SpringCloudServerEcommerceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Application.order-servcie.executor&quot;: &quot;Run&quot;,
+    &quot;Application.product-service.executor&quot;: &quot;Run&quot;,
+    &quot;Application.user-service.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;branch-10-2-converting-mysql-local-to-docker-mysql&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Personal/CODE/Java-Code/MicroService/MicroserverWithDiffrentServices/additionalFolder/evaluate-prometheus&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Personal\CODE\Java-Code\MicroService\MicroserverWithDiffrentServices\additionalFolder\evaluate-prometheus" />
+      <recent name="D:\Personal\CODE\Java-Code\MicroService\MicroserverWithDiffrentServices\additionalFolder\resources" />
+      <recent name="D:\Personal\CODE\Java-Code\MicroService\MicroserverWithDiffrentServices\Notes" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.app_ecom.dto" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="configurationTypes">
+      <set>
+        <option value="Application" />
+      </set>
+    </option>
+    <option name="configurationStatuses">
+      <map>
+        <entry key="Application">
+          <value>
+            <map>
+              <entry key="EurekaServer" value="STOPPED" />
+              <entry key="ProviderApplication" value="FAILED" />
+              <entry key="SpringCloudServerEcommerceApplication" value="STOPPED" />
+              <entry key="order-servcie" value="STOPPED" />
+              <entry key="product-service" value="STOPPED" />
+              <entry key="user-service" value="STOPPED" />
+            </map>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="RunManager" selected="Application.product-service">
+    <configuration name="EurekaServer" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="com.EurekaServer.EurekaServer.EurekaServerApplication" />
+      <module name="EurekaServer" />
+      <extension name="net.ashald.envfile">
+        <option name="IS_ENABLED" value="false" />
+        <option name="IS_SUBST" value="false" />
+        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+        <option name="IS_IGNORE_MISSING_FILES" value="false" />
+        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+        <ENTRIES>
+          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
+        </ENTRIES>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ProviderApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.provider.provider.ProviderApplication" />
+      <module name="provider" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.provider.provider.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SpringCloudServerEcommerceApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.SpringCloudServerEcommerce.SpringCloudServerEcommerce.SpringCloudServerEcommerceApplication" />
+      <module name="SpringCloudServerEcommerce" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.SpringCloudServerEcommerce.SpringCloudServerEcommerce.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="order-servcie" type="Application" factoryName="Application" temporary="true">
+      <option name="envFilePaths">
+        <option value="$PROJECT_DIR$/order-model/.env" />
+      </option>
+      <option name="MAIN_CLASS_NAME" value="com.app_ecom.EcomApplication" />
+      <module name="ecom-application (1)" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.app_ecom.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <extension name="net.ashald.envfile">
+        <option name="IS_ENABLED" value="false" />
+        <option name="IS_SUBST" value="false" />
+        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+        <option name="IS_IGNORE_MISSING_FILES" value="false" />
+        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+        <ENTRIES>
+          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
+        </ENTRIES>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="product-service" type="Application" factoryName="Application" temporary="true">
+      <option name="MAIN_CLASS_NAME" value="com.app_ecom.EcomApplication" />
+      <module name="ecom-application (2)" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.app_ecom.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <extension name="net.ashald.envfile">
+        <option name="IS_ENABLED" value="false" />
+        <option name="IS_SUBST" value="false" />
+        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+        <option name="IS_IGNORE_MISSING_FILES" value="false" />
+        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+        <ENTRIES>
+          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
+        </ENTRIES>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="user-service" type="Application" factoryName="Application" temporary="true">
+      <option name="envFilePaths">
+        <option value="$PROJECT_DIR$/user-model/.env" />
+      </option>
+      <option name="MAIN_CLASS_NAME" value="com.app_ecom.EcomApplication" />
+      <module name="ecom-application (3)" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.app_ecom.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <extension name="net.ashald.envfile">
+        <option name="IS_ENABLED" value="false" />
+        <option name="IS_SUBST" value="false" />
+        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+        <option name="IS_IGNORE_MISSING_FILES" value="false" />
+        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+        <ENTRIES>
+          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
+        </ENTRIES>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.EurekaServer" />
+      <item itemvalue="Application.order-servcie" />
+      <item itemvalue="Application.product-service" />
+      <item itemvalue="Application.ProviderApplication" />
+      <item itemvalue="Application.SpringCloudServerEcommerceApplication" />
+      <item itemvalue="Application.user-service" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.order-servcie" />
+        <item itemvalue="Application.product-service" />
+        <item itemvalue="Application.user-service" />
+        <item itemvalue="Application.SpringCloudServerEcommerceApplication" />
+        <item itemvalue="Application.ProviderApplication" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="11bb4f24-49a4-40fa-a822-fb039513c5c3" name="Changes" comment="" />
+      <created>1765368700701</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1765368700701</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <default-breakpoints>
+        <breakpoint enabled="true" type="java-exception" />
+      </default-breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

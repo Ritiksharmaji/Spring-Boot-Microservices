@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="consumer" target="17" />
+      <module name="ecom-application (1)" target="21" />
+      <module name="ecom-application (2)" target="21" />
+      <module name="ecom-application (3)" target="21" />
+      <module name="eurekaEcommerce" target="21" />
+      <module name="EurekaServer" target="21" />
+      <module name="provider" target="21" />
+      <module name="SpringCloudServerEcommerce" target="21" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

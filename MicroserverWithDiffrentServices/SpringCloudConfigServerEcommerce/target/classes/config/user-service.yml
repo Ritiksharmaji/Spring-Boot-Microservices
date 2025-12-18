@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: user-service
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI}
+      database: ${SPRING_DATA_MONGODB_DATABASE}
+      # For Atlas connection, uncomment below and comment the local URI
+      # uri: mongodb+srv://ritik:ritik@cluster0.78zdwsn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    shutdown:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+
+info:
+  app:
+    name: E-Commerce-App-userModel
+    description: Spring Boot Actuator Info Example
+    version: 1.0.0
+  developer:
+    name: Ritik Sharma
+    email: ritik@example.com
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
+logging:
+  level:
+    root: INFO
+    com.app_ecom.user: TRACE
+  file:
+    name: logs/${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      max-file-size: 5MB
+      max-history: 7

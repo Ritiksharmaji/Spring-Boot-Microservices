@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: SpringConfigDemo   # must match the file name in Git repo (SpringConfigDemo.yml)
+  config:
+    import: "optional:configserver:http://localhost:8888"
+server:
+  port: 8080
+
+
