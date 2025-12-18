@@ -1,4 +1,4 @@
-# ---i am asking give me all the potics stpe by stpes for microservice---
+# ---i am asking give me all the topics stpe by stpes for microservice---
 Nice — here’s a complete, structured, **step-by-step learning roadmap for Microservices** from absolute beginner → intermediate → advanced, with topics, subtopics, practical exercises, tools, project ideas and checkpoints. Treat it like a curriculum you can follow weekly or pick items from as needed.
 
 # Beginner — fundamentals (foundation)
