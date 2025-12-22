@@ -1849,3 +1849,309 @@ If you want next:
 * 🧪 **Production interview questions**
 
 Just tell me 👍
+
+## ---------- still now we have done -------
+Below is a **clean, well-structured `.md` (Markdown) document** exactly as you asked — covering **configuration management in Spring Boot step-by-step**, from **default values** up to **Docker environment files**.
+
+You can **copy-paste this directly into a `.md` file** (for example:
+`SpringBoot-Configuration-Management.md`).
+
+---
+
+# Spring Boot Configuration Management (0 → Production)
+
+This document explains **how configuration works in Spring Boot**, step-by-step, from **hardcoded defaults** to **Docker environment-based configuration**.
+
+---
+
+## 1️⃣ Default Values in Code (Hardcoded Configuration)
+
+### What is it?
+
+Configuration values are **directly written inside Java code**.
+
+### Example
+
+```java
+@RestController
+public class DemoController {
+
+    private String appName = "Order-Service";
+
+    @GetMapping("/app-name")
+    public String getAppName() {
+        return appName;
+    }
+}
+```
+
+### Using `@Value` with Default
+
+```java
+@Value("${server.port:8080}")
+private int serverPort;
+```
+
+### Pros
+
+* Very simple
+* No external setup needed
+
+### Cons ❌
+
+* Not flexible
+* Code change required for config change
+* Not suitable for production
+
+---
+
+## 2️⃣ application.properties / application.yml
+
+### What is it?
+
+Spring Boot’s **primary configuration file**.
+
+### application.properties
+
+```properties
+server.port=8081
+spring.application.name=order-service
+```
+
+### application.yml
+
+```yaml
+server:
+  port: 8081
+
+spring:
+  application:
+    name: order-service
+```
+
+### Accessing Values
+
+```java
+@Value("${spring.application.name}")
+private String appName;
+```
+
+or (Recommended)
+
+```java
+@ConfigurationProperties(prefix = "spring.application")
+@Getter @Setter
+public class AppConfig {
+    private String name;
+}
+```
+
+### Pros
+
+* Centralized config
+* Easy to maintain
+* Profile support (`dev`, `prod`)
+
+### Cons ❌
+
+* Not secure for secrets
+* Needs rebuild for container images
+
+---
+
+## 3️⃣ Command Line Configuration
+
+### What is it?
+
+Configuration passed **while starting the application**.
+
+### Example
+
+```bash
+mvn spring-boot:run \
+  -Dspring-boot.run.arguments="--server.port=9090 --spring.application.name=cmd-service"
+```
+
+### Or JAR
+
+```bash
+java -jar app.jar --server.port=9090
+```
+
+### Priority
+
+👉 **Command line overrides application.properties**
+
+### Pros
+
+* No code or file change
+* Perfect for testing & CI/CD
+
+### Cons ❌
+
+* Hard to manage many variables
+* Not readable for large configs
+
+---
+
+## 4️⃣ .env File (Environment Variables)
+
+### What is it?
+
+Configuration loaded from **environment variables**, often via `.env`.
+
+### Example `.env`
+
+```env
+SERVER_PORT=8085
+SPRING_APPLICATION_NAME=env-service
+```
+
+### Access Automatically
+
+Spring Boot automatically maps:
+
+```env
+SERVER_PORT → server.port
+```
+
+### Using in Code
+
+```java
+@Value("${server.port}")
+private int port;
+```
+
+### Load `.env` (Optional)
+
+For local development, tools like:
+
+* IntelliJ
+* Docker
+* OS shell
+
+### Pros
+
+* Secure
+* Externalized
+* Cloud-friendly
+
+### Cons ❌
+
+* OS dependent
+* Not version controlled
+
+# - till now we have to up above -----------------
+
+## 5️⃣ Docker Environment Configuration (Spring Boot)
+
+### What is it?
+
+Configuration passed **via Docker environment variables**.
+
+---
+
+### Dockerfile
+
+```dockerfile
+FROM eclipse-temurin:21-jdk
+COPY target/app.jar app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]
+```
+
+---
+
+### docker run
+
+```bash
+docker run -p 8080:8080 \
+  -e SERVER_PORT=8080 \
+  -e SPRING_APPLICATION_NAME=docker-service \
+  app-image
+```
+
+---
+
+### docker-compose.yml
+
+```yaml
+version: '3.8'
+services:
+  order-service:
+    image: order-service:latest
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      SPRING_APPLICATION_NAME: order-service
+```
+
+---
+
+### application.yml (Optional)
+
+```yaml
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:default-service}
+```
+
+### Pros
+
+* Best for production
+* Works with Kubernetes
+* Secure & scalable
+
+### Cons ❌
+
+* Slight learning curve
+* Requires container knowledge
+
+---
+
+## 🔥 Configuration Priority Order (IMPORTANT)
+
+Spring Boot follows this priority (Highest → Lowest):
+
+1. **Command Line Arguments**
+2. **Environment Variables**
+3. **Docker / OS Variables**
+4. **application-{profile}.properties**
+5. **application.properties**
+6. **Default values in code**
+
+---
+
+## ✅ Best Practices (Industry Standard)
+
+✔ Never hardcode configs
+✔ Use `application.yml` for defaults
+✔ Use **env variables** for secrets
+✔ Use **Docker/K8s env** in production
+✔ Use **Spring Cloud Config** for large systems
+
+---
+
+## 📌 Summary Table
+
+| Method                 | Used In    | Production Ready |
+| ---------------------- | ---------- | ---------------- |
+| Hardcoded              | Learning   | ❌                |
+| application.properties | Dev        | ⚠️               |
+| Command Line           | CI/CD      | ✅                |
+| .env                   | Cloud      | ✅                |
+| Docker Env             | Production | ✅✅               |
+
+---
+
+If you want next, I can give you:
+
+* 🔥 **Spring Cloud Config Server notes**
+* 🔐 **Secret management (Vault, K8s secrets)**
+* 🚀 **Kubernetes config maps**
+* 📊 **Real-world microservice config architecture**
+
+Just tell me 👍

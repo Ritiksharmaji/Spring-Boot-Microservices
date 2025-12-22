@@ -1,3 +1,20 @@
+## 🧠 **5️⃣ How Spring Boot Resolves Configuration (Order)**
+
+| Priority | Source                      | Example Value                   |
+| -------- | --------------------------- | ------------------------------- |
+| **1️⃣**  | Command Line Argument       | `--server.port=7070`            |
+| **2️⃣**  | Docker Environment Variable | `SERVER_PORT=8080`              |
+| **3️⃣**  | .env File Variable          | `SERVER_PORT=9090`              |
+| **4️⃣**  | application.properties      | `server.port=8081`              |
+| **5️⃣**  | Default value in code       | `@Value("${server.port:8080}")` |
+
+> The top one wins if duplicates exist. 
+1) as per we have done by
+   -  default value in code
+   - application.properties
+   -  docmmand line
+   - .env file as well 
+   -  now time for docker enviroment file(Spring boot)
 ## ---------- spring cloud ------
 1) ![img_96.png](img_96.png)
 2) ![img_97.png](img_97.png)

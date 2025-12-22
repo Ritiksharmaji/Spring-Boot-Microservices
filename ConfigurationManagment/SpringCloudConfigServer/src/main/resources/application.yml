@@ -1,10 +1,10 @@
+## ------------- with localfile system --------------
 #server:
 #  port: 8888
 #
 #spring:
 #  application:
 #    name: SpringCloudConfigServer
-## ------------- with localfile system --------------
 #  profiles:
 #    active: native
 #    cloud:
@@ -14,6 +14,11 @@
 #            search-location: classpath:/config
 
 # ------------------ the lelow is related to githube configuration
+#server:
+#  port: 8888
+#spring:
+#  application:
+#    name: SpringCloudConfigServer
 #  cloud:
 #    config:
 #      server:
@@ -21,8 +26,8 @@
 #          uri: https://github.com/Ritiksharmaji/SpringBoot-Cloud-Config-Server
 #          clone-on-start: true
 #          default-label: main
-#          username: ${GIT_USER}
-#          password: ${GIT_PASSWORD}
+##          username: ${GIT_USER}
+##          password: ${GIT_PASSWORD}
 
 # ---------- with database configuration ----------------
 #  profiles:
@@ -114,7 +119,7 @@
 #      exposure:
 #        include: busrefresh, refresh, health, info
 
-##------------ with githube -----------
+##------------ this is for RabbitMQ Example with github -----------
 
 server:
   port: 8888

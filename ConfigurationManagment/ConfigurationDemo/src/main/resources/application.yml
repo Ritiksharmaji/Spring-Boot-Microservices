@@ -20,31 +20,31 @@
 
 ## --------- this is for RabbitMQ Example -----------------
 
-#server:
-#  port: ${SERVER_PORT:8080}   # default fallback
-#
-#spring:
-#  application:
-#    name: SpringConfigDemo
-#  config:
-#    import: "optional:configserver:http://localhost:8888"
-#  profiles:
-#    active: prod
-#
-#  rabbitmq:
-#    host: localhost
-#    port: 5672
-#    username: guest
-#    password: guest
-#
-#management:
-#  endpoints:
-#    web:
-#      exposure:
-#        include: refresh, busrefresh, health, info
-#  endpoint:
-#    health:
-#      show-details: always
+server:
+  port: ${SERVER_PORT:8080}   # default fallback
+
+spring:
+  application:
+    name: SpringConfigDemo
+  config:
+    import: "optional:configserver:http://localhost:8888"
+  profiles:
+    active: prod
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, busrefresh, health, info
+  endpoint:
+    health:
+      show-details: always
 
 ## --------- with database -------
 #server:
@@ -77,24 +77,24 @@
 
 
 # -------- with git ---------------
-server:
-  port: 8080
-
-spring:
-  application:
-    name: SpringConfigDemo
-  config:
-    import: "optional:configserver:http://localhost:8888"
-  profiles:
-    active: prod   # change to dev when testing dev configs
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: refresh, busrefresh, health, info
+#server:
+#  port: 8080
+#
+#spring:
+#  application:
+#    name: SpringConfigDemo
+#  config:
+#    import: "optional:configserver:http://localhost:8888"
+#  profiles:
+#    active: prod   # change to dev when testing dev configs
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: refresh, busrefresh, health, info
