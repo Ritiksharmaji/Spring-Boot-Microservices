@@ -1088,7 +1088,195 @@ Type: production
 | **System property**     | `java -jar app.jar --spring.profiles.active=prod` | When deploying JARs      |
 
 ---
+# ----------- notes by chatGPT on how to setup thorw the command-line --------------
+Got it 👍
+You want **command-line (CLI) based configuration**, not IDE/UI.
 
+Below is a **clean, step-by-step command line way** to configure **Java + Maven** (most common requirement for Spring Boot & Microservices).
+
+---
+
+# 🔧 Command Line Configuration (Java & Maven)
+
+## 1️⃣ Check Current Configuration (CLI)
+
+Open **Command Prompt / PowerShell** and run:
+
+```bash
+java -version
+```
+
+```bash
+mvn -version
+```
+
+✔ If both work → configuration is already correct
+❌ If not → follow steps below
+
+---
+
+## 2️⃣ Configure JAVA_HOME (Command Line Way)
+
+### Step 1: Find Java Path
+
+Usually installed at:
+
+```
+C:\Program Files\Java\jdk-21
+```
+
+### Step 2: Set JAVA_HOME (Temporary – current terminal only)
+
+```bash
+set JAVA_HOME=C:\Program Files\Java\jdk-21
+set PATH=%JAVA_HOME%\bin;%PATH%
+```
+
+Verify:
+
+```bash
+java -version
+```
+
+---
+
+### Step 3: Set JAVA_HOME (Permanent – recommended)
+
+```bash
+setx JAVA_HOME "C:\Program Files\Java\jdk-21"
+```
+
+Then add Java to PATH:
+
+```bash
+setx PATH "%PATH%;%JAVA_HOME%\bin"
+```
+
+➡ Close terminal and reopen
+➡ Verify:
+
+```bash
+java -version
+```
+
+---
+
+## 3️⃣ Configure MAVEN_HOME (Command Line Way)
+
+### Step 1: Maven Location
+
+Example:
+
+```
+C:\Program Files\apache-maven-3.9.11
+```
+
+---
+
+### Step 2: Set MAVEN_HOME
+
+```bash
+setx MAVEN_HOME "C:\Program Files\apache-maven-3.9.11"
+```
+
+Add Maven to PATH:
+
+```bash
+setx PATH "%PATH%;%MAVEN_HOME%\bin"
+```
+
+➡ Restart terminal
+➡ Verify:
+
+```bash
+mvn -version
+```
+
+---
+
+## 4️⃣ Run Spring Boot App from Command Line
+
+Go to project folder:
+
+```bash
+cd D:\Personal\CODE\Java-Code\MicroService\ConfigurationDemo
+```
+
+Run app:
+
+```bash
+mvn spring-boot:run
+```
+
+OR build jar:
+
+```bash
+mvn clean package
+java -jar target/*.jar
+```
+
+---
+
+## 5️⃣ Environment-Specific Configuration (CLI)
+
+### Set Spring Profile via CLI
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+OR
+
+```bash
+java -jar app.jar --spring.profiles.active=prod
+```
+
+---
+
+## 6️⃣ Configuration Using Environment Variables (Microservices Best Practice)
+
+```bash
+set SPRING_PROFILES_ACTIVE=dev
+set SERVER_PORT=8082
+set DB_URL=jdbc:mysql://localhost:3306/appdb
+```
+
+Spring Boot auto-reads them ✔
+
+---
+
+## 7️⃣ Common CLI Commands You Must Know
+
+| Command               | Purpose         |
+| --------------------- | --------------- |
+| `java -version`       | Check Java      |
+| `mvn -version`        | Check Maven     |
+| `mvn clean`           | Clean build     |
+| `mvn install`         | Build & install |
+| `mvn spring-boot:run` | Run app         |
+| `java -jar app.jar`   | Run jar         |
+
+---
+
+## 🔥 What Kind of Configuration Is This?
+
+✅ **Environment Variable Configuration**
+✅ **Command Line Configuration**
+✅ **Externalized Configuration (12-Factor App)**
+✅ **Production-ready Microservices Configuration**
+
+---
+
+If you want next, I can explain:
+
+* ✅ **Spring Boot config priority order**
+* ✅ **application.yml vs env vars**
+* ✅ **Config Server vs CLI config**
+* ✅ **Docker-based config**
+* ✅ **Kubernetes config maps**
+
+Just tell me 👍
+## ----------- practices --------------
 1) ![img_81.png](img_81.png)
 2) 
 Got it 👍 — this error means **Maven is not installed** or **not added to your system PATH** yet.
@@ -1278,7 +1466,7 @@ If it’s missing, your `pom.xml` may not have the `spring-boot-maven-plugin`.
 ![img_86.png](img_86.png)
 ![img_87.png](img_87.png)
 
-## -------- other and easy way -------
+## -------- other and easy way using IDE -------
 1) ![img_88.png](img_88.png)
 2) ![img_89.png](img_89.png)
 3) ![img_90.png](img_90.png)
@@ -1296,6 +1484,8 @@ Would you like me to show how to do the same using a **`.env` file** (for Docker
 1) ![img_93.png](img_93.png)
 2) ![img_94.png](img_94.png)
 3) ![img_95.png](img_95.png)
+
+
 
 ## ------------- configuration-management system: 1) what is it 2) types of it 3) advantage dis-advantage 0 to 100 about it ------
 Below are **complete, exam-ready + interview-ready notes** on **Configuration Management Systems**, written **from 0 → 100 level** and tailored for **Spring Boot / Microservices** learners like you.
