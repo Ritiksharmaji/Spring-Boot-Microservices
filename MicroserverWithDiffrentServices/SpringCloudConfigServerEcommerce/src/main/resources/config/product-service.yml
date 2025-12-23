@@ -1,16 +1,16 @@
-spring:
-  application:
-    name: product-service
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-
-  data:
-    mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI}
-      database: ${SPRING_DATA_MONGODB_DATABASE}
+#spring:
+#  application:
+#    name: product-service
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
+#
+#  data:
+#    mongodb:
+#      uri: ${SPRING_DATA_MONGODB_URI}
+#      database: ${SPRING_DATA_MONGODB_DATABASE}
 #  datasource:
 #    url: jdbc:postgresql://localhost:5432/product?stringtype=unspecified&currentSchema=public&ApplicationName=ecom-application&TimeZone=Asia/Kolkata
 #    username: embarkx
@@ -27,8 +27,60 @@ spring:
 #        jdbc:
 #          time_zone: Asia/Kolkata
 
+#server:
+#  port: 8082
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+#  endpoint:
+#    health:
+#      show-details: always
+#    shutdown:
+#      enabled: true
+#
+#info:
+#  app:
+#    name: E-Commerce-App-productModel
+#    description: Spring Boot Actuator Info Example
+#    version: 1.0.0
+#  developer:
+#    name: Ritik Sharma
+#    email: ritik@example.com
+#app:
+#  message: "Hello-product-auto-refresh"
+
+## ----------------- by practies ----------------
 server:
-  port: 8082
+  port: ${SERVER_PORT:8082}
+
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:product-service}
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ecomdb
+    username: embarkx
+    password: embarkx
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database: postgresql
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: Asia/Kolkata
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 
 management:
   endpoints:
@@ -43,11 +95,12 @@ management:
 
 info:
   app:
-    name: E-Commerce-App-productModel
+    name: E-Commerce-App-OrderModel
     description: Spring Boot Actuator Info Example
-    version: 1.0.0
+    version: 2.2.0
   developer:
     name: Ritik Sharma
     email: ritik@example.com
+
 app:
-  message: "Hello-product-auto-refresh"
+  message: "Hello-product-auto-refresh-testing"
