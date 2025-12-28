@@ -25,4 +25,14 @@ spring:
                 - Path=/api/users/**
 logging:
   level:
-    org.springframework.cloud.gateway: DEBUG
+    root: info
+    org.springframework.cloud.gateway: TRACE
+    org.springframework.cloud.gateway.route.RouteDefinitionLocator: INFO
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  tracing:
+    sampling:
+      probability: 1.0

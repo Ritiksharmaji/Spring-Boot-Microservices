@@ -42,3 +42,32 @@
 ## ---- 216. Recommended Order to Start Microservices ---
 1) so first start the config server then eureka server then all the serives after all the services at the last start the apiGateway services
 
+## ------- 217. Behind the Scenes: How API Gateway Works? ----
+1) ![img_420.png](img_420.png)
+2) then run that apiGatewayt server  clear the console so that when we make a request then we can see the logs 
+3) ![img_421.png](img_421.png) 
+4) we make request for user 
+5) ![img_422.png](img_422.png)
+6) after that see the logs how it works 
+7) ![img_423.png](img_423.png)
+8) we can also use the zipkin the track the logs as well
+```declarative
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  tracing:
+    sampling:
+      probability: 1.0
+```
+8) ![img_425.png](img_425.png)
+9) then again restar the appication and make a request and see the logs in zipkin 
+10) zipkin must be run ( for that we are using the docker).
+11) ![img_426.png](img_426.png)
+12) ![img_427.png](img_427.png)
+13) ![img_428.png](img_428.png)
+14) ![img_429.png](img_429.png)
+15) ![img_430.png](img_430.png)
+16) ![img_431.png](img_431.png)
+17) 
