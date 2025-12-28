@@ -56,36 +56,93 @@
 #    fetch-registry: true
 
 
+#spring:
+#  application:
+#    name: product-service
+#
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
+#
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/ecomdb
+#    username: root
+#    password: root
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    hikari:
+#      connection-timeout: 30000
+#      maximum-pool-size: 10
+#
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+#    database-platform: org.hibernate.dialect.MySQL8Dialect
+#    properties:
+#      hibernate:
+#        format_sql: true
+# ======= other way ==========
+#server:
+#  port: 8082
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+#  endpoint:
+#    health:
+#      show-details: always
+#
+#info:
+#  app:
+#    name: E-Commerce-App-productModel
+#    description: Spring Boot Actuator Info Example
+#    version: 1.0.0
+#
+#app:
+#  message: "Hello-product-auto-refresh"
+#
+#eureka:
+#  client:
+#    serviceUrl:
+#      defaultZone: http://localhost:8761/eureka/
+#    register-with-eureka: true
+#    fetch-registry: true
+
+
+## ----------------- by practies ----------------
+server:
+  port: ${SERVER_PORT:8082}
+
 spring:
   application:
-    name: product-service
+    name: ${SPRING_APPLICATION_NAME:product-service}
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ecomdb
+    username: embarkx
+    password: embarkx
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database: postgresql
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: Asia/Kolkata
 
   rabbitmq:
     host: localhost
     port: 5672
     username: guest
     password: guest
-
-  datasource:
-    url: jdbc:mysql://localhost:3306/ecomdb
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      connection-timeout: 30000
-      maximum-pool-size: 10
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-    properties:
-      hibernate:
-        format_sql: true
-
-server:
-  port: 8082
 
 management:
   endpoints:
@@ -95,15 +152,20 @@ management:
   endpoint:
     health:
       show-details: always
+    shutdown:
+      enabled: true
 
 info:
   app:
-    name: E-Commerce-App-productModel
+    name: E-Commerce-App-OrderModel
     description: Spring Boot Actuator Info Example
-    version: 1.0.0
+    version: 2.2.0
+  developer:
+    name: Ritik Sharma
+    email: ritik@example.com
 
 app:
-  message: "Hello-product-auto-refresh"
+  message: "Hello-product-auto-refresh-testing"
 
 eureka:
   client:

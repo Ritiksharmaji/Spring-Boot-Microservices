@@ -5,6 +5,7 @@
     <file url="file://$PROJECT_DIR$/ConfigurationManagment/ConfigurationDemo/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ConfigurationManagment/SpringCloudConfigServer/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/MicroserverWithDiffrentServices/SpringCloudConfigServerEcommerce/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/MicroserverWithDiffrentServices/eurekaEcommerce/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/MicroserverWithDiffrentServices/order-model/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/MicroserverWithDiffrentServices/product-model/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/MicroserverWithDiffrentServices/user-model/src/main/java" charset="UTF-8" />

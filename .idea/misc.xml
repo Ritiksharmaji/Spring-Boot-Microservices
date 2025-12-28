@@ -14,6 +14,7 @@
         <option value="$PROJECT_DIR$/MicroserverWithDiffrentServices/user-model/pom.xml" />
         <option value="$PROJECT_DIR$/MicroserverWithDiffrentServices/product-model/pom.xml" />
         <option value="$PROJECT_DIR$/MicroserverWithDiffrentServices/order-model/pom.xml" />
+        <option value="$PROJECT_DIR$/MicroserverWithDiffrentServices/eurekaEcommerce/pom.xml" />
       </list>
     </option>
   </component>
