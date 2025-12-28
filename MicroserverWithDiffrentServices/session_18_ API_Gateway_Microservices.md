@@ -70,4 +70,19 @@ management:
 14) ![img_429.png](img_429.png)
 15) ![img_430.png](img_430.png)
 16) ![img_431.png](img_431.png)
-17) 
+
+## ----- 218. Adding Global Filters: Logging & Authentication ---
+1) we can log the data from creating controller we well 
+2) comments the logging info from the application.yml then code in contoller
+3) ![img_432.png](img_432.png)
+4) ![img_433.png](img_433.png)
+5) ![img_434.png](img_434.png)
+
+## ---- 219. Secure API Gateway with JWT Authentication -----
+1) ![img_435.png](img_435.png)
+2) ![img_436.png](img_436.png)
+3) then run the applicaton and make a request without auth
+4) ![img_437.png](img_437.png)
+5) ![img_438.png](img_438.png)
+6) ![img_439.png](img_439.png)
+

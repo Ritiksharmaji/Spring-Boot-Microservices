@@ -28,11 +28,11 @@ logging:
     root: info
     org.springframework.cloud.gateway: TRACE
     org.springframework.cloud.gateway.route.RouteDefinitionLocator: INFO
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-  tracing:
-    sampling:
-      probability: 1.0
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+#  tracing:
+#    sampling:
+#      probability: 1.0
