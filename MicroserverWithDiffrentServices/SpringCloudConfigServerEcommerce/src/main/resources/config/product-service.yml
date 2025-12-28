@@ -1,32 +1,32 @@
 #spring:
 #  application:
 #    name: product-service
-#
 #  rabbitmq:
 #    host: localhost
 #    port: 5672
 #    username: guest
 #    password: guest
 #
+#  data:
+#    mongodb:
+#      uri: ${SPRING_DATA_MONGODB_URI}
+#      database: ${SPRING_DATA_MONGODB_DATABASE}
 #  datasource:
-#    url: jdbc:postgresql://localhost:5432/ecomdb?ApplicationName=ecom-application
+#    url: jdbc:postgresql://localhost:5432/product?stringtype=unspecified&currentSchema=public&ApplicationName=ecom-application&TimeZone=Asia/Kolkata
 #    username: embarkx
 #    password: embarkx
-#    hikari:
-#      connection-timeout: 30000
-#      maximum-pool-size: 10
-#
+
 #  jpa:
 #    hibernate:
-#      ddl-auto: create
+#      ddl-auto: update
 #    show-sql: true
+#    database: postgresql
 #    properties:
 #      hibernate:
 #        dialect: org.hibernate.dialect.PostgreSQLDialect
 #        jdbc:
 #          time_zone: Asia/Kolkata
-#        format_sql: true
-#
+
 #server:
 #  port: 8082
 #
@@ -38,80 +38,19 @@
 #  endpoint:
 #    health:
 #      show-details: always
+#    shutdown:
+#      enabled: true
 #
 #info:
 #  app:
 #    name: E-Commerce-App-productModel
 #    description: Spring Boot Actuator Info Example
 #    version: 1.0.0
-#
+#  developer:
+#    name: Ritik Sharma
+#    email: ritik@example.com
 #app:
 #  message: "Hello-product-auto-refresh"
-#
-#eureka:
-#  client:
-#    serviceUrl:
-#      defaultZone: http://localhost:8761/eureka/
-#    register-with-eureka: true
-#    fetch-registry: true
-
-
-#spring:
-#  application:
-#    name: product-service
-#
-#  rabbitmq:
-#    host: localhost
-#    port: 5672
-#    username: guest
-#    password: guest
-#
-#  datasource:
-#    url: jdbc:mysql://localhost:3306/ecomdb
-#    username: root
-#    password: root
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-#    hikari:
-#      connection-timeout: 30000
-#      maximum-pool-size: 10
-#
-#  jpa:
-#    hibernate:
-#      ddl-auto: update
-#    show-sql: true
-#    database-platform: org.hibernate.dialect.MySQL8Dialect
-#    properties:
-#      hibernate:
-#        format_sql: true
-# ======= other way ==========
-#server:
-#  port: 8082
-#
-#management:
-#  endpoints:
-#    web:
-#      exposure:
-#        include: "*"
-#  endpoint:
-#    health:
-#      show-details: always
-#
-#info:
-#  app:
-#    name: E-Commerce-App-productModel
-#    description: Spring Boot Actuator Info Example
-#    version: 1.0.0
-#
-#app:
-#  message: "Hello-product-auto-refresh"
-#
-#eureka:
-#  client:
-#    serviceUrl:
-#      defaultZone: http://localhost:8761/eureka/
-#    register-with-eureka: true
-#    fetch-registry: true
-
 
 ## ----------------- by practies ----------------
 server:
@@ -125,7 +64,6 @@ spring:
     url: jdbc:postgresql://localhost:5432/ecomdb
     username: embarkx
     password: embarkx
-    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -157,7 +95,7 @@ management:
 
 info:
   app:
-    name: E-Commerce-App-OrderModel
+    name: E-Commerce-App-product
     description: Spring Boot Actuator Info Example
     version: 2.2.0
   developer:
