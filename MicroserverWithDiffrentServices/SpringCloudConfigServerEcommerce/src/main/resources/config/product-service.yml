@@ -126,7 +126,7 @@
 ## ============= for mysql with docker ============
 spring:
   application:
-    name: product-service
+    name: PRODUCT-SERVICE
 
   rabbitmq:
     host: localhost

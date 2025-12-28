@@ -4,15 +4,15 @@ import com.app_ecom.user.dto.UserRequest;
 import com.app_ecom.user.dto.UserResponse;
 import com.app_ecom.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @Slf4j
+@RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
 
@@ -20,49 +20,42 @@ public class UserController {
         this.userService = userService;
     }
 
-  //  private static final Logger logger = LoggerFactory.getLogger(UserController.class);
-
-    @GetMapping("/api/users")
-    public List<UserResponse> getUsers(){
-        return new ResponseEntity<> (userService.fetchAllUsers(), HttpStatus.OK).getBody();
-
+    // ✅ GET ALL USERS
+    @GetMapping
+    public ResponseEntity<List<UserResponse>> getUsers() {
+        return ResponseEntity.ok(userService.fetchAllUsers());
     }
 
-    @PostMapping("/api/users")
-    public ResponseEntity<String>  createUser( @RequestBody UserRequest userRequest){
+    // ✅ CREATE USER
+    @PostMapping
+    public ResponseEntity<String> createUser(@RequestBody UserRequest userRequest) {
         userService.addUser(userRequest);
-        return ResponseEntity.ok("User Added");
+        return ResponseEntity.status(HttpStatus.CREATED).body("User Added");
     }
 
-    @GetMapping("/api/users/{id}")
-    public ResponseEntity<UserResponse> getUser(@PathVariable String id){
-//        logger.info("Request received for user:{}",id );
-//        logger.trace("this is TRACE level - very details logs");
-//        logger.debug("this is DEBUG level - used for developer debugging");
-//        logger.warn("this is WARM level - general System information");
-//        logger.error("this is ERROR level - something failed");
-        // ============= using lombok =======================
-        log.info("Request received for user:{}",id );
-        log.trace("this is TRACE level - very details logs");
-        log.debug("this is DEBUG level - used for developer debugging");
-        log.warn("this is WARM level - general System information");
-        log.error("this is ERROR level - something failed");
+    // ✅ GET USER BY ID
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponse> getUser(@PathVariable String id) {
+
+        log.info("Request received for user: {}", id);
 
         return userService.fetchUser(id)
                 .map(ResponseEntity::ok)
-                .orElseGet(()-> ResponseEntity.notFound().build());
-
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/api/users/{id}")
-    public ResponseEntity<String> UpdateUser(@PathVariable String id, @RequestBody UserRequest updateUserRequest){
+    // ✅ UPDATE USER
+    @PutMapping("/{id}")
+    public ResponseEntity<String> updateUser(
+            @PathVariable String id,
+            @RequestBody UserRequest updateUserRequest) {
+
         boolean updated = userService.updateUser(id, updateUserRequest);
+
         if (updated) {
-            return ResponseEntity.ok("user updated"); // return updated user
+            return ResponseEntity.ok("User updated");
         } else {
-            return ResponseEntity.notFound().build(); // 404 if user not found
+            return ResponseEntity.notFound().build();
         }
-
     }
-
 }
