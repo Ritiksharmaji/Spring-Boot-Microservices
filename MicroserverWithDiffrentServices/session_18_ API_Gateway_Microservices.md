@@ -1019,3 +1019,376 @@ Just tell me 👍
 4) ![img_463.png](img_463.png)
 5) ![img_464.png](img_464.png)
 
+## -------226. Configuring Rewrite Path Filter in yml ---
+
+Perfect 👍
+You already have the **Java RouteLocator** working. Below is the **exact `.yml` equivalent** that will give you the same behavior:
+
+👉 **Client URL**
+
+```
+http://localhost:8080/users
+http://localhost:8080/products
+http://localhost:8080/orders
+http://localhost:8080/cart
+```
+
+👉 **Backend URL**
+
+```
+/api/users/**
+/api/products/**
+/api/orders/**
+/api/cart/**
+```
+
+---
+
+## ✅ `application.yml` (API Gateway)
+
+```yaml
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+
+        # ================= USER SERVICE =================
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/users/**
+          filters:
+            - RewritePath=/users(?<segment>/?.*), /api/users${segment}
+
+        # ================= PRODUCT SERVICE =================
+        - id: product-service
+          uri: lb://PRODUCT-SERVICE
+          predicates:
+            - Path=/products/**
+          filters:
+            - RewritePath=/products(?<segment>/?.*), /api/products${segment}
+
+        # ================= ORDER + CART SERVICE =================
+        - id: order-service
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/orders/**,/cart/**
+          filters:
+            - RewritePath=/orders(?<segment>/?.*), /api/orders${segment}
+            - RewritePath=/cart(?<segment>/?.*), /api/cart${segment}
+
+        # ================= EUREKA UI =================
+        - id: eureka-main
+          uri: http://localhost:8761
+          predicates:
+            - Path=/eureka/main
+          filters:
+            - SetPath=/
+
+        - id: eureka-static
+          uri: http://localhost:8761
+          predicates:
+            - Path=/eureka/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.netflix.eureka: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,routes
+  tracing:
+    sampling:
+      probability: 1.0
+```
+
+---
+
+## 🔍 Why this works (important)
+
+### Example:
+
+**Client calls**
+
+```
+POST http://localhost:8080/products
+```
+
+**Gateway rewrite**
+
+```
+/products        → /api/products
+/products/12     → /api/products/12
+```
+
+Regex explanation:
+
+```
+/products(?<segment>/?.*)
+```
+
+* `/products` → segment = `""`
+* `/products/12` → segment = `/12`
+
+Then:
+
+```
+/api/products${segment}
+```
+
+---
+
+## ✅ How to verify routing
+
+Hit this endpoint:
+
+```
+http://localhost:8080/actuator/gateway/routes
+```
+
+Enable logs (already done):
+
+```
+org.springframework.cloud.gateway: DEBUG
+```
+
+You should see:
+
+```
+Mapped to route product-service
+Rewritten path: /api/products
+```
+
+---
+
+## ⚠️ Common mistakes to avoid
+
+❌ Missing `lb://SERVICE-NAME`
+❌ Backend controller not mapped to `/api/...`
+❌ Regex without `(?<segment>)`
+
+---
+
+If you want, I can also:
+
+* Add **auth filter**
+* Add **rate limiting**
+* Convert this to **Spring Cloud Gateway MVC**
+* Debug a **404 / 503 issue**
+
+Just tell me 👍
+2) ![img_466.png](img_466.png)
+3) ![img_467.png](img_467.png)
+1) ![img_465.png](img_465.png)
+   You’re **very close** 👍
+   Nothing is actually broken. This is a **Spring Cloud Gateway 4.x / Spring Boot 3.x migration warning**.
+
+---
+
+## ✅ What the warning means (simple words)
+
+Spring **renamed configuration keys** internally.
+
+You are using the **old but still supported** key:
+
+```yaml
+spring.cloud.gateway.routes
+```
+
+Spring now **prefers**:
+
+```yaml
+spring.cloud.gateway.server.webflux.routes
+```
+
+So Spring:
+
+* Automatically maps old → new
+* Starts successfully
+* Prints a **warning only**
+
+👉 **Your routing + RewritePath is WORKING correctly**
+The warning is just asking you to update the YAML.
+
+---
+
+## 🎯 Your Requirement (Confirmed Working)
+
+| Client Request | Gateway Forwards To |
+| -------------- | ------------------- |
+| `/users`       | `/api/users`        |
+| `/products`    | `/api/products`     |
+| `/orders`      | `/api/orders`       |
+| `/cart`        | `/api/cart`         |
+
+✔️ Your RewritePath regex is correct
+✔️ Eureka + LoadBalancer is correct
+✔️ Gateway logs prove rewrite is happening
+
+---
+
+## ✅ FIX: Updated YAML (No Warning)
+
+### 🔥 Use this **new-style YAML**
+
+```yaml
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+
+            # ================= USER SERVICE =================
+            - id: user-service
+              uri: lb://USER-SERVICE
+              predicates:
+                - Path=/users/**
+              filters:
+                - RewritePath=/users(?<segment>/?.*), /api/users${segment}
+
+            # ================= PRODUCT SERVICE =================
+            - id: product-service
+              uri: lb://PRODUCT-SERVICE
+              predicates:
+                - Path=/products/**
+              filters:
+                - RewritePath=/products(?<segment>/?.*), /api/products${segment}
+
+            # ================= ORDER + CART SERVICE =================
+            - id: order-service
+              uri: lb://ORDER-SERVICE
+              predicates:
+                - Path=/orders/**,/cart/**
+              filters:
+                - RewritePath=/orders(?<segment>/?.*), /api/orders${segment}
+                - RewritePath=/cart(?<segment>/?.*), /api/cart${segment}
+
+            # ================= EUREKA UI =================
+            - id: eureka-main
+              uri: http://localhost:8761
+              predicates:
+                - Path=/eureka/main
+              filters:
+                - SetPath=/
+
+            - id: eureka-static
+              uri: http://localhost:8761
+              predicates:
+                - Path=/eureka/**
+```
+
+---
+
+## ✅ Eureka Configuration (No Change Needed)
+
+```yaml
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    fetch-registry: true
+    register-with-eureka: true
+
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+```
+
+---
+
+## ✅ Logging (Perfect for Debugging)
+
+```yaml
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.netflix.eureka: DEBUG
+```
+
+---
+
+## 🧪 Test with Postman / Browser
+
+```http
+POST http://localhost:8080/users
+→ USER-SERVICE receives /api/users
+
+GET http://localhost:8080/products/1
+→ PRODUCT-SERVICE receives /api/products/1
+
+GET http://localhost:8080/orders/123
+→ ORDER-SERVICE receives /api/orders/123
+```
+
+---
+
+## 🧠 Final Verdict
+
+✔ Routing is correct
+✔ RewritePath regex is correct
+✔ Eureka + LB works
+✔ Warning fixed by new YAML keys
+
+If you want, next I can:
+
+* Explain **RewritePath regex visually**
+* Add **Auth/JWT filter**
+* Add **Global logging filter**
+* Debug **404 / 503 gateway errors**
+
+Just tell me 👌
+
+1) as it is older one also working so  we are not changing the yml 
+2) ![img_468.png](img_468.png)
+3) ![img_469.png](img_469.png)
+4) now we can change also
+5) ![img_470.png](img_470.png)
+6) ![img_471.png](img_471.png)
+7) ![img_472.png](img_472.png)
+8) ![img_473.png](img_473.png)
+9) now working all good
+10) ![img_474.png](img_474.png)
+11) ![img_475.png](img_475.png)
+
+
+## ------ 227. Removing Rewrite Path Filter: When & Why? ---------
+## --- 228. API Gateway Patterns & Best Practices for Scale----
+1) ![img_476.png](img_476.png)
+2) ![img_477.png](img_477.png)
+3) ![img_478.png](img_478.png)
+4) ![img_479.png](img_479.png)
+5) ![img_480.png](img_480.png)
+6) ![img_481.png](img_481.png)
+7) ![img_482.png](img_482.png)
+8) ![img_483.png](img_483.png)
+9) ![img_484.png](img_484.png)
+10) ![img_485.png](img_485.png)
+11) 
+

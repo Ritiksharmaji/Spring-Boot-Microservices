@@ -67,7 +67,7 @@
 #    loadbalancer:
 #      enabled: true
 
-## --------- using java code ------
+## --------- using java code for  ------
 server:
   port: 8080
 
@@ -99,3 +99,130 @@ management:
   cloud:
     loadbalancer:
       enabled: true
+
+
+## --------- using .yml file for Rewrite path filter in ApiGateWay ------
+#server:
+#  port: 8080
+#
+#spring:
+#  application:
+#    name: api-gateway
+#  cloud:
+#    gateway:
+#      routes:
+#
+#        # ================= USER SERVICE =================
+#        - id: user-service
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/users/**
+#          filters:
+#            - RewritePath=/users(?<segment>/?.*), /api/users${segment}
+#
+#        # ================= PRODUCT SERVICE =================
+#        - id: product-service
+#          uri: lb://PRODUCT-SERVICE
+#          predicates:
+#            - Path=/products/**
+#          filters:
+#            - RewritePath=/products(?<segment>/?.*), /api/products${segment}
+#
+#        # ================= ORDER + CART SERVICE =================
+#        - id: order-service
+#          uri: lb://ORDER-SERVICE
+#          predicates:
+#            - Path=/orders/**,/cart/**
+#          filters:
+#            - RewritePath=/orders(?<segment>/?.*), /api/orders${segment}
+#            - RewritePath=/cart(?<segment>/?.*), /api/cart${segment}
+#
+#        # ================= EUREKA UI =================
+#        - id: eureka-main
+#          uri: http://localhost:8761
+#          predicates:
+#            - Path=/eureka/main
+#          filters:
+#            - SetPath=/
+#
+#        - id: eureka-static
+#          uri: http://localhost:8761
+#          predicates:
+#            - Path=/eureka/**
+
+#server:
+#  port: 8080
+#
+#spring:
+#  application:
+#    name: api-gateway
+#
+#  cloud:
+#    gateway:
+#      server:
+#        webflux:
+#          routes:
+#
+#            # ================= USER SERVICE =================
+#            - id: user-service
+#              uri: lb://USER-SERVICE
+#              predicates:
+#                - Path=/users/**
+#              filters:
+#                - RewritePath=/users(?<segment>/?.*), /api/users${segment}
+#
+#            # ================= PRODUCT SERVICE =================
+#            - id: product-service
+#              uri: lb://PRODUCT-SERVICE
+#              predicates:
+#                - Path=/products/**
+#              filters:
+#                - RewritePath=/products(?<segment>/?.*), /api/products${segment}
+#
+#            # ================= ORDER + CART SERVICE =================
+#            - id: order-service
+#              uri: lb://ORDER-SERVICE
+#              predicates:
+#                - Path=/orders/**,/cart/**
+#              filters:
+#                - RewritePath=/orders(?<segment>/?.*), /api/orders${segment}
+#                - RewritePath=/cart(?<segment>/?.*), /api/cart${segment}
+#
+#            # ================= EUREKA UI =================
+#            - id: eureka-main
+#              uri: http://localhost:8761
+#              predicates:
+#                - Path=/eureka/main
+#              filters:
+#                - SetPath=/
+#
+#            - id: eureka-static
+#              uri: http://localhost:8761
+#              predicates:
+#                - Path=/eureka/**
+#
+#eureka:
+#  client:
+#    service-url:
+#      defaultZone: http://localhost:8761/eureka
+#    fetch-registry: true
+#    register-with-eureka: true
+#  instance:
+#    hostname: localhost
+#    prefer-ip-address: true
+#
+#logging:
+#  level:
+#    root: INFO
+#    org.springframework.cloud.gateway: DEBUG
+#    org.springframework.cloud.netflix.eureka: DEBUG
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: health,info,gateway,routes
+#  tracing:
+#    sampling:
+#      probability: 1.0
+

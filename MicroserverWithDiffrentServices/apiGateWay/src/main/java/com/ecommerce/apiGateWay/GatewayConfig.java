@@ -9,74 +9,27 @@ import org.springframework.context.annotation.Configuration;
 public class GatewayConfig {
 
     // by normal
-//    @Bean
-//    public RouteLocator customRoutes(RouteLocatorBuilder builder) {
-//
-//        return builder.routes()
-//
-//                // USER SERVICE (Direct URL)
-//                .route("user-service", r -> r
-//                        .path("/api/users/**")
-//                        .uri("lb://USER-SERVICE"))
-//
-//                // PRODUCT SERVICE (Load Balanced via Eureka)
-//                .route("product-service", r -> r
-//                        .path("/api/products/**")
-//                        .uri("lb://PRODUCT-SERVICE"))
-//
-//                // ORDER + CART SERVICE
-//                .route("order-service", r -> r
-//                        .path("/api/orders/**", "/api/cart/**")
-//                        .uri("lb://ORDER-SERVICE"))
-//
-//                // EUREKA UI MAIN PAGE
-//                .route("eureka-server", r -> r
-//                        .path("/eureka/main")
-//                        .filters(f -> f.setPath("/"))
-//                        .uri("http://localhost:8761"))
-//
-//                // EUREKA STATIC CONTENT
-//                .route("eureka-server-static", r -> r
-//                        .path("/eureka/**")
-//                        .uri("http://localhost:8761"))
-//
-//                .build();
-//    }
-
-    // --------------- by Rewrite filter --------
     @Bean
     public RouteLocator customRoutes(RouteLocatorBuilder builder) {
 
         return builder.routes()
 
-                // USER SERVICE
+                // USER SERVICE (Direct URL)
                 .route("user-service", r -> r
-                        .path("/users/**")
-                        .filters(f -> f
-                                .rewritePath("/users(?<segment>/?.*)", "/api/users${segment}")
-                        )
-                        .uri("lb://USER-SERVICE")
-                )
+                        .path("/api/users/**")
+                        .uri("lb://USER-SERVICE"))
 
-
-                // PRODUCT SERVICE ✅ FIXED
+                // PRODUCT SERVICE (Load Balanced via Eureka)
                 .route("product-service", r -> r
-                        .path("/products/**")
-                        .filters(f -> f
-                                .rewritePath("/products(?<segment>/?.*)", "/api/products${segment}")
-                        )
+                        .path("/api/products/**")
                         .uri("lb://PRODUCT-SERVICE"))
 
                 // ORDER + CART SERVICE
                 .route("order-service", r -> r
-                        .path("/orders/**", "/cart/**")
-                        .filters(f -> f
-                                .rewritePath("/orders/(?<segment>.*)", "/api/orders/${segment}")
-                                .rewritePath("/cart/(?<segment>.*)", "/api/cart/${segment}")
-                        )
+                        .path("/api/orders/**", "/api/cart/**")
                         .uri("lb://ORDER-SERVICE"))
 
-                // EUREKA MAIN PAGE
+                // EUREKA UI MAIN PAGE
                 .route("eureka-server", r -> r
                         .path("/eureka/main")
                         .filters(f -> f.setPath("/"))
@@ -89,5 +42,52 @@ public class GatewayConfig {
 
                 .build();
     }
+
+    // --------------- by Rewrite filter --------
+//    @Bean
+//    public RouteLocator customRoutes(RouteLocatorBuilder builder) {
+//
+//        return builder.routes()
+//
+//                // USER SERVICE
+//                .route("user-service", r -> r
+//                        .path("/users/**")
+//                        .filters(f -> f
+//                                .rewritePath("/users(?<segment>/?.*)", "/api/users${segment}")
+//                        )
+//                        .uri("lb://USER-SERVICE")
+//                )
+//
+//
+//                // PRODUCT SERVICE ✅ FIXED
+//                .route("product-service", r -> r
+//                        .path("/products/**")
+//                        .filters(f -> f
+//                                .rewritePath("/products(?<segment>/?.*)", "/api/products${segment}")
+//                        )
+//                        .uri("lb://PRODUCT-SERVICE"))
+//
+//                // ORDER + CART SERVICE
+//                .route("order-service", r -> r
+//                        .path("/orders/**", "/cart/**")
+//                        .filters(f -> f
+//                                .rewritePath("/orders/(?<segment>.*)", "/api/orders/${segment}")
+//                                .rewritePath("/cart/(?<segment>.*)", "/api/cart/${segment}")
+//                        )
+//                        .uri("lb://ORDER-SERVICE"))
+//
+//                // EUREKA MAIN PAGE
+//                .route("eureka-server", r -> r
+//                        .path("/eureka/main")
+//                        .filters(f -> f.setPath("/"))
+//                        .uri("http://localhost:8761"))
+//
+//                // EUREKA STATIC CONTENT
+//                .route("eureka-server-static", r -> r
+//                        .path("/eureka/**")
+//                        .uri("http://localhost:8761"))
+//
+//                .build();
+//    }
 
 }
