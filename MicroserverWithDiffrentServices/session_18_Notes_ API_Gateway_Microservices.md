@@ -1691,3 +1691,248 @@ If you want next:
 * 📈 **Distributed tracing with Zipkin**
 
 Just say the word 🔥
+
+## ---- Eureka Discovery Server via API Gateway notes ------
+Below are **clean, exam + interview-ready notes** for **Eureka Discovery Server via API Gateway**, aligned with **Spring Boot 3.5.x + Spring Cloud 2025.x** (your current stack).
+
+---
+
+# 🌐 Eureka Discovery Server via API Gateway — Notes
+
+## 1️⃣ What is Eureka?
+
+**Eureka** is a **Service Discovery Server** used in Microservices to:
+
+* Register services dynamically
+* Discover services by **service name** instead of hard-coded URLs
+* Enable **load balancing** and **fault tolerance**
+
+### Key Components
+
+| Component     | Role                                                 |
+| ------------- | ---------------------------------------------------- |
+| Eureka Server | Registry for services                                |
+| Eureka Client | Microservice that registers itself                   |
+| API Gateway   | Entry point, routes requests using service discovery |
+
+---
+
+## 2️⃣ Why Access Eureka via API Gateway?
+
+### Benefits
+
+✔ Single entry point
+✔ No direct exposure of Eureka server
+✔ Centralized routing
+✔ Better security control
+
+---
+
+## 3️⃣ Architecture Flow
+
+```
+Client
+  ↓
+API Gateway (8080)
+  ↓
+Eureka Server (8761)
+  ↓
+Microservices
+```
+
+---
+
+## 4️⃣ Eureka Server Setup
+
+### Dependency
+
+```xml
+<dependency>
+  <groupId>org.springframework.cloud</groupId>
+  <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+</dependency>
+```
+
+### Enable Server
+
+```java
+@EnableEurekaServer
+@SpringBootApplication
+public class EurekaServerApplication {
+  public static void main(String[] args) {
+    SpringApplication.run(EurekaServerApplication.class, args);
+  }
+}
+```
+
+### `application.yml`
+
+```yaml
+server:
+  port: 8761
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+```
+
+---
+
+## 5️⃣ API Gateway Setup (Spring Cloud Gateway)
+
+### Dependency
+
+```xml
+<dependency>
+  <groupId>org.springframework.cloud</groupId>
+  <artifactId>spring-cloud-starter-gateway</artifactId>
+</dependency>
+```
+
+---
+
+## 6️⃣ Route Eureka via API Gateway
+
+### ✅ Correct Route Configuration
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: eureka-server
+          uri: http://localhost:8761
+          predicates:
+            - Path=/eureka/main
+          filters:
+            - SetPath=/
+```
+
+### 🔍 How It Works
+
+| Request                 | Action             |
+| ----------------------- | ------------------ |
+| `/eureka/main`          | Gateway receives   |
+| `SetPath=/`             | Rewrites path      |
+| `http://localhost:8761` | Forwards to Eureka |
+
+➡ Access Eureka UI at:
+
+```
+http://localhost:8080/eureka/main
+```
+
+---
+
+## 7️⃣ Service Registration with Eureka
+
+### Microservice Dependency
+
+```xml
+<dependency>
+  <groupId>org.springframework.cloud</groupId>
+  <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+</dependency>
+```
+
+### Microservice `application.yml`
+
+```yaml
+spring:
+  application:
+    name: USER-SERVICE
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+```
+
+---
+
+## 8️⃣ Load Balancing via Eureka + Gateway
+
+### Use `lb://SERVICE-NAME`
+
+```yaml
+- id: user-service
+  uri: lb://USER-SERVICE
+  predicates:
+    - Path=/api/users/**
+```
+
+### Why?
+
+✔ No hard-coded URLs
+✔ Automatic load balancing
+✔ Supports multiple instances
+
+---
+
+## 9️⃣ Common Mistakes ❌
+
+| Mistake                        | Fix                 |
+| ------------------------------ | ------------------- |
+| Using `url:` instead of `uri:` | Always use `uri`    |
+| Using `server.webflux`         | ❌ Removed in 2025.x |
+| Hardcoding ports               | Use `lb://`         |
+| Exposing Eureka directly       | Route via Gateway   |
+
+---
+
+## 🔟 Security Considerations
+
+✔ Hide Eureka from public access
+✔ Allow only Gateway traffic
+✔ Add authentication filter if needed
+
+---
+
+## 1️⃣1️⃣ Interview Questions & Answers
+
+### Q1. Why route Eureka through Gateway?
+
+**Answer:**
+To avoid exposing the Eureka server directly and maintain a single entry point.
+
+---
+
+### Q2. Can Eureka be load-balanced?
+
+**Answer:**
+Yes, using `lb://` when multiple Eureka servers are deployed.
+
+---
+
+### Q3. What happens if Eureka is down?
+
+**Answer:**
+Gateway continues routing using cached service instances until TTL expires.
+
+---
+
+### Q4. Difference between `uri` and `url`?
+
+**Answer:**
+Gateway supports only `uri`. `url` causes configuration binding failure.
+
+---
+
+## 1️⃣2️⃣ Summary
+
+✔ Eureka handles **service discovery**
+✔ Gateway handles **routing + security**
+✔ `lb://` enables dynamic discovery
+✔ Eureka UI can be safely exposed via Gateway
+
+---
+
+If you want, next I can give:
+
+* 🔐 **Secure Eureka via Gateway**
+* ⚡ **Gateway Filters (Auth, Rate Limiting)**
+* 🔁 **Eureka HA (Cluster setup)**
+* 📘 **PDF Notes for revision**
+
+Just say the word 👍

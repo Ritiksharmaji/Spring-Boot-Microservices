@@ -450,4 +450,12 @@ Just tell me 👍
 
 ## --- now we will create two instacce of user-service and test it --
 1) ![img_440.png](img_440.png)
-2) 
+
+## ----------- 221. Eureka Discovery Server via API Gateway --
+1) as of now to access the eureka server we need to call on http:localhost:8761 then we can access the eureka server but by configuing the routing into API gateway we can also access it on the port of apigateway
+2) ![img_441.png](img_441.png)
+3) ![img_442.png](img_442.png)
+4) as we can see the configuration working fine but static data configuration not working so for taht
+5) ![img_443.png](img_443.png)
+6) ![img_444.png](img_444.png)
+7) 
