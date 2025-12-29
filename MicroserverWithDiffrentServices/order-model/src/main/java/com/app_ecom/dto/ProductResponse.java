@@ -16,4 +16,6 @@ public class ProductResponse {
     private Boolean active;
 
 
+//    public ProductResponse(Long productId, String productServiceDown, int i) {
+//    }
 }

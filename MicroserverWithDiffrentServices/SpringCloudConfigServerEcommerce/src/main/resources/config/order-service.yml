@@ -175,6 +175,9 @@ management:
   endpoint:
     health:
       show-details: always
+  health:
+    circuitbreakers:
+      enable: true
     shutdown:
       enabled: true
   tracing:
@@ -198,6 +201,8 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
+  instance:
+    prefer-ip-address: true
 
 logging:
   level:
@@ -209,3 +214,22 @@ logging:
     rollingpolicy:
       max-file-size: 5MB
       max-history: 7
+
+# configuration of cuickit bracker
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        registerHealthIndicator: true
+
+    instances:
+      productService:
+        baseConfig: default
+
