@@ -9,39 +9,43 @@ import org.springframework.context.annotation.Configuration;
 public class GatewayConfig {
 
     // by normal
-    @Bean
-    public RouteLocator customRoutes(RouteLocatorBuilder builder) {
-
-        return builder.routes()
-
-                // USER SERVICE (Direct URL)
-                .route("user-service", r -> r
-                        .path("/api/users/**")
-                        .uri("lb://USER-SERVICE"))
-
-                // PRODUCT SERVICE (Load Balanced via Eureka)
-                .route("product-service", r -> r
-                        .path("/api/products/**")
-                        .uri("lb://PRODUCT-SERVICE"))
-
-                // ORDER + CART SERVICE
-                .route("order-service", r -> r
-                        .path("/api/orders/**", "/api/cart/**")
-                        .uri("lb://ORDER-SERVICE"))
-
-                // EUREKA UI MAIN PAGE
-                .route("eureka-server", r -> r
-                        .path("/eureka/main")
-                        .filters(f -> f.setPath("/"))
-                        .uri("http://localhost:8761"))
-
-                // EUREKA STATIC CONTENT
-                .route("eureka-server-static", r -> r
-                        .path("/eureka/**")
-                        .uri("http://localhost:8761"))
-
-                .build();
-    }
+//    @Bean
+//    public RouteLocator customRoutes(RouteLocatorBuilder builder) {
+//
+//        return builder.routes()
+//
+//                // USER SERVICE (Direct URL)
+//                .route("user-service", r -> r
+//                        .path("/api/users/**")
+//                        .uri("lb://USER-SERVICE"))
+//
+//                // PRODUCT SERVICE (Load Balanced via Eureka)
+//                .route("product-service", r -> r
+//                        .path("/api/products/**")
+//                        .filters(f -> f.circuitBreaker(config -> config
+//                                .setName("ecomBreaker")
+//                                .setFallbackUri("forward:/fallback/products")
+//                        ))
+//                        .uri("lb://PRODUCT-SERVICE"))
+//
+//                // ORDER + CART SERVICE
+//                .route("order-service", r -> r
+//                        .path("/api/orders/**", "/api/cart/**")
+//                        .uri("lb://ORDER-SERVICE"))
+//
+//                // EUREKA UI MAIN PAGE
+//                .route("eureka-server", r -> r
+//                        .path("/eureka/main")
+//                        .filters(f -> f.setPath("/"))
+//                        .uri("http://localhost:8761"))
+//
+//                // EUREKA STATIC CONTENT
+//                .route("eureka-server-static", r -> r
+//                        .path("/eureka/**")
+//                        .uri("http://localhost:8761"))
+//
+//                .build();
+//    }
 
     // --------------- by Rewrite filter --------
 //    @Bean
@@ -89,5 +93,62 @@ public class GatewayConfig {
 //
 //                .build();
 //    }
+
+    // ========= by  circulte breacker ====
+
+    @Bean
+    public RouteLocator customRoutes(RouteLocatorBuilder builder) {
+
+        return builder.routes()
+
+                // USER SERVICE
+                .route("user-service", r -> r
+                        .path("/api/users/**")
+                        .filters(f -> f.circuitBreaker(config -> config
+                                .setName("userBreaker")
+                                .setFallbackUri("forward:/fallback/users")
+                        ))
+                        .uri("lb://USER-SERVICE"))
+
+                // PRODUCT SERVICE
+                .route("product-service", r -> r
+                        .path("/api/products/**")
+                        .filters(f -> f.circuitBreaker(config -> config
+                                .setName("productBreaker")
+                                .setFallbackUri("forward:/fallback/products")
+                        ))
+                        .uri("lb://PRODUCT-SERVICE"))
+
+                // ORDER SERVICE
+                .route("order-service", r -> r
+                        .path("/api/orders/**")
+                        .filters(f -> f.circuitBreaker(config -> config
+                                .setName("orderBreaker")
+                                .setFallbackUri("forward:/fallback/orders")
+                        ))
+                        .uri("lb://ORDER-SERVICE"))
+
+                // CART SERVICE
+                .route("cart-service", r -> r
+                        .path("/api/cart/**")
+                        .filters(f -> f.circuitBreaker(config -> config
+                                .setName("cartBreaker")
+                                .setFallbackUri("forward:/fallback/cart")
+                        ))
+                        .uri("lb://ORDER-SERVICE"))
+
+                // EUREKA MAIN PAGE
+                .route("eureka-server", r -> r
+                        .path("/eureka/main")
+                        .filters(f -> f.setPath("/"))
+                        .uri("http://localhost:8761"))
+
+                // EUREKA STATIC CONTENT
+                .route("eureka-server-static", r -> r
+                        .path("/eureka/**")
+                        .uri("http://localhost:8761"))
+
+                .build();
+    }
 
 }

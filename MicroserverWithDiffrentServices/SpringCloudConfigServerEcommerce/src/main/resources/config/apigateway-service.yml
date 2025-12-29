@@ -92,7 +92,16 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway,routes
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enable: true
+    shutdown:
+      enabled: true
+
   tracing:
     sampling:
       probability: 1.0
@@ -226,3 +235,47 @@ management:
 #    sampling:
 #      probability: 1.0
 
+
+## ----------
+# configuration of cuickit bracker
+#resilience4j:
+#  circuitbreaker:
+#    configs:
+#      default:
+#        slidingWindowType: COUNT_BASED
+#        slidingWindowSize: 10
+#        minimumNumberOfCalls: 5
+#        failureRateThreshold: 50
+#        waitDurationInOpenState: 10s
+#        permittedNumberOfCallsInHalfOpenState: 3
+#        automaticTransitionFromOpenToHalfOpenEnabled: true
+#        registerHealthIndicator: true
+#
+#    instances:
+#      ecomBreaker:
+#        baseConfig: default
+#
+
+# =========== other  by  circuitbreaker-for-fault-tolerance  for different services ========
+resilience4j:
+  circuitbreaker:
+    instances:
+      productBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+
+      userBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+
+      orderBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+
+      cartBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
