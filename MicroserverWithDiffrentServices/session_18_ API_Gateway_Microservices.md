@@ -458,4 +458,16 @@ Just tell me 👍
 4) as we can see the configuration working fine but static data configuration not working so for taht
 5) ![img_443.png](img_443.png)
 6) ![img_444.png](img_444.png)
-7) 
+
+## --- 222. Moving API Gateway Configurations to Config Server --
+1) so now wea re going to make all the configuration details of apigGateWay to configServer applicaition.yml file
+2) so add the config client dependecy to apiGateway 
+```declarative
+<dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-config</artifactId>
+    </dependency>
+```
+3) ![img_445.png](img_445.png)
+4) ![img_446.png](img_446.png)
+
