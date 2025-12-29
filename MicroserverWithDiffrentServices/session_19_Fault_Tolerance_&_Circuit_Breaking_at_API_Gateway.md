@@ -594,3 +594,104 @@ now impletement same for other as well
 17) ![img_577.png](img_577.png)
 18) ![img_578.png](img_578.png)
 
+## ------ 239. What is Retry Pattern -------
+1) ![img_579.png](img_579.png)
+2) ![img_580.png](img_580.png)
+3) ![img_581.png](img_581.png)
+4) ![img_582.png](img_582.png)
+
+## ----- 240. Implementing Retries Using Resilience4j --
+1) 1) ![img_583.png](img_583.png)
+2) ![img_584.png](img_584.png)
+3) so when we make the request on cart then it will call that request and if product service is down then it will call upto 5 time by 5milisecond then even if not running then fallback method will run
+4) ![img_585.png](img_585.png)
+5) ![img_586.png](img_586.png)
+6) ![img_587.png](img_587.png)
+
+## ------- 241. Retry Advanced Configurations ---
+1) https://resilience4j.readme.io/docs/retry
+2) ![img_588.png](img_588.png)
+3) ![img_589.png](img_589.png)
+
+Here is the **exact `application.yml` (Resilience4j Retry with exponential backoff)** matching the image 👇
+You can **copy-paste directly**.
+
+```yaml
+resilience4j:
+  retry:
+    instances:
+      exampleRetry:
+        maxAttempts: 3
+        waitDuration: 500ms
+
+        intervalFunction:
+          type: exponential
+          initialInterval: 500ms
+          multiplier: 1.5
+          maxInterval: 5s
+
+        retryExceptions:
+          - java.io.IOException
+          - java.sql.SQLException
+
+        ignoreExceptions:
+          - com.example.exception.NonRetriableException
+
+        failAfterMaxAttempts: false
+```
+
+---
+
+## 🔍 What this configuration does (quick understanding)
+
+* **maxAttempts: 3** → total tries = 1 initial + 2 retries
+* **initialInterval: 500ms** → first retry after 500ms
+* **multiplier: 1.5** → exponential backoff
+
+    * 500ms → 750ms → 1125ms
+* **maxInterval: 5s** → retry delay won’t exceed 5 seconds
+* **retryExceptions** → retry ONLY for these exceptions
+* **ignoreExceptions** → NEVER retry these
+* **failAfterMaxAttempts: false** → returns last exception instead of failing immediately
+
+---
+
+## ✅ How to use this Retry in code
+
+```java
+@Retry(name = "exampleRetry")
+public String callExternalService() {
+    return restTemplate.getForObject("http://external-service/api", String.class);
+}
+```
+
+---
+
+## 🧠 Interview-ready one-liner
+
+> **Resilience4j Retry supports exponential backoff, allowing retries with increasing delays to reduce system load during transient failures.**
+
+---
+
+If you want next:
+
+* Retry + CircuitBreaker together
+* Retry only for specific HTTP status codes
+* Retry with fallback method
+* Gateway Retry vs Service Retry comparison
+
+Just say 👍
+
+## ------ 242. Retry Pattern Using Spring Cloud Gateway Filter ---
+1) first run all the services
+2) ![img_590.png](img_590.png)
+3) creating a simulater
+4) ![img_591.png](img_591.png)
+5) ![img_592.png](img_592.png)
+6) ![img_593.png](img_593.png)
+7) ![img_594.png](img_594.png)
+8) now all the services are running but give giving the value as true we are making it down 
+9) ![img_595.png](img_595.png)
+10) ![img_596.png](img_596.png)
+11) be remember it is used when service throw the error not when service is down
+12) 

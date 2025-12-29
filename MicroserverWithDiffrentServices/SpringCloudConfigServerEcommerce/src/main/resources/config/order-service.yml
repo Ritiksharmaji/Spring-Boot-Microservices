@@ -218,8 +218,8 @@ logging:
 # configuration of cuickit bracker
 resilience4j:
   circuitbreaker:
-    configs:
-      default:
+    instances:
+      productService:
         slidingWindowType: COUNT_BASED
         slidingWindowSize: 10
         minimumNumberOfCalls: 5
@@ -228,8 +228,12 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         automaticTransitionFromOpenToHalfOpenEnabled: true
         registerHealthIndicator: true
-
+  retry:
     instances:
-      productService:
-        baseConfig: default
+      retryBreaker:
+        maxAttempts: 5
+        waitDuration: 500ms
+
+
+
 

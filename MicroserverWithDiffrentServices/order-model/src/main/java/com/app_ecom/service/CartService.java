@@ -8,6 +8,7 @@ import com.app_ecom.dto.UserResponse;
 import com.app_ecom.model.CartItem;
 import com.app_ecom.repository.CartItemRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,9 +23,12 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductServiceClient productServiceClient;
     private final UserServiceClient userServiceClient;
+    int attempt = 0;
 
-    @CircuitBreaker(name = "productService", fallbackMethod = "productFallback")
+//    @CircuitBreaker(name = "productService", fallbackMethod = "productFallback")
+    @Retry(name = "retryBreaker", fallbackMethod = "productFallback")
     public boolean addToCart(String userId, CartItemRequest request) {
+        System.out.println(" count of attempt is:"+ ++attempt);
 
         // ============================= using loadbalancing ========================
         // first find either product is Exit or not   throw the microservcie
