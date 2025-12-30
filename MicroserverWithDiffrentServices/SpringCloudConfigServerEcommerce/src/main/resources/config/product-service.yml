@@ -124,10 +124,81 @@
 #      max-history: 7
 
 ## ============= for mysql with docker ============
+#spring:
+#  application:
+#    name: PRODUCT-SERVICE
+#
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
+#
+#  datasource:
+#    url: jdbc:mysql://localhost:3308/ecomdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+#    username: embarkx
+#    password: embarkx
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+#    database: mysql
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.MySQL8Dialect
+#        format_sql: true
+#
+#server:
+#  port: 8082
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+#  endpoint:
+#    health:
+#      show-details: always
+#  tracing:
+#    sampling:
+#      probability: 1.0
+#info:
+#  app:
+#    name: E-Commerce-App-productModel
+#    description: Spring Boot Actuator Info Example
+#    version: 1.0.0
+#
+#app:
+#  message: "Hello-product-auto-refresh"
+#
+#eureka:
+#  client:
+#    serviceUrl:
+#      defaultZone: http://localhost:8761/eureka/
+#    register-with-eureka: true
+#    fetch-registry: true
+#  instance:
+#    prefer-ip-address: true
+#
+#logging:
+#  level:
+#    root: INFO
+#    com.app_ecom.user: TRACE
+#  file:
+#    name: logs/${spring.application.name}.log
+#  logback:
+#    rollingpolicy:
+#      max-file-size: 5MB
+#      max-history: 7
+
+## ----- working with postgresQL with docker -----
 spring:
   application:
     name: PRODUCT-SERVICE
-
+  jackson:
+    time-zone: Asia/Kolkata
   rabbitmq:
     host: localhost
     port: 5672
@@ -135,20 +206,22 @@ spring:
     password: guest
 
   datasource:
-    url: jdbc:mysql://localhost:3308/ecomdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+#    url: jdbc:postgresql://postgres:5432/ecomdb
+    url: jdbc:postgresql://localhost:5432/ecomdb
     username: embarkx
     password: embarkx
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    #driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-    database: mysql
+    database: postgresql
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
-        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: Asia/Kolkata
 
 server:
   port: 8082
@@ -164,6 +237,7 @@ management:
   tracing:
     sampling:
       probability: 1.0
+
 info:
   app:
     name: E-Commerce-App-productModel
@@ -175,8 +249,8 @@ app:
 
 eureka:
   client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
   instance:
@@ -185,10 +259,12 @@ eureka:
 logging:
   level:
     root: INFO
-    com.app_ecom.user: TRACE
+    com.app_ecom.product: TRACE
   file:
     name: logs/${spring.application.name}.log
   logback:
     rollingpolicy:
       max-file-size: 5MB
       max-history: 7
+
+

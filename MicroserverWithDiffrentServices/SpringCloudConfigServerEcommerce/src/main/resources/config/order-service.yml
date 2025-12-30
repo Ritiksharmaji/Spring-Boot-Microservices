@@ -138,6 +138,110 @@
 #      max-history: 7
 
 ## ============= below is for mysql with docker ===============
+#server:
+#  port: ${SERVER_PORT:8083}
+#
+#spring:
+#  application:
+#    name: ORDER-SERVICE
+#
+#  datasource:
+#    url: jdbc:mysql://localhost:3308/ecomdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+#    username: embarkx
+#    password: embarkx
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+#    database: mysql
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.MySQL8Dialect
+#        format_sql: true
+#
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+#  endpoint:
+#    health:
+#      show-details: always
+#  health:
+#    circuitbreakers:
+#      enable: true
+#    shutdown:
+#      enabled: true
+#  tracing:
+#    sampling:
+#      probability: 1.0
+#info:
+#  app:
+#    name: E-Commerce-App-OrderModel
+#    description: Spring Boot Actuator Info Example
+#    version: 1.0.0
+#  developer:
+#    name: Ritik Sharma
+#    email: ritik@example.com
+#
+#app:
+#  message: "Hello-order-auto-refresh"
+#
+#eureka:
+#  client:
+#    serviceUrl:
+#      defaultZone: http://localhost:8761/eureka/
+#    register-with-eureka: true
+#    fetch-registry: true
+#  instance:
+#    prefer-ip-address: true
+#
+#logging:
+#  level:
+#    root: INFO
+#    com.app_ecom.user: TRACE
+#  file:
+#    name: logs/${spring.application.name}.log
+#  logback:
+#    rollingpolicy:
+#      max-file-size: 5MB
+#      max-history: 7
+#
+## configuration of cuickit bracker
+#resilience4j:
+#  circuitbreaker:
+#    instances:
+#      productService:
+#        slidingWindowType: COUNT_BASED
+#        slidingWindowSize: 10
+#        minimumNumberOfCalls: 5
+#        failureRateThreshold: 50
+#        waitDurationInOpenState: 10s
+#        permittedNumberOfCallsInHalfOpenState: 3
+#        automaticTransitionFromOpenToHalfOpenEnabled: true
+#        registerHealthIndicator: true
+#  retry:
+#    instances:
+#      retryBreaker:
+#        maxAttempts: 5
+#        waitDuration: 500ms
+#
+#  ratelimiter:
+#    instances:
+#      retryBreaker:
+#        limitForPeriod: 2
+#        limitRefreshPeriod: 4s
+#        timeoutDuration: 0
+#
+ ## ----------- for postgresQL with  docker ---
 server:
   port: ${SERVER_PORT:8083}
 
@@ -146,23 +250,24 @@ spring:
     name: ORDER-SERVICE
 
   datasource:
-    url: jdbc:mysql://localhost:3308/ecomdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+    url: jdbc:postgresql://postgres:5432/ecomdb
     username: embarkx
     password: embarkx
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    #driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-    database: mysql
+    database: postgresql
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
-        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: Asia/Kolkata
 
   rabbitmq:
-    host: localhost
+    host: rabbitmq
     port: 5672
     username: guest
     password: guest
@@ -177,12 +282,11 @@ management:
       show-details: always
   health:
     circuitbreakers:
-      enable: true
-    shutdown:
       enabled: true
   tracing:
     sampling:
       probability: 1.0
+
 info:
   app:
     name: E-Commerce-App-OrderModel
@@ -197,8 +301,8 @@ app:
 
 eureka:
   client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
   instance:
@@ -207,7 +311,7 @@ eureka:
 logging:
   level:
     root: INFO
-    com.app_ecom.user: TRACE
+    com.app_ecom.order: TRACE
   file:
     name: logs/${spring.application.name}.log
   logback:
@@ -215,8 +319,11 @@ logging:
       max-file-size: 5MB
       max-history: 7
 
-# configuration of cuickit bracker
+# ===============================
+# Resilience4j Configuration
+# ===============================
 resilience4j:
+
   circuitbreaker:
     instances:
       productService:
@@ -240,6 +347,4 @@ resilience4j:
         limitForPeriod: 2
         limitRefreshPeriod: 4s
         timeoutDuration: 0
-
-
 

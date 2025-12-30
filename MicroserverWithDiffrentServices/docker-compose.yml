@@ -44,27 +44,97 @@
 #    driver: bridge
 
 ## ---------- for mysql --------------
-services:
-  mysql:
-    image: mysql:8.0
-    container_name: mysql_container
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: ecomdb
-      MYSQL_USER: embarkx
-      MYSQL_PASSWORD: embarkx
-      TZ: Asia/Kolkata
-    ports:
-      - "3308:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    command: >
-      --default-authentication-plugin=mysql_native_password
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_unicode_ci
+#services:
+#  mysql:
+#    image: mysql:8.0
+#    container_name: mysql_container
+#    restart: unless-stopped
+#    environment:
+#      MYSQL_ROOT_PASSWORD: root
+#      MYSQL_DATABASE: ecomdb
+#      MYSQL_USER: embarkx
+#      MYSQL_PASSWORD: embarkx
+#      TZ: Asia/Kolkata
+#    ports:
+#      - "3308:3306"
+#    volumes:
+#      - mysql_data:/var/lib/mysql
+#    command: >
+#      --default-authentication-plugin=mysql_native_password
+#      --character-set-server=utf8mb4
+#      --collation-server=utf8mb4_unicode_ci
+#
+## define the service
+#  rabbitmq:
+#    image: rabbitmq:3-management
+#    container_name: rabbitmq_container
+#    restart: unless-stopped
+#    environment:
+#      RABBITMQ_DEFAULT_USER: guest
+#      RABBITMQ_DEFAULT_PASS: guest
+#    ports:
+#      - "5672:5672"
+#      - "15672:15672"
+#    networks:
+#      - backend
+#
+##  zipkin:
+##    image: openzipkin/zipkin
+##    container_name: zipkin
+##    restart: unless-stopped
+##    ports:
+##      - "9411:9411"
+##    networks:
+##      - backend
+#
+#volumes:
+#  mysql_data:
+#networks:
+#  backend:
+#    driver: bridge
+##networks:
+##  postgres_network:
+##    driver: bridge
 
-# define the service
+## --------- connecting with postgresSQL ---------------
+version: "3.9"
+
+services:
+
+  postgres:
+    container_name: postgres_container
+    image: postgres:14
+    environment:
+      POSTGRES_USER: embarkx
+      POSTGRES_PASSWORD: embarkx
+      POSTGRES_DB: ecomdb
+      #TZ: Asia/Kolkata
+      PGDATA: /data/postgres
+    volumes:
+      - postgres_data:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+    restart: unless-stopped
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@pgadmin.org
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - backend
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq_container
@@ -78,20 +148,10 @@ services:
     networks:
       - backend
 
-#  zipkin:
-#    image: openzipkin/zipkin
-#    container_name: zipkin
-#    restart: unless-stopped
-#    ports:
-#      - "9411:9411"
-#    networks:
-#      - backend
-
 volumes:
-  mysql_data:
+  postgres_data:
+  pgadmin_data:
+
 networks:
   backend:
     driver: bridge
-#networks:
-#  postgres_network:
-#    driver: bridge
