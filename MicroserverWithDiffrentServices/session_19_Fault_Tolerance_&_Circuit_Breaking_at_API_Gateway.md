@@ -694,4 +694,100 @@ Just say 👍
 9) ![img_595.png](img_595.png)
 10) ![img_596.png](img_596.png)
 11) be remember it is used when service throw the error not when service is down
-12) 
+
+## ----------- 243. What is Rate Limiting and Why is it Needed? --
+1) ![img_597.png](img_597.png)
+2) ![img_598.png](img_598.png)
+3) ![img_599.png](img_599.png)
+4) ![img_600.png](img_600.png)
+5) ![img_601.png](img_601.png)
+6) ![img_602.png](img_602.png)
+
+## ------ 244. Implementing Rate Limiting with Resilience4J --
+1) so now we are going to implement the rate limit to the order service
+2) to implement on it we need to similate lot of request on it for that we are going to add a tool into the system that is apachi 
+3) https://jmeter.apache.org/
+4) ![img_603.png](img_603.png)
+5) ![img_604.png](img_604.png)
+6) ![img_605.png](img_605.png)
+7) now open it by two time click on it
+8) ![img_606.png](img_606.png)
+9) now right click on the test plan 
+10) ![img_607.png](img_607.png)
+11) then set as five
+12) ![img_608.png](img_608.png)
+13) then  right click on thread  group and 
+14) ![img_609.png](img_609.png)
+15) then fill the details here
+16) ![img_610.png](img_610.png)
+17) ![img_611.png](img_611.png)
+18) then again right click on http-request
+19) ![img_612.png](img_612.png)
+20) ![img_613.png](img_613.png)
+21) then start it 
+22) ![img_614.png](img_614.png)
+23) ![img_615.png](img_615.png)
+24) ![img_616.png](img_616.png)
+25) ![img_617.png](img_617.png)
+26) then start everything
+27) after restart all again do that process same
+28) ![img_618.png](img_618.png)
+29) ![img_619.png](img_619.png)
+30) then come to order-service config file
+31) ![img_620.png](img_620.png)
+32) so here we are setting 2 request at every 4 second
+33) then appy that name to message endpoint
+34) ![img_621.png](img_621.png)
+35) ![img_622.png](img_622.png)
+36) then restart the both config server and order as well
+37) and clear the 
+38) ![img_623.png](img_623.png)
+39) ![img_624.png](img_624.png)
+40) ![img_625.png](img_625.png)
+41) ![img_626.png](img_626.png)
+42) ![img_627.png](img_627.png)
+
+## --------- 245. Understanding Rate Limiting in Gateway ---
+1) https://spring.io/projects/spring-cloud-gateway#learn
+2) ![img_628.png](img_628.png)
+3) ![img_629.png](img_629.png)
+4) ![img_630.png](img_630.png)
+
+## ------- 246. Implementing Rate Limiting in Gateway ----
+1) add the  Redis  dependecy to apiGateway application
+2) ![img_631.png](img_631.png)
+```declarative
+<dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+    </dependency>
+```
+3) ![img_632.png](img_632.png)
+4) then we need to configure some beans
+5) ![img_633.png](img_633.png)
+6) now we need to run the radis by docker for that first down all the instnce and then create instace for radis and start all
+7) ![img_634.png](img_634.png)
+8) to create redis image:   docker run -d --name redis -p 6379:6379 redis:latest
+9) ![img_635.png](img_635.png)
+10) now start all
+11) ![img_636.png](img_636.png)
+12) ![img_637.png](img_637.png)
+13) then restart the apigateway application and come to that apachi Jmeter
+14) create for apiGateway level
+15) ![img_638.png](img_638.png)
+16) ![img_639.png](img_639.png)
+17) ![img_640.png](img_640.png)
+18) ![img_641.png](img_641.png)
+19) now start everthing then agian
+20) ![img_642.png](img_642.png)
+21) see some request getting rejected and some working
+22) ![img_643.png](img_643.png)
+23) beacuse of ratelimit
+24) ![img_644.png](img_644.png)
+25) now update it
+26) ![img_645.png](img_645.png)
+27) now see all comming 
+28) ![img_646.png](img_646.png)
+29) ![img_647.png](img_647.png)
+30) ![img_648.png](img_648.png)
+31) 
