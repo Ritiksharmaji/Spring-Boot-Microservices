@@ -102,13 +102,13 @@ version: "3.9"
 services:
 
   postgres:
-    container_name: postgres_container
+    #container_name: postgres_container
     image: postgres:14
     environment:
       POSTGRES_USER: embarkx
       POSTGRES_PASSWORD: embarkx
       POSTGRES_DB: ecomdb
-      #TZ: Asia/Kolkata
+      TZ: Asia/Kolkata
       PGDATA: /data/postgres
     volumes:
       - postgres_data:/data/postgres
@@ -119,7 +119,7 @@ services:
     restart: unless-stopped
 
   pgadmin:
-    container_name: pgadmin_container
+    #container_name: pgadmin_container
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@pgadmin.org

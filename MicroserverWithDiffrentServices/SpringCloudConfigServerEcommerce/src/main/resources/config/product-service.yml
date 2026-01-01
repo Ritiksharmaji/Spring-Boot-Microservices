@@ -206,11 +206,10 @@ spring:
     password: guest
 
   datasource:
-#    url: jdbc:postgresql://postgres:5432/ecomdb
     url: jdbc:postgresql://localhost:5432/ecomdb
     username: embarkx
     password: embarkx
-    #driver-class-name: org.postgresql.Driver
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -250,7 +249,8 @@ app:
 eureka:
   client:
     service-url:
-      defaultZone: http://eureka-server:8761/eureka/
+#      defaultZone: http://eureka-server:8761/eureka/
+      defaultZone: http://localhost:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
   instance:
