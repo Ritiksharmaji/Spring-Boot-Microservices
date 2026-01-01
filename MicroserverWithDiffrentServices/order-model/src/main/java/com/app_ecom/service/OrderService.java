@@ -6,10 +6,14 @@ import com.app_ecom.model.*;
 import com.app_ecom.repository.OrderRepository;
 //import com.app_ecom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -21,6 +25,13 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     // private final StreamBridge streamBridge;
+
+    private final RabbitTemplate rabbitTemplate;
+
+    @Value("${rabbitmq.exchange.name}")
+    private String exchangeName;
+    @Value("${rabbitmq.routing.key}")
+    private String routingKey;
 
     public Optional<OrderResponse> createOrder(String userId) {
         // Validate for cart items
@@ -42,7 +53,8 @@ public class OrderService {
 
         // step-4: Create order
         Order order = new Order();
-        order.setUserId(Long.valueOf(userId));
+//        order.setUserId(Long.valueOf(userId));
+        order.setUserId(userId);
         order.setStatus(OrderStatus.CONFIRMED);
         order.setTotalAmount(totalPrice);
 
@@ -61,6 +73,18 @@ public class OrderService {
 
         // Clear the cart
         cartService.clearCart(userId);
+        // working with RabbitMQ for order message
+        // hardcode value
+//        rabbitTemplate.convertAndSend("order.exchange", "order.tracking",
+//                Map.of("orderId", savedOrder.getId(),
+//                        "status", "CREATED"));
+        // getting from .yml
+        rabbitTemplate.convertAndSend(exchangeName,
+                routingKey,
+                Map.of("orderId", savedOrder.getId(),
+                        "status", "CREATED"));
+
+
 
         // Publish order created event
         return Optional.of(mapToOrderResponse(savedOrder));
