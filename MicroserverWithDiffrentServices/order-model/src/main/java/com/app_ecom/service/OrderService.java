@@ -95,13 +95,12 @@ public class OrderService {
                 savedOrder.getCreateAt()
         );
         rabbitTemplate.convertAndSend(exchangeName,
-                routingKey,event);
+                routingKey, event);
 
 
         // Publish order created event
         return Optional.of(mapToOrderResponse(savedOrder));
     }
-
 
 
     private OrderResponse mapToOrderResponse(Order order) {
@@ -123,9 +122,9 @@ public class OrderService {
                 .build();
     }
 
-    private List<OrderItemDTO> mapToOrderItemDTOs(List<OrderItem> items){
+    private List<OrderItemDTO> mapToOrderItemDTOs(List<OrderItem> items) {
         return items.stream()
-                .map(item-> new OrderItemDTO(
+                .map(item -> new OrderItemDTO(
                         item.getId(),
                         item.getProductId(),
                         item.getQuantity(),
