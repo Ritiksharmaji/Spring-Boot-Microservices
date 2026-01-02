@@ -95,4 +95,53 @@ docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:4-manag
 11) ![img_703.png](img_703.png)
 12) ![img_704.png](img_704.png)
 13) ![img_705.png](img_705.png)
-14) 
+
+## ------------ 254. Creating Notification Service ---
+1) ![img_706.png](img_706.png)
+
+## -------- 255. Consuming Messages from RabbitMQ -----
+1) now set the configuration of rabbitMQ into notification service
+2) ![img_707.png](img_707.png)
+3) now make the java code based configuration into notification service as order service
+4) now we need create a consumer who will lesson the message
+5) ![img_708.png](img_708.png)
+6) ![img_709.png](img_709.png)
+7) now start all the services 
+8) ![img_710.png](img_710.png)
+9) all services are running now start creating a order and then see the logs in notification service.
+10) ![img_711.png](img_711.png)
+11) ![img_712.png](img_712.png)
+12) ![img_713.png](img_713.png)
+13) ![img_714.png](img_714.png)
+14) now we will call the order place then see the logs of notifications
+15) ![img_715.png](img_715.png)
+16) ![img_716.png](img_716.png)
+17) we can see on the rabbiMQ also
+18) ![img_717.png](img_717.png)
+19) because message already send to notification service. and message has consumed by notifcation service 
+20) ![img_718.png](img_718.png)
+20) ![img_719.png](img_719.png)
+21) ![img_720.png](img_720.png)
+22) ![img_721.png](img_721.png)
+23) ![img_722.png](img_722.png)
+24) ![img_723.png](img_723.png)
+25) ![img_724.png](img_724.png)
+26) now we will start the notification services then after start it will start the consuming the message
+27) ![img_725.png](img_725.png)
+28) ![img_726.png](img_726.png)
+6) so if even notification service is down it is not going to impact on order service api call becasue it is asyn call but if it is sysn call then it will impact and ones the notifcation service will start then it will start the consuming the messaging from the RabbitMQ as you can see the below
+
+## --------- 256. Setting up DTO for Communication Between Services -----
+1) so till now we are sending that data to rabbitMQ in form of key value map hardcoded which is ok but for bettter we can use the DTO as well
+2) ![img_727.png](img_727.png)
+3) ![img_728.png](img_728.png)
+4) ![img_729.png](img_729.png)
+5) ![img_730.png](img_730.png)
+6) ![img_731.png](img_731.png)
+7) ![img_732.png](img_732.png)
+8) now if we start the notification service then it will start consuming the message 
+9) ![img_733.png](img_733.png)
+10) now you can see the logs for better we are going to update the consumer to consume the message proper way
+11) ![img_734.png](img_734.png)
+12) ![img_735.png](img_735.png)
+

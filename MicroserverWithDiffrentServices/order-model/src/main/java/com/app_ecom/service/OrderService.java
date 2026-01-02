@@ -1,5 +1,6 @@
 package com.app_ecom.service;
 
+import com.app_ecom.dto.OrderCreateEvent;
 import com.app_ecom.dto.OrderItemDTO;
 import com.app_ecom.dto.OrderResponse;
 import com.app_ecom.model.*;
@@ -79,11 +80,22 @@ public class OrderService {
 //                Map.of("orderId", savedOrder.getId(),
 //                        "status", "CREATED"));
         // getting from .yml
-        rabbitTemplate.convertAndSend(exchangeName,
-                routingKey,
-                Map.of("orderId", savedOrder.getId(),
-                        "status", "CREATED"));
+//        rabbitTemplate.convertAndSend(exchangeName,
+//                routingKey,
+//                Map.of("orderId", savedOrder.getId(),
+//                        "status", "CREATED"));
 
+        // publish order created event
+        OrderCreateEvent event = new OrderCreateEvent(
+                savedOrder.getId(),
+                savedOrder.getUserId(),
+                savedOrder.getStatus(),
+                mapToOrderItemDTOs(savedOrder.getItems()),
+                savedOrder.getTotalAmount(),
+                savedOrder.getCreateAt()
+        );
+        rabbitTemplate.convertAndSend(exchangeName,
+                routingKey,event);
 
 
         // Publish order created event
@@ -109,6 +121,17 @@ public class OrderService {
                 .createAt(order.getCreateAt())
                 .updateAt(order.getUpdateAt())
                 .build();
+    }
+
+    private List<OrderItemDTO> mapToOrderItemDTOs(List<OrderItem> items){
+        return items.stream()
+                .map(item-> new OrderItemDTO(
+                        item.getId(),
+                        item.getProductId(),
+                        item.getQuantity(),
+                        item.getPrice(),
+                        item.getPrice().multiply(new BigDecimal(item.getQuantity()))
+                )).collect(Collectors.toList());
     }
 
 }

@@ -50,6 +50,15 @@
         </processorPath>
         <module name="ecom-application (2)" />
       </profile>
+      <profile name="Annotation profile for notification" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
+        </processorPath>
+        <module name="notification" />
+      </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
@@ -63,6 +72,7 @@
       <module name="ecom-application (2)" options="-parameters" />
       <module name="ecom-application (3)" options="-parameters" />
       <module name="eurekaEcommerce" options="-parameters" />
+      <module name="notification" options="-parameters" />
       <module name="provider" options="-parameters" />
     </option>
   </component>
