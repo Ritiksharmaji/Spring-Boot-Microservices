@@ -18,10 +18,12 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="EurekaServer" />
-        <module name="apiGateWay" />
         <module name="SpringCloudServerEcommerce" />
-        <module name="consumer" />
         <module name="eurekaEcommerce" />
+        <module name="apiGateWay" />
+        <module name="consumer (1) (com.example.consumer)" />
+        <module name="producer" />
+        <module name="consumer" />
       </profile>
       <profile name="Annotation profile for provider" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -67,12 +69,14 @@
       <module name="SpringCloudServerEcommerce" options="-parameters" />
       <module name="apiGateWay" options="-parameters" />
       <module name="consumer" options="-parameters" />
+      <module name="consumer (1) (com.example.consumer)" options="-parameters" />
       <module name="ecom-application" options="-parameters" />
       <module name="ecom-application (1)" options="-parameters" />
       <module name="ecom-application (2)" options="-parameters" />
       <module name="ecom-application (3)" options="-parameters" />
       <module name="eurekaEcommerce" options="-parameters" />
       <module name="notification" options="-parameters" />
+      <module name="producer" options="-parameters" />
       <module name="provider" options="-parameters" />
     </option>
   </component>
