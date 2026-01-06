@@ -527,3 +527,608 @@ Just tell me 👍
 7) ![img_28.png](./kafka/img_28.png)
 8) then run the producer
 9) ![img_29.png](./kafka/img_29.png)
+
+## ------- 270. Sending Objects By Serializing and Deserializing --
+1) basically we should not send the message as string it must be in form og object for better read the notes
+2) so we are going to create a class
+3) now created that class RiderLocation and after created we need to create object (instacne of it when we are going to send the message)
+4) ![img_820.png](img_820.png)
+5) ![img_821.png](img_821.png)
+6) now after that we need to define the serializer in the yml file
+7) ![img_822.png](img_822.png)
+8) ![img_823.png](img_823.png)
+9) ![img_824.png](img_824.png)
+10) ![img_825.png](img_825.png)
+11) now we will consume this message into consumer server for that first we need to create that RiderLocation java file so that we can consume of its object
+12) ![img_826.png](img_826.png)
+13) then we will create a third consumer for riderLocation
+14) ![img_827.png](img_827.png)
+15) then we need to add the deserializer not serializer into consumer as well
+16) ![img_828.png](img_828.png)
+17) ![img_829.png](img_829.png)
+18) then restart both services producer and consumer and make request
+19) ![img_830.png](img_830.png)
+20) ![img_831.png](img_831.png)
+
+Great question — this is a **very common Kafka + Spring Boot mistake**, and your error is actually **100% logical** once you understand what’s happening 👍
+Let’s break it clearly and then fix it **the right way (production-style)**.
+
+---
+
+## 🔴 ROOT CAUSE (Why this error is happening)
+
+### ❌ Error Summary
+
+```
+Cannot convert from [java.lang.String] 
+to [com.example.consumer.consumer.RiderLocation]
+```
+
+### 🔍 What Kafka is telling you
+
+* Your **producer is sending a STRING message**
+* Your **RiderLocation consumer expects a JSON OBJECT**
+* Kafka **does NOT magically know** which listener wants which type
+* All listeners are consuming from the **same topic (`my-topic`)**
+
+So this listener 👇
+
+```java
+@KafkaListener(topics = "my-topic", groupId = "my-group-RiderLocation")
+public void RiderLocation(RiderLocation riderLocation)
+```
+
+is trying to read a **String message** like:
+
+```
+"HelloKafka-new message for consumer"
+```
+
+and convert it into:
+
+```java
+RiderLocation
+```
+
+❌ Impossible → hence `MessageConversionException`
+
+---
+
+## 🧠 VERY IMPORTANT KAFKA RULE (Interview-Ready)
+
+> **One Kafka topic should contain ONE message type**
+
+Mixing:
+
+* `String`
+* `RiderLocation`
+* `Order`
+
+in the **same topic** ❌ is a **bad design**
+
+---
+
+## ✅ CORRECT SOLUTION (BEST PRACTICE)
+
+### ✔️ Solution 1 (RECOMMENDED): Separate Topics per Message Type
+
+| Topic Name             | Message Type    |
+| ---------------------- | --------------- |
+| `text-topic`           | `String`        |
+| `rider-location-topic` | `RiderLocation` |
+
+---
+
+## 🛠 FIX STEP-BY-STEP
+
+---
+
+## 1️⃣ PRODUCER – Send String Message
+
+```java
+kafkaTemplate.send("text-topic", "Hello Kafka");
+```
+
+---
+
+## 2️⃣ PRODUCER – Send RiderLocation Object
+
+```java
+RiderLocation location = new RiderLocation(
+        "Ritik Sharma",
+        28.61,
+        77.23
+);
+
+kafkaTemplate.send("rider-location-topic", location);
+```
+
+---
+
+## 3️⃣ CONSUMER – STRING Consumer
+
+```java
+@KafkaListener(topics = "text-topic", groupId = "text-group")
+public void listenText(String message) {
+    System.out.println("Text message: " + message);
+}
+```
+
+---
+
+## 4️⃣ CONSUMER – RiderLocation Consumer
+
+```java
+@KafkaListener(topics = "rider-location-topic", groupId = "rider-group")
+public void listenRider(RiderLocation riderLocation) {
+    System.out.println("Rider ID: " + riderLocation.getRiderId());
+    System.out.println("Lat: " + riderLocation.getLatitude());
+    System.out.println("Lng: " + riderLocation.getLongitude());
+}
+```
+
+---
+
+## 5️⃣ CONSUMER application.yml (FIXED ❗)
+
+### ❌ Your mistake
+
+You used **serializer instead of deserializer**
+
+### ✅ Correct config
+
+```yaml
+spring:
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: rider-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: "*"
+```
+
+⚠️ **Do NOT set `spring.json.value.default.type` globally** when consuming multiple types.
+
+---
+
+## 🧠 WHY your current config FAILED
+
+```yaml
+spring.json.value.default.type: com.example.consumer.consumer
+```
+
+This tells Spring:
+
+> “EVERY message is this class”
+
+But:
+
+* Some messages are `String`
+* Some are `RiderLocation`
+
+➡️ Conflict → Conversion failure
+
+---
+
+## 🚀 OPTIONAL (ADVANCED / INTERVIEW LEVEL)
+
+### Using Message Headers to Support Multiple Types (Not Recommended for beginners)
+
+Producer:
+
+```java
+kafkaTemplate.send(
+    MessageBuilder
+        .withPayload(location)
+        .setHeader(KafkaHeaders.TOPIC, "my-topic")
+        .setHeader("__TypeId__", "RiderLocation")
+        .build()
+);
+```
+
+Consumer:
+
+```java
+@KafkaListener(topics = "my-topic")
+public void consume(RiderLocation location) {}
+```
+
+⚠️ This works but **separate topics is cleaner**
+
+---
+
+## ✅ FINAL DESIGN (BEST PRACTICE)
+
+```
+Producer
+ ├── text-topic  ──▶ Text Consumer
+ └── rider-location-topic ──▶ Rider Consumer
+```
+
+---
+
+## 🎯 INTERVIEW ONE-LINER (VERY IMPORTANT)
+
+> “Kafka topics should be designed around event types. Mixing multiple payload types in a single topic leads to deserialization failures and poor design.”
+
+---
+
+## 🔥 You’re Learning Kafka the RIGHT Way
+
+This exact problem is faced by **90% of Kafka learners** — fixing it means you now understand:
+
+* Serialization
+* Deserialization
+* Topic design
+* Consumer groups
+
+If you want next:
+
+* Kafka **headers-based polymorphism**
+* Kafka **Schema Registry**
+* Kafka **exactly-once**
+* Kafka **real microservice architecture**
+
+Just say 👍
+
+## ==== fix the code ----
+You’re very close. The issue is **configuration + design clarity**, not Kafka itself. I’ll **fix it cleanly** and explain *why* each change is required.
+
+---
+
+## ✅ WHAT IS CORRECT IN YOUR CODE
+
+✔ Separate topic for object
+
+```java
+kafkaTemplate.send("rider-location-topic", riderLocation);
+```
+
+✔ Separate consumer for `RiderLocation`
+
+```java
+@KafkaListener(topics = "rider-location-topic", groupId = "my-group-RiderLocation")
+```
+
+✔ Using `JsonSerializer` on producer
+✔ Using `JsonDeserializer` on consumer
+
+So the **idea is correct**.
+
+---
+
+## ❌ WHAT IS WRONG (ROOT CAUSES)
+
+### 1️⃣ **Wrong YAML structure**
+
+You have **two `spring:` blocks** in the same file
+➡️ Only the **last one is applied**
+
+### 2️⃣ **Using `key-serializer` instead of `key-deserializer` in consumer**
+
+This is a critical typo.
+
+### 3️⃣ **Producer disabled type headers**
+
+```yaml
+spring.json.add.type.headers: false
+```
+
+But consumer is expecting JSON → conversion may fail later.
+
+---
+
+## ✅ FIXED CONFIGURATION (COPY–PASTE)
+
+---
+
+## 🔹 PRODUCER `application.yml`
+
+```yaml
+spring:
+  application:
+    name: producer
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: true
+
+server:
+  port: 8080
+```
+
+✅ Why:
+
+* Enables type headers
+* Allows consumer to deserialize `RiderLocation` safely
+
+---
+
+## 🔹 CONSUMER `application.yml`
+
+```yaml
+spring:
+  application:
+    name: consumer
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: my-group-RiderLocation
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: com.example.consumer.consumer
+
+server:
+  port: 8081
+```
+
+✅ Why:
+
+* Correct **deserializers**
+* Trusted package is specific (best practice)
+* No forced default type (important)
+
+---
+
+## ✅ FINAL WORKING DESIGN
+
+```
+Producer
+ └── rider-location-topic (RiderLocation JSON)
+         ↓
+Consumer
+ └── RiderLocation Listener
+```
+
+---
+
+## 🧠 IMPORTANT RULES (MEMORIZE)
+
+### 🔴 Rule 1
+
+> **One topic → one message type**
+
+### 🔴 Rule 2
+
+> Producer uses **Serializer**, Consumer uses **Deserializer**
+
+### 🔴 Rule 3
+
+> Never mix `String` and `Object` messages in the same topic
+
+---
+
+## 🎯 INTERVIEW ANSWER (STRONG)
+
+> “Kafka object messaging works by serializing objects into JSON on the producer side and deserializing them on the consumer side using JsonSerializer and JsonDeserializer, with one event type per topic.”
+
+---
+
+## ✅ Your Code Will Now:
+
+* Start without errors
+* Deserialize `RiderLocation` correctly
+* Follow real-world Kafka design
+
+If you want next:
+
+* Kafka with **multiple partitions**
+* Kafka **consumer groups vs listeners**
+* Kafka **schema registry**
+* Kafka **microservices flow (Order → Payment)**
+
+Just say 👍
+
+## ======== final fixed =======
+Perfect — this stack trace now tells us **exactly** what is wrong.
+You are **99% correct**, only **one Kafka concept is biting you**.
+
+---
+
+## 🔥 EXACT ROOT CAUSE (From Your Error)
+
+> ❌ **Class not found [com.demokafka.producer.RiderLocation]**
+
+### What is happening internally?
+
+1. **Producer sends JSON**
+2. Producer’s `JsonSerializer` adds this header:
+
+   ```
+   __TypeId__ = com.demokafka.producer.RiderLocation
+   ```
+3. Consumer receives the message
+4. Consumer tries to load:
+
+   ```
+   com.demokafka.producer.RiderLocation
+   ```
+5. ❌ **Consumer project does NOT have this class**
+6. 💥 Deserialization fails → `ListenerExecutionFailedException`
+
+---
+
+## 🧠 Key Kafka Rule (VERY IMPORTANT)
+
+> **Producer and Consumer must NOT depend on each other’s package names**
+
+Kafka is a **distributed system** — class names must be:
+
+* Shared
+* Or explicitly mapped
+* Or ignored
+
+---
+
+## ✅ SOLUTION OPTIONS (Choose ONE)
+
+---
+
+# ✅ SOLUTION 1 (BEST PRACTICE – RECOMMENDED)
+
+### 🔹 Create a **shared DTO module**
+
+Create a **common library** (jar):
+
+```
+kafka-common
+└── com.common.dto.RiderLocation
+```
+
+### RiderLocation (COMMON)
+
+```java
+package com.common.dto;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class RiderLocation {
+    private String riderId;
+    private double latitude;
+    private double longitude;
+}
+```
+
+### Use SAME class in:
+
+* Producer
+* Consumer
+
+✔ Clean
+✔ Scalable
+✔ Production ready
+
+---
+
+# ✅ SOLUTION 2 (FAST FIX – Your Case)
+
+### 🔥 Disable type headers in PRODUCER
+
+So Kafka **does NOT send class name**
+
+### Producer `application.yml`
+
+```yaml
+spring:
+  kafka:
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    properties:
+      spring.json.add.type.headers: false   # 🔥 IMPORTANT
+```
+
+---
+
+### Consumer `application.yml`
+
+```yaml
+spring:
+  kafka:
+    consumer:
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: "*"
+        spring.json.value.default.type: com.example.consumer.consumer.RiderLocation
+```
+
+✔ Consumer ignores producer’s package
+✔ Uses its **own RiderLocation class**
+
+---
+
+# ❌ SOLUTION 3 (NOT RECOMMENDED)
+
+Mapping producer → consumer class manually
+
+```yaml
+spring.json.type.mapping:
+  rider:com.example.consumer.consumer.RiderLocation
+```
+
+⚠ Works but fragile in microservices
+
+---
+
+## ✅ WHY YOUR OFFSET IS STUCK AT `offset=2`
+
+Kafka **keeps retrying the same bad message**:
+
+```
+rider-location-topic-0@2
+```
+
+Because:
+
+* Deserialization fails
+* Offset is never committed
+
+---
+
+## 🧹 CLEANUP (IMPORTANT)
+
+After fixing config, do **ONE** of these:
+
+### Option A: Reset offset
+
+```bash
+kafka-consumer-groups.sh \
+--bootstrap-server localhost:9092 \
+--group my-group-RiderLocation \
+--topic rider-location-topic \
+--reset-offsets --to-latest --execute
+```
+
+### Option B: Change consumer group
+
+```yaml
+group-id: my-group-RiderLocation-v2
+```
+
+---
+
+## ✅ FINAL SUMMARY
+
+| Issue                              | Status |
+| ---------------------------------- | ------ |
+| Producer sends class header        | ❌      |
+| Consumer can’t find producer class | ❌      |
+| Disable type headers OR shared DTO | ✅      |
+| Reset offset                       | ✅      |
+| Consumer works                     | ✅      |
+
+---
+
+## 🎯 WHAT I RECOMMEND FOR YOU
+
+Since you’re learning **Kafka + Microservices**:
+
+👉 **Use SOLUTION 2 now**
+👉 **Use SOLUTION 1 in real projects**
+
+---
+
+If you want next:
+
+* Kafka **Schema Registry**
+* Kafka **Dead Letter Topic (DLT)**
+* Kafka **Exactly Once**
+* Kafka **Spring Cloud Stream**
+
+Just say the word 🚀
+1) ![img_832.png](img_832.png)
+2) ![img_833.png](img_833.png)
+3) ![img_834.png](img_834.png)
+4) ![img_835.png](img_835.png)
+5) ![img_836.png](img_836.png)
