@@ -1132,3 +1132,503 @@ Just say the word 🚀
 3) ![img_834.png](img_834.png)
 4) ![img_835.png](img_835.png)
 5) ![img_836.png](img_836.png)
+
+## -------- 271. What are Java Functions ---
+1) ![img_837.png](img_837.png)
+2) ![img_838.png](img_838.png)
+3) ![img_839.png](img_839.png)
+4) ![img_840.png](img_840.png)
+5) ![img_841.png](img_841.png)
+6) ![img_842.png](img_842.png)
+
+## -------- 272. Spring Cloud Function ---
+1) ![img_843.png](img_843.png)
+2) ![img_844.png](img_844.png)
+3) https://spring.io/projects/spring-cloud-function
+
+## ------- 273. Spring Cloud Functions - Hands On ---
+1) add the dependeies of spring cloud function to provider 
+2) ![img_845.png](img_845.png)
+```declarative
+ <dependency>
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-starter</artifactId>
+</dependency>
+<dependency>
+<groupId>org.springframework.cloud</groupId>
+<artifactId>spring-cloud-function-context</artifactId>
+</dependency>
+<dependency>
+<groupId>org.springframework.cloud</groupId>
+<artifactId>spring-cloud-starter-function-web</artifactId>
+</dependency>
+
+```
+3) ![img_846.png](img_846.png)
+4) then create a class as FunctionsClass
+5) ![img_847.png](img_847.png)
+6) now change the .yml file
+7) ![img_848.png](img_848.png)
+8) now we have define a function into .yml file then we need to call it 
+9) basically we can create this project without using the kafka it is deffrent one but if we are using it with kafka then we need to run the kafka also 
+10) ![img_849.png](img_849.png)
+
+## ------------ 278. Introduction to Spring Cloud Streams -----------
+1) ![img_850.png](img_850.png)
+2) so spring cloud stream is a light weght framework which is part of spring cloud and it is used to build the event driving microservice
+3) by using spring cloud stream we can write a clean java function which by using we can make use of suppliers, cunsumer, function then we can bind them for mesaging testing  like topics , quesue without any sort of brocker code like RabbitMQ and kafka 
+4) So let me give you a better explanation or let me go a little bit a little step further.
+
+Okay.
+
+So if you are writing a service that has to communicate like consume or produce message from a message
+
+broker, you will have to write broker specific code.
+
+Now if you are making use of RabbitMQ, you will have to make use of RabbitMQ based classes This in
+
+your code so that you can send and consume the messages.
+
+If you are making use of message broker like Kafka, you have to make use of Kafka based classes within
+
+your code so that you can consume and send messages to and fro from Kafka, right?
+
+That is how things work, right?
+
+So you are making use of the point over here I'm trying to make is you're making use of broker specific
+
+code, which is broker specific classes.
+
+Right.
+
+And tomorrow, if the messaging broker changes, for example, if your application or your company decides
+
+to switch to Kafka instead of RabbitMQ, then you have to rewrite all the code.
+
+You have to see where all RabbitMQ specific code is written, and you have to go to that file and make
+
+changes, right?
+
+And this is a little bit cumbersome.
+
+So what Spring Cloud Stream does is it abstracts and it allows you to basically write code for messaging
+
+destinations like RabbitMQ and Kafka without writing broker specific code.
+
+So the code that you write is generic.
+
+And tomorrow if you switch the, um, broker like from Kafka to RabbitMQ, or if you switch the provider,
+
+you don't have to make any changes into your code, you just have to make some changes in the configuration.
+
+That is it.
+
+So that's the benefit it provides.
+
+So if I have to explain this with the help of a diagram I would showcase some diagram like this.
+
+## ---------- 279. Transition to Spring Cloud Streams with Apache Kafka - Producer End ---
+1) So now it's time that we transition our project to Spring Cloud Stream.
+2) for that we are going to convert the producer as spring cloud Stream then consumer
+3) for that first we will change some depedencies then we will start coding the java code then do some littler bit  configuration in .yml file
+4)  we need spring boot starter., spring cloud stream related dependency, 
+5) ![img_851.png](img_851.png)
+6) ![img_852.png](img_852.png)
+7) now
+8) so as per now we have removed the web  related and other dependeies so we will get the so many erros 
+9) ![img_853.png](img_853.png)
+10) s0 better is that to comments this all and create a new producer
+11) now without kafka specific code we are going to send the data to the topic
+12) now create a supplier which is going to send the location of ridder to kafka topic
+13) ![img_854.png](img_854.png)
+14) now commnets these all and start from new 
+15) ![img_855.png](img_855.png)
+16) ![img_856.png](img_856.png)
+17) now run the docker and 
+18) ![img_857.png](img_857.png)
+19) ![img_858.png](img_858.png)
+20) ![img_859.png](img_859.png)
+21) run the application
+22) ![img_860.png](img_860.png)
+23) ![img_861.png](img_861.png)
+24) so messing is sending in streams of list we can control it as well based on given time 
+25) ![img_862.png](img_862.png)
+26) ![img_863.png](img_863.png)
+
+
+## ----------- 280. Transition to Spring Cloud Streams with Apache Kafka - Consumer End --
+1) now conveting consumer 
+2) ![img_864.png](img_864.png)
+3) ![img_865.png](img_865.png)
+4) now we need to change the kafka related consumer code 
+5) ![img_866.png](img_866.png)
+6) then create new consumer
+7) ![img_867.png](img_867.png)
+8) ![img_868.png](img_868.png)
+9) then start the consumer , provider is already running
+10) ![img_869.png](img_869.png)
+    You’re **very close** 👍
+    Producer **is sending**, but consumer **is not receiving** because of **Spring Cloud Stream function + binding mismatches** and **missing serializer configuration**.
+
+Let’s go step by step and fix it cleanly.
+
+---
+
+# ❌ WHY CONSUMER IS NOT LISTENING
+
+## 1️⃣ Missing `content-type` on **consumer binding**
+
+Your producer sends **JSON**, but the consumer does **not know how to deserialize it**.
+
+👉 Result: message is received at Kafka, but **consumer silently drops it**
+
+---
+
+## 2️⃣ `RiderLocation` class mismatch (VERY IMPORTANT)
+
+* Producer and consumer **must have the same class structure**
+* Same **field names**
+* Same **package or compatible JSON mapping**
+
+If consumer `RiderLocation` ≠ producer `RiderLocation` → ❌ deserialization fails
+
+---
+
+## 3️⃣ Function definition is correct (✅), but binding config incomplete
+
+---
+
+# ✅ FIX (WORKING CONFIG)
+
+---
+
+## ✅ PRODUCER (Correct – only minor cleanup)
+
+### `application.yml`
+
+```yaml
+spring:
+  application:
+    name: producer
+  cloud:
+    function:
+      definition: sendRiderLocation
+    stream:
+      bindings:
+        sendRiderLocation-out-0:
+          destination: my-topic-new
+          content-type: application/json
+      poller:
+        fixed-delay: 5000
+      kafka:
+        binder:
+          brokers: localhost:9092
+```
+
+### Producer Function
+
+```java
+@Configuration
+public class KafkaProducerStream {
+
+    @Bean
+    public Supplier<RiderLocation> sendRiderLocation() {
+        return () -> {
+            RiderLocation location =
+                    new RiderLocation("Ritik new", 50.8, 44.3);
+            System.out.println("Sending location: " + location.getRiderId());
+            return location;
+        };
+    }
+}
+```
+
+---
+
+## ✅ CONSUMER (THIS IS WHERE FIX IS REQUIRED)
+
+### 🔴 PROBLEM: No `content-type`
+
+### 🔴 PROBLEM: No consumer group
+
+---
+
+### ✅ FIXED `application.yml`
+
+```yaml
+spring:
+  application:
+    name: consumer
+  cloud:
+    function:
+      definition: processRiderLocation
+    stream:
+      bindings:
+        processRiderLocation-in-0:
+          destination: my-topic-new
+          group: rider-location-group
+          content-type: application/json
+      kafka:
+        binder:
+          brokers: localhost:9092
+
+server:
+  port: 8081
+```
+
+👉 `group` is REQUIRED so Kafka commits offsets
+👉 `content-type` enables JSON deserialization
+
+---
+
+### ✅ Consumer Function
+
+```java
+@Configuration
+public class KafkaConsumerStream {
+
+    @Bean
+    public Consumer<RiderLocation> processRiderLocation() {
+        return location -> {
+            System.out.println(
+                "Received: " + location.getRiderId()
+                + " @ " + location.getLatitude()
+                + ", " + location.getLongitude()
+            );
+        };
+    }
+}
+```
+
+---
+
+## ✅ RiderLocation (MUST MATCH ON BOTH SIDES)
+
+```java
+public class RiderLocation {
+
+    private String riderId;
+    private double latitude;
+    private double longitude;
+
+    public RiderLocation() {} // REQUIRED
+
+    public RiderLocation(String riderId, double latitude, double longitude) {
+        this.riderId = riderId;
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
+    // getters & setters
+}
+```
+
+🚨 **No-args constructor is mandatory**
+
+---
+
+## 🔍 HOW TO VERIFY MESSAGE IS ACTUALLY IN KAFKA
+
+```bash
+docker exec -it kafka kafka-console-consumer \
+--bootstrap-server localhost:9092 \
+--topic my-topic-new \
+--from-beginning
+```
+
+If you see JSON → producer is fine ✅
+
+---
+
+## 🧠 COMMON MISTAKES (YOU HIT 2 OF THEM)
+
+| Mistake                  | Result                          |
+| ------------------------ | ------------------------------- |
+| Missing `content-type`   | Consumer doesn’t deserialize    |
+| No consumer `group`      | Kafka doesn’t assign partitions |
+| No default constructor   | Jackson fails silently          |
+| Different POJO structure | Consumer ignores message        |
+
+---
+
+## ✅ FINAL STATUS AFTER FIX
+
+✔ Producer sends every 5 sec
+✔ Kafka topic receives messages
+✔ Consumer listens & prints logs
+
+---
+
+If you want next:
+
+* ✅ **Multiple consumers**
+* ✅ **Dead-letter topic**
+* ✅ **Error handling**
+* ✅ **Kafka Streams**
+* ✅ **Microservice real-world pattern**
+
+Just say 🚀
+
+## -------- 281. Add partitions ----
+Perfect 👍
+Here’s **how to ADD partitions to your Kafka topic** and make your Spring Cloud Stream apps use them correctly.
+
+---
+
+## 1️⃣ Check current partitions
+
+Run this inside Kafka container:
+
+```bash
+docker exec -it kafka kafka-topics \
+--bootstrap-server localhost:9092 \
+--describe \
+--topic my-topic-new
+```
+
+---
+
+## 2️⃣ Add partitions to existing topic (SAFE)
+
+Kafka allows **increasing** partitions (not decreasing).
+
+### Example: increase to **3 partitions**
+
+```bash
+docker exec -it kafka kafka-topics \
+--bootstrap-server localhost:9092 \
+--alter \
+--topic my-topic-new \
+--partitions 3
+```
+
+✔ Existing data remains
+✔ New messages spread across partitions
+
+---
+
+## 3️⃣ Verify partitions
+
+```bash
+docker exec -it kafka kafka-topics \
+--bootstrap-server localhost:9092 \
+--describe \
+--topic my-topic-new
+```
+
+You should see:
+
+```
+PartitionCount: 3
+```
+
+---
+
+## 4️⃣ Enable Partitioned Producer (Spring Cloud Stream)
+
+### Producer `application.yml`
+
+```yaml
+spring:
+  cloud:
+    stream:
+      bindings:
+        sendRiderLocation-out-0:
+          destination: my-topic-new
+          content-type: application/json
+          producer:
+            partition-key-expression: payload.riderId
+            partition-count: 3
+```
+
+### Why this matters
+
+| Config                     | Purpose                           |
+| -------------------------- | --------------------------------- |
+| `partition-key-expression` | Same rider goes to same partition |
+| `partition-count`          | Matches Kafka topic partitions    |
+
+---
+
+## 5️⃣ Enable Consumer Parallelism
+
+### Consumer `application.yml`
+
+```yaml
+spring:
+  cloud:
+    stream:
+      bindings:
+        processRiderLocation-in-0:
+          destination: my-topic-new
+          group: rider-location-group
+          content-type: application/json
+          consumer:
+            concurrency: 3
+```
+
+✔ Each consumer thread listens to **one partition**
+
+---
+
+## 6️⃣ How messages are distributed
+
+With:
+
+```yaml
+partition-key-expression: payload.riderId
+```
+
+| riderId | Partition   |
+| ------- | ----------- |
+| Ritik   | Partition 1 |
+| Ritik   | Partition 1 |
+| Amit    | Partition 2 |
+
+➡ Ordering is guaranteed **per rider**
+
+---
+
+## 7️⃣ Logs you should see (Consumer)
+
+```
+Received: Ritik new @ 50.8, 44.3
+Received: Ritik new @ 50.8, 44.3
+```
+
+Run multiple instances of consumer → Kafka auto load-balances 🚀
+
+---
+
+## 8️⃣ BONUS: Create topic WITH partitions (recommended)
+
+Instead of alter:
+
+```bash
+docker exec -it kafka kafka-topics \
+--bootstrap-server localhost:9092 \
+--create \
+--topic my-topic-new \
+--partitions 3 \
+--replication-factor 1
+```
+
+---
+
+## 🔥 Real-world best practices
+
+* Use **business key** (riderId, orderId)
+* Never rely on random partitioning
+* Match `partition-count` with topic partitions
+* Scale consumers horizontally
+
+---
+
+If you want next:
+
+* 🔄 **Rebalancing demo**
+* ⚠ **What happens on consumer crash**
+* 📦 **Exactly-once semantics**
+* 🧪 **Partition debugging**
+
+Just tell me 💪

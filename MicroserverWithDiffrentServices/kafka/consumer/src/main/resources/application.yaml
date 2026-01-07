@@ -13,15 +13,53 @@
 #        spring.json.trusted.packages: "*"
 #        spring.json.value.default.type: com.example.consumer.consumer.RiderLocation
 
+#spring:
+#  kafka:
+#    consumer:
+#      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      properties:
+#        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+#        spring.json.trusted.packages: "*"
+#        spring.json.value.default.type: com.example.consumer.consumer.RiderLocation
+#
+#server:
+#  port: 8081
+
+# --------------------- 280. Transition to Spring Cloud Streams with Apache Kafka - Consumer End ----------
+#spring:
+#  application:
+#    name: consumer
+#  cloud:
+#    stream:
+#      function:
+#        definition: processRiderLocation
+#      bindings:
+#        processRiderLocation-in-0:
+#          destination: my-topic-new
+#    kafka:
+#      binder:
+#        brokers: localhost:9092
+#
+#
+#server:
+#  port: 8081
+## ------ fixed -------------
 spring:
-  kafka:
-    consumer:
-      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      properties:
-        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-        spring.json.trusted.packages: "*"
-        spring.json.value.default.type: com.example.consumer.consumer.RiderLocation
+  application:
+    name: consumer
+  cloud:
+    function:
+      definition: processRiderLocation
+    stream:
+      bindings:
+        processRiderLocation-in-0:
+          destination: my-topic-new
+          content-type: application/json
+      kafka:
+        binder:
+          brokers: localhost:9092
 
 server:
   port: 8081
+
