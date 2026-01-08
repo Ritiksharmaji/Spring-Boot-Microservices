@@ -7,7 +7,6 @@ import com.app_ecom.model.*;
 import com.app_ecom.repository.OrderRepository;
 //import com.app_ecom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;

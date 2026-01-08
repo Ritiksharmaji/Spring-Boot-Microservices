@@ -1,11 +1,46 @@
+#spring:
+#  application:
+#    name: notification
+##  rabbitmq:
+##    host: localhost
+##    port: 5672
+##    username: guest
+##    password: guest
+#  cloud:
+#    function:
+#      definition: orderCreated
+#    stream:
+#      function:
+#        definition: orderCreated
+#      bindings:
+#        orderCreated-in-0:
+#          destination: order.exchange
+#          content-type: application/json
+#
+#  rabbitmq:
+#    host: ${RABBITMQ_HOST:localhost}
+#    port: ${RABBITMQ_PORT:5672}
+#    username: ${RABBIT_USERNAME:guest}
+#    password: ${RABBIT_PASSWORD:guest}
+#    virtual-host: ${RABBITMQ_VHOST:guest}
+#    connection-timeout: 30000
+#    ssl:
+#      enabled: ${RABBITMQ_SSL:true}
+#rabbitmq:
+#  exchange:
+#    name: order.exchange
+#  queue:
+#    name: order.queue
+#  routing:
+#    key: order.tracking
+#
+#server:
+#  port: 8084
+
+## =========== working with kafka ======
 spring:
   application:
     name: notification
-#  rabbitmq:
-#    host: localhost
-#    port: 5672
-#    username: guest
-#    password: guest
   cloud:
     function:
       definition: orderCreated
@@ -16,23 +51,8 @@ spring:
         orderCreated-in-0:
           destination: order.exchange
           content-type: application/json
-
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBIT_USERNAME:guest}
-    password: ${RABBIT_PASSWORD:guest}
-    virtual-host: ${RABBITMQ_VHOST:guest}
-    connection-timeout: 30000
-    ssl:
-      enabled: ${RABBITMQ_SSL:true}
-rabbitmq:
-  exchange:
-    name: order.exchange
-  queue:
-    name: order.queue
-  routing:
-    key: order.tracking
-
+      kafka:
+        binder:
+          brokers: localhost:9092
 server:
   port: 8084
