@@ -3,12 +3,16 @@ package com.notification.notification;
 
 import com.notification.notification.payload.OrderCreateEvent;
 import com.notification.notification.payload.OrderStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 @Service
+@Slf4j
 public class OrderEventConsumer {
 
 //    @RabbitListener(queues = "${rabbitmq.queue.name}")
@@ -29,22 +33,29 @@ public class OrderEventConsumer {
 //    }
 
     // ============ by dto ==============
-    @RabbitListener(queues = "${rabbitmq.queue.name}")
-    public void handleOrderEvent(OrderCreateEvent orderEvent){
-        System.out.println("Received Order Event:"+ orderEvent);
+//    @RabbitListener(queues = "${rabbitmq.queue.name}")
+//    public void handleOrderEvent(OrderCreateEvent orderEvent){
+//        System.out.println("Received Order Event:"+ orderEvent);
+//
+//        Long orderId = orderEvent.getOrderId();
+//        OrderStatus status = orderEvent.getStatus();
+//        System.out.println("Order ID:"+ orderId);
+//        System.out.println("Order status:"+ status);
+//
+//        // now after getting message we can send them to
+//        // update Database
+//        // send emails
+//        // send notifiaction
+//        // generate Invoice
+//        // send seller notification
+//
+//
+//    }
 
-        Long orderId = orderEvent.getOrderId();
-        OrderStatus status = orderEvent.getStatus();
-        System.out.println("Order ID:"+ orderId);
-        System.out.println("Order status:"+ status);
-
-        // now after getting message we can send them to
-        // update Database
-        // send emails
-        // send notifiaction
-        // generate Invoice
-        // send seller notification
-
-
+    @Bean
+    public Consumer<OrderCreateEvent> orderCreated(){
+        return event ->{
+            log.info("Received order create event for order:{}", event.getOrderId());
+        };
     }
 }

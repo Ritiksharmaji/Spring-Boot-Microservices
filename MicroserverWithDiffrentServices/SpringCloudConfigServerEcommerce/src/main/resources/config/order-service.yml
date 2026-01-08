@@ -242,6 +242,130 @@
 #        timeoutDuration: 0
 #
  ## ----------- for postgresQL with  docker ---
+#server:
+#  port: ${SERVER_PORT:8083}
+#
+#spring:
+#  application:
+#    name: ORDER-SERVICE
+#
+#  datasource:
+#    #url: jdbc:postgresql://postgres:5432/ecomdb
+#    url: jdbc:postgresql://localhost:5432/ecomdb
+#    username: embarkx
+#    password: embarkx
+#    driver-class-name: org.postgresql.Driver
+#
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+#    database: postgresql
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.PostgreSQLDialect
+#        jdbc:
+#          time_zone: Asia/Kolkata
+#
+#  rabbitmq:
+#    host: ${RABBITMQ_HOST:localhost}
+#    port: ${RABBITMQ_PORT:5672}
+#    username: ${RABBIT_USERNAME:guest}
+#    password: ${RABBIT_PASSWORD:guest}
+#    virtual-host: ${RABBITMQ_VHOST:guest}
+#    connection-timeout: 30000
+#    ssl:
+#      enabled: ${RABBITMQ_SSL:true}
+#
+#rabbitmq:
+#  exchange:
+#    name: order.exchange
+#  queue:
+#    name: order.queue
+#  routing:
+#    key: order.tracking
+#
+#
+#
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+#  endpoint:
+#    health:
+#      show-details: always
+#  health:
+#    circuitbreakers:
+#      enabled: true
+#  tracing:
+#    sampling:
+#      probability: 1.0
+#
+#info:
+#  app:
+#    name: E-Commerce-App-OrderModel
+#    description: Spring Boot Actuator Info Example
+#    version: 1.0.0
+#  developer:
+#    name: Ritik Sharma
+#    email: ritik@example.com
+#
+#app:
+#  message: "Hello-order-auto-refresh"
+#
+#eureka:
+#  client:
+#    service-url:
+##      defaultZone: http://eureka-server:8761/eureka/
+#      defaultZone: http://localhost:8761/eureka/
+#    register-with-eureka: true
+#    fetch-registry: true
+#  instance:
+#    prefer-ip-address: true
+#
+#logging:
+#  level:
+#    root: INFO
+#    com.app_ecom.order: TRACE
+#  file:
+#    name: logs/${spring.application.name}.log
+#  logback:
+#    rollingpolicy:
+#      max-file-size: 5MB
+#      max-history: 7
+#
+## ===============================
+## Resilience4j Configuration
+## ===============================
+#resilience4j:
+#
+#  circuitbreaker:
+#    instances:
+#      productService:
+#        slidingWindowType: COUNT_BASED
+#        slidingWindowSize: 10
+#        minimumNumberOfCalls: 5
+#        failureRateThreshold: 50
+#        waitDurationInOpenState: 10s
+#        permittedNumberOfCallsInHalfOpenState: 3
+#        automaticTransitionFromOpenToHalfOpenEnabled: true
+#        registerHealthIndicator: true
+#  retry:
+#    instances:
+#      retryBreaker:
+#        maxAttempts: 5
+#        waitDuration: 500ms
+#
+#  ratelimiter:
+#    instances:
+#      retryBreaker:
+#        limitForPeriod: 2
+#        limitRefreshPeriod: 4s
+#        timeoutDuration: 0
+
+##------------ working with spring cloud function and streams ---
 server:
   port: ${SERVER_PORT:8083}
 
@@ -250,7 +374,6 @@ spring:
     name: ORDER-SERVICE
 
   datasource:
-    #url: jdbc:postgresql://postgres:5432/ecomdb
     url: jdbc:postgresql://localhost:5432/ecomdb
     username: embarkx
     password: embarkx
@@ -266,6 +389,17 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
           time_zone: Asia/Kolkata
+  cloud:
+    stream:
+      bindings:
+        createOrder-out-0:
+          destination: order.exchange
+          content-type: application/json
+      rabbit:
+        bindings:
+          createOrder-out-0:
+            producer:
+              routing-key-expression: '''order.tracking'''
 
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
@@ -318,7 +452,7 @@ app:
 eureka:
   client:
     service-url:
-#      defaultZone: http://eureka-server:8761/eureka/
+      #      defaultZone: http://eureka-server:8761/eureka/
       defaultZone: http://localhost:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
@@ -364,4 +498,3 @@ resilience4j:
         limitForPeriod: 2
         limitRefreshPeriod: 4s
         timeoutDuration: 0
-

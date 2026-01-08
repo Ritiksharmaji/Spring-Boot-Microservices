@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -25,14 +26,14 @@ public class OrderService {
     //private final UserRepository userRepository;
 
     private final OrderRepository orderRepository;
-    // private final StreamBridge streamBridge;
+    private final StreamBridge streamBridge;
 
-    private final RabbitTemplate rabbitTemplate;
-
-    @Value("${rabbitmq.exchange.name}")
-    private String exchangeName;
-    @Value("${rabbitmq.routing.key}")
-    private String routingKey;
+//    private final RabbitTemplate rabbitTemplate;
+//
+//    @Value("${rabbitmq.exchange.name}")
+//    private String exchangeName;
+//    @Value("${rabbitmq.routing.key}")
+//    private String routingKey;
 
     public Optional<OrderResponse> createOrder(String userId) {
         // Validate for cart items
@@ -94,8 +95,9 @@ public class OrderService {
                 savedOrder.getTotalAmount(),
                 savedOrder.getCreateAt()
         );
-        rabbitTemplate.convertAndSend(exchangeName,
-                routingKey, event);
+//        rabbitTemplate.convertAndSend(exchangeName,
+//                routingKey, event);
+        streamBridge.send("createOrder-out-0", event);
 
 
         // Publish order created event

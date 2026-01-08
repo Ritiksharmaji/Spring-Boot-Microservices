@@ -6,6 +6,17 @@ spring:
 #    port: 5672
 #    username: guest
 #    password: guest
+  cloud:
+    function:
+      definition: orderCreated
+    stream:
+      function:
+        definition: orderCreated
+      bindings:
+        orderCreated-in-0:
+          destination: order.exchange
+          content-type: application/json
+
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -22,5 +33,6 @@ rabbitmq:
     name: order.queue
   routing:
     key: order.tracking
+
 server:
   port: 8084
