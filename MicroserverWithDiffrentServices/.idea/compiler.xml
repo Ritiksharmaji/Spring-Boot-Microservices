@@ -18,6 +18,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="EurekaServer" />
+        <module name="Oauth" />
         <module name="SpringCloudServerEcommerce" />
         <module name="eurekaEcommerce" />
         <module name="apiGateWay" />
@@ -66,6 +67,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="EurekaServer" options="-parameters" />
+      <module name="Oauth" options="-parameters" />
       <module name="SpringCloudServerEcommerce" options="-parameters" />
       <module name="apiGateWay" options="-parameters" />
       <module name="consumer" options="-parameters" />
