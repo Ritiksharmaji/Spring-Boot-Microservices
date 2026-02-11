@@ -18,6 +18,9 @@
         <option value="$PROJECT_DIR$/kafka/consumer/pom.xml" />
         <option value="$PROJECT_DIR$/kafka/producer/pom.xml" />
         <option value="$PROJECT_DIR$/Oauth/pom.xml" />
+        <option value="$PROJECT_DIR$/client-credentials/resourceservice/pom.xml" />
+        <option value="$PROJECT_DIR$/client-credentials/pure-client/pom.xml" />
+        <option value="$PROJECT_DIR$/client-credentials/NormalClientWithOAuthServer/pom.xml" />
       </list>
     </option>
   </component>

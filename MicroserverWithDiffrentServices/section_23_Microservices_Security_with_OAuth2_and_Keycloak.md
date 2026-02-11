@@ -297,4 +297,943 @@ Just tell me 👍
 5) now if we want to get the user details as well can 
 6) ![img_972.png](img_972.png)
 7) ![img_973.png](img_973.png)
-8) 
+
+## -----------  303. Introduction to Client Credentials Flow ---
+1) ![img_974.png](img_974.png)
+2) ![img_975.png](img_975.png)
+3) ![img_976.png](img_976.png)
+4) ![img_977.png](img_977.png)
+5) ![img_978.png](img_978.png)
+6) ![img_979.png](img_979.png)
+
+## ------ 304. Implementing Client Credentials Flow --
+1) know we are going to create two new services one services will have protected data which is exposed by protected api and second one is tying to consume that data which is protected by first service and both services are not client those are machine
+2) ![img_980.png](img_980.png)
+3) ![img_981.png](img_981.png)
+4) now create one one which is client which trying to access that resource from the resource-service
+5) ![img_982.png](img_982.png)
+6) ![img_983.png](img_983.png)
+7) now start the keyclock 
+8) write the below command in 
+```declarative
+  docker run -d -p 8483:8080 -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:26.5.0 start-dev --hostname=localhos
+```
+9) ![img_994.png](img_994.png)
+10) ![img_995.png](img_995.png)
+11) ![img_996.png](img_996.png)
+12) 
+7) now create one more client 
+8) ![img_984.png](img_984.png)
+9) ![img_985.png](img_985.png)
+10) ![img_986.png](img_986.png)
+11) ![img_987.png](img_987.png)
+12) ![img_988.png](img_988.png)
+13) ![img_989.png](img_989.png)
+14) now start working on resource service
+15) ![img_990.png](img_990.png)
+16) to get the above resource-service issurs url follow the below
+16) ![img_997.png](img_997.png)
+17) ![img_998.png](img_998.png)
+18) 
+16) after this we need to add the security-configuration
+17) ![img_991.png](img_991.png)
+18) now we need a protected API which client want to access
+19) ![img_992.png](img_992.png)
+20) now resource-server is configure propally now we will set the client
+21) first configure the .yml file of client
+22) ![img_999.png](img_999.png)
+23) ![img_1000.png](img_1000.png)
+24) ![img_1001.png](img_1001.png)
+25) now ones configuration for client done we start to do the code for client 
+26) ![img_1002.png](img_1002.png)
+27) ![img_1003.png](img_1003.png)
+28) ![img_1004.png](img_1004.png)
+29) ![img_1005.png](img_1005.png)
+30) now we will start the resource application 
+31) ![img_1006.png](img_1006.png)
+32) then start the client 
+33) ![img_1007.png](img_1007.png)
+
+soluation :
+
+Very good 👏 your setup is almost correct.
+The problem is **not in your client code logic** — it is most likely in **Keycloak configuration or token validation**.
+
+Let’s debug properly step-by-step.
+
+---
+
+# ✅ First — Your Architecture Is Correct
+
+You have:
+
+### 🔐 Resource Server (8082)
+
+* Validates JWT using:
+
+```yaml
+issuer-uri: http://localhost:8483/realms/auth2
+```
+
+### 🤖 Client (8081)
+
+* Uses client_credentials
+* Gets token from:
+
+```
+http://127.0.0.1:8483/realms/auth2/protocol/openid-connect/token
+```
+
+Code logic ✔ correct
+OAuth2AuthorizedClientManager ✔ correct
+Bearer token attached ✔ correct
+
+So why 401?
+
+---
+
+# 🔴 The REAL Problem (Very Common)
+
+In **Client Credentials Flow**, the token does NOT contain:
+
+```
+scope
+roles
+audience (correct resource)
+```
+
+And Spring Resource Server by default validates:
+
+* issuer
+* signature
+* expiration
+* audience (sometimes)
+* scopes/authorities
+
+Most likely your token does not have proper audience or roles for Service-2.
+
+---
+
+# ✅ Step 1 — Print The Token
+
+Add this temporarily:
+
+```java
+System.out.println("Access Token: " + accessToken);
+```
+
+Copy the token.
+
+Go to:
+
+👉 [https://jwt.io](https://jwt.io)
+
+Decode it.
+
+Check:
+
+* iss
+* aud
+* scope
+* realm_access
+* resource_access
+
+---
+
+# 🔴 Most Likely Issue #1 — Missing Audience
+
+Your resource server expects token issued for it.
+
+In Keycloak:
+
+Go to:
+
+```
+Client → oauth2-client-credintials
+```
+
+Then:
+
+### Client Settings → Access Type
+
+Must be:
+
+```
+Confidential
+```
+
+---
+
+### Then VERY IMPORTANT:
+
+Go to:
+
+```
+Client → oauth2-client-credintials → Client Scopes
+```
+
+Make sure:
+
+* "openid" default scope is added
+* or create a client scope that adds audience
+
+---
+
+# 🔴 Most Common Fix (Audience Mapper)
+
+In Keycloak:
+
+1. Go to your client
+2. Click **Client Scopes**
+3. Add a new mapper:
+
+```
+Mapper Type: Audience
+Included Client Audience: resourceservice
+```
+
+OR
+
+Go to:
+
+```
+Client → Mappers → Create
+```
+
+Add:
+
+```
+Name: audience
+Mapper Type: Audience
+Included Client Audience: resourceservice
+```
+
+This ensures token has:
+
+```json
+"aud": "resourceservice"
+```
+
+---
+
+# 🔴 Most Common Issue #2 — Different Host
+
+You are using:
+
+Resource Server:
+
+```
+issuer-uri: http://localhost:8483
+```
+
+Client:
+
+```
+token-uri: http://127.0.0.1:8483
+```
+
+⚠️ localhost ≠ 127.0.0.1 in strict validation sometimes.
+
+👉 Change token-uri to:
+
+```
+http://localhost:8483/realms/auth2/protocol/openid-connect/token
+```
+
+Keep everything consistent.
+
+---
+
+# 🔴 Most Common Issue #3 — Realm Mismatch
+
+Make sure:
+
+```
+iss in JWT =
+http://localhost:8483/realms/auth2
+```
+
+If it says 127.0.0.1 and your resource server expects localhost → 401.
+
+They must match EXACTLY.
+
+---
+
+# 🧪 Quick Debug Trick
+
+Temporarily allow all in resource server:
+
+```java
+.authorizeHttpRequests(auth -> auth
+        .anyRequest().permitAll()
+)
+```
+
+If it works → token validation problem
+If still fails → client not sending token
+
+---
+
+# 🎯 What I Think Is Happening
+
+Most likely:
+
+✔ Token is generated
+✔ Token is attached
+❌ Resource server rejects due to issuer mismatch or audience
+
+---
+
+# 🚀 Clean Checklist
+
+### In Client YAML
+
+Change:
+
+```
+token-uri: http://127.0.0.1:8483
+```
+
+to:
+
+```
+token-uri: http://localhost:8483
+```
+
+---
+
+### In Keycloak
+
+Ensure:
+
+* Client type = Confidential
+* Service Accounts Enabled = ON
+* Audience mapper exists OR disable audience validation
+
+---
+
+# 💥 If You Want Immediate Working Solution
+
+Add this in resource server to ignore audience:
+
+```yaml
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8483/realms/auth2
+          audiences: []
+```
+
+Or customize decoder bean.
+
+---
+
+# 🎓 Final Question For You
+
+When you decode JWT:
+
+What is the value of:
+
+```
+iss
+aud
+```
+
+Send me those two values only.
+Then I will give you exact final fix.
+
+```
+
+Here is a **correct, complete `application.yml`** for a **pure OAuth2 client using Client Credentials Flow**
+👉 **Service-to-Service (no user, no browser)**
+👉 **Calling a secured Resource Server (8082)**
+👉 **Keycloak as Auth Server**
+
+---
+
+## ✅ `application.yml` — PURE CLIENT (8081)
+
+```yaml
+spring:
+  application:
+    name: pure-client
+
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak-client:
+            client-id: pure-client
+            client-secret: YOUR_CLIENT_SECRET
+            authorization-grant-type: client_credentials
+            scope:
+              - payment.read
+
+        provider:
+          keycloak:
+            token-uri: http://localhost:8483/realms/auth2/protocol/openid-connect/token
+
+server:
+  port: 8081
+```
+
+---
+![img_1008.png](img_1008.png)
+
+=== output ===
+![img_1009.png](img_1009.png)
+
+
+## 🔑 Important Notes
+
+### ✔ `client-id`
+
+Must be the **Keycloak client ID**
+
+### ✔ `client-secret`
+
+From:
+
+```
+Keycloak → Clients → pure-client → Credentials
+```
+
+### ✔ `scope`
+
+Must match **Keycloak client scopes / roles**
+
+---
+
+## ✅ Required Dependency (Client App)
+
+```xml
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-oauth2-client</artifactId>
+</dependency>
+```
+
+---
+================ Belows are using WebClient as we have did using RestTemp as above ===
+## ✅ WebClient Config (TOKEN AUTO-INJECTION)
+
+```java
+@Configuration
+public class WebClientConfig {
+
+    @Bean
+    WebClient webClient(ClientRegistrationRepository repo,
+                        OAuth2AuthorizedClientService service) {
+
+        ServletOAuth2AuthorizedClientExchangeFilterFunction oauth =
+                new ServletOAuth2AuthorizedClientExchangeFilterFunction(repo, service);
+
+        oauth.setDefaultClientRegistrationId("keycloak-client");
+
+        return WebClient.builder()
+                .apply(oauth.oauth2Configuration())
+                .build();
+    }
+}
+```
+
+---
+
+## ✅ Calling Resource Server (8082)
+
+```java
+@RestController
+@RequestMapping("/client")
+public class ClientController {
+
+    private final WebClient webClient;
+
+    public ClientController(WebClient webClient) {
+        this.webClient = webClient;
+    }
+
+    @GetMapping("/call-resource")
+    public String callResource() {
+        return webClient.get()
+                .uri("http://localhost:8082/api/hello")
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+    }
+}
+```
+
+---
+
+## 🧪 Full Flow Test
+
+1️⃣ Start Keycloak (8483)
+2️⃣ Start Resource Server (8082)
+3️⃣ Start Client (8081)
+4️⃣ Hit:
+
+```
+GET http://localhost:8081/client/call-resource
+```
+
+---
+
+## ❌ If You See Errors
+
+| Error           | Reason          |
+| --------------- | --------------- |
+| 401             | Scope missing   |
+| 403             | Role not mapped |
+| invalid_client  | Wrong secret    |
+| issuer mismatch | Wrong realm     |
+
+---
+
+## 🧠 Architecture You Now Have
+
+```
+pure-client (8081)
+   ↓ (client_credentials)
+Keycloak (8483)
+   ↓ (JWT)
+resource-service (8082)
+```
+
+🔥 **This is real production microservice security**
+
+---
+
+## 🚀 Next (Choose One)
+
+* Scope → Role mapping in Keycloak
+* API Gateway with OAuth2
+* Token relay between services
+* Securing Kafka with OAuth2
+* Full interview-ready explanation
+
+Just say **next** 💪
+
+Good catch — there are **2 problems** here:
+1️⃣ Java code has a **syntax + design issue**
+2️⃣ OAuth2 **will NOT work automatically with plain `RestTemplate`**
+
+I’ll fix **both properly** ✅
+
+---
+
+# ✅ FIX 1: Java Code (Syntax + Correct OAuth2 Usage)
+
+### ❌ Problem in your code
+
+```java
+return new RestTemplate()
+```
+
+➡ missing `;`
+
+But **bigger issue** ❌
+👉 `RestTemplate` **does NOT automatically attach OAuth2 tokens**
+
+For **Client Credentials Flow**, you must use:
+✔ `OAuth2AuthorizedClientManager`
+✔ or `WebClient` (recommended)
+
+---
+
+# ✅ RECOMMENDED FIX (Production-Ready)
+
+## ✔ Use `WebClient` (Best Practice)
+
+### ✅ `PureClientApplication.java`
+
+```java
+package com.client.example.pure_client;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class PureClientApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(PureClientApplication.class, args);
+    }
+}
+```
+
+---
+
+## ✅ OAuth2 WebClient Configuration
+
+### `WebClientConfig.java`
+
+```java
+package com.client.example.pure_client.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.client.*;
+import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Configuration
+public class WebClientConfig {
+
+    @Bean
+    public WebClient webClient(
+            ClientRegistrationRepository clientRegistrationRepository,
+            OAuth2AuthorizedClientService authorizedClientService
+    ) {
+
+        ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2 =
+                new ServletOAuth2AuthorizedClientExchangeFilterFunction(
+                        clientRegistrationRepository,
+                        authorizedClientService
+                );
+
+        // IMPORTANT: registration id from application.yml
+        oauth2.setDefaultClientRegistrationId("keycloak-client");
+
+        return WebClient.builder()
+                .apply(oauth2.oauth2Configuration())
+                .build();
+    }
+}
+```
+
+---
+
+## ✅ Client Controller (Calling Resource Service)
+
+```java
+package com.client.example.pure_client.controller;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@RestController
+public class ClientController {
+
+    private final WebClient webClient;
+
+    @Value("${service2.url}")
+    private String service2Url;
+
+    public ClientController(WebClient webClient) {
+        this.webClient = webClient;
+    }
+
+    @GetMapping("/call-service2")
+    public String callService2() {
+        return webClient.get()
+                .uri(service2Url + "/api/hello")
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+    }
+}
+```
+
+---
+
+# ✅ FIX 2: application.yml (Mostly Correct, Small Improvements)
+
+Your YAML is **almost perfect** 👍
+Just **clean & finalize it**
+
+```yaml
+spring:
+  application:
+    name: pure-client
+
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak-client:
+            client-id: oauth2-client-credintials
+            client-secret: j59g9M8g48dVB1u26z50QaFjxypgGvWf
+            authorization-grant-type: client_credentials
+            scope:
+              - payment.read
+
+        provider:
+          keycloak:
+            token-uri: http://localhost:8483/realms/auth2/protocol/openid-connect/token
+
+service2:
+  url: http://localhost:8082
+
+server:
+  port: 8081
+```
+
+### ❌ Removed `openid`
+
+`openid` is **NOT needed** for client credentials
+(no user, no ID token)
+
+---
+
+# ✅ Required Dependency (Don’t Miss This)
+
+```xml
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-oauth2-client</artifactId>
+</dependency>
+
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-webflux</artifactId>
+</dependency>
+```
+
+---
+
+# 🧪 End-to-End Test
+
+1️⃣ Start **Keycloak** (8483)
+2️⃣ Start **Resource Service** (8082)
+3️⃣ Start **Pure Client** (8081)
+
+Hit:
+
+```
+GET http://localhost:8081/call-service2
+```
+
+### ✅ Expected Output
+
+```
+Hello from Resource Server
+```
+
+---
+
+# ❌ If Something Fails
+
+| Error              | Cause                               |
+| ------------------ | ----------------------------------- |
+| 401                | Scope missing in token              |
+| 403                | Scope not mapped in resource server |
+| invalid_client     | Wrong secret                        |
+| Connection refused | Service 8082 not running            |
+
+---
+
+# 🔥 You Are Now Using REAL Client Credentials Flow
+
+✔ No user
+✔ Secure JWT
+✔ Token auto-managed
+✔ Microservice ready
+
+---
+
+## 🚀 Next (Tell Me What You Want)
+
+* Role vs Scope mapping in Keycloak
+* Securing API Gateway
+* Token relay pattern
+* Client Credentials interview Q&A
+* RestTemplate version (if interviewer asks)
+
+Just say **next** 💪
+
+![img_993.png](img_993.png)
+Great screenshot 👍 — this **actually proves your configuration is working**, but there’s a **conceptual misunderstanding** (very common, even for experienced devs).
+
+Let’s clear it **once and for all**.
+
+---
+
+# ❌ Why you are seeing a **blank “Login with OAuth 2.0” page**
+
+You opened:
+
+```
+http://localhost:8081/login
+```
+
+And you see:
+
+> **Login with OAuth 2.0**
+> (no buttons, no Keycloak redirect)
+
+### 🚨 This is NOT an error
+
+### 🚨 This is EXPECTED behavior for **Client Credentials Flow**
+
+---
+
+# 🧠 CORE CONCEPT (MOST IMPORTANT)
+
+## 🔐 Client Credentials Flow ≠ User Login
+
+| Flow                   | Who logs in?         | Browser used? |
+| ---------------------- | -------------------- | ------------- |
+| Authorization Code     | 👤 User              | ✅ Yes         |
+| Password Grant         | 👤 User              | ⚠️ Deprecated |
+| **Client Credentials** | 🤖 Machine (Service) | ❌ NO          |
+
+👉 **Client Credentials Flow has NO LOGIN PAGE**
+
+---
+
+# 🔥 Why the page is blank
+
+Spring shows the OAuth login page **only when there are OAuth clients that support user login**.
+
+Your client:
+
+```yaml
+authorization-grant-type: client_credentials
+```
+
+🚫 Client Credentials **does not involve a user**
+🚫 No redirect to Keycloak
+🚫 No login form
+🚫 No button shown
+
+So Spring renders an **empty login page**.
+
+✔️ This means Spring is behaving correctly.
+
+---
+
+# ✅ HOW CLIENT CREDENTIALS FLOW REALLY WORKS
+
+### ❌ WRONG WAY (what you tried)
+
+```
+Browser → /login → expect Keycloak page
+```
+
+### ✅ CORRECT WAY
+
+```
+Service → Token Endpoint → Access Token → Call Resource Server
+```
+
+---
+
+# 🧪 CORRECT TEST (DO THIS)
+
+### Call your client endpoint directly:
+
+```
+GET http://localhost:8081/call-service2
+```
+
+### What happens internally:
+
+1. Spring requests token from Keycloak
+2. Keycloak issues **access token**
+3. Client calls resource server (8082)
+4. Resource server validates JWT
+5. Response returned
+
+✔️ **NO browser login involved**
+
+---
+
+# 🧩 WHY `/login` EXISTS AT ALL THEN?
+
+Spring Security auto-configures `/login` **if OAuth Client is on classpath**.
+
+But:
+
+* No `authorization_code` clients → no buttons
+* Only `client_credentials` → empty page
+
+---
+
+# 🔍 IF YOU WANT A LOGIN PAGE (OPTIONAL)
+
+You must use:
+
+```yaml
+authorization-grant-type: authorization_code
+```
+
+and add:
+
+```yaml
+redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+```
+
+👉 That’s a **different flow** (user-based login)
+
+---
+
+# 🏆 INTERVIEW-READY EXPLANATION (VERY IMPORTANT)
+
+> “Client Credentials Flow is used for service-to-service communication.
+> It does not involve a browser or user authentication.
+> Therefore, there is no login page or redirect.”
+
+If you say this in interviews → **instant strong impression** 💯
+
+---
+
+# ✅ SUMMARY (PIN THIS)
+
+✔ Your config is **correct**
+✔ Blank login page is **expected**
+✔ Client Credentials ≠ user login
+✔ Test via API, not browser
+✔ You are implementing **real microservice security**
+
+---
+
+## 🔥 Next Level (Tell me what you want next)
+
+* Decode & inspect JWT token
+* Map Keycloak roles → Spring authorities
+* Secure endpoints with scopes
+* API Gateway + Client Credentials
+* Common interview traps in OAuth2
+
+Just say 👉 **next** 🚀
+
+## === 306. Client as OAuth2 Client and Resource Server ===
+1) till now we have create a client which is console based now we are going to create a client which expose the api throw the postman
+2) now creating new service 
+3) ![img_1010.png](img_1010.png)
+4) then load it as moven project
+5) ![img_1011.png](img_1011.png)
+6) now this service will act like both client as well resource service so we need to config it as both type for that first get all the config of client and paste to it 
+7) ![img_1012.png](img_1012.png)
+8) now  we need to security config to validate the token which will come from postman so we can get that from resourceservice or we can create as well 
+9) ![img_1013.png](img_1013.png)
+10) after this we need to prepare our client to communicate with resource server
+11) we can take that client code accept to commond line and paste into security config below in same file 
+12) ![img_1014.png](img_1014.png)
+13) now after this we need to create two files one is a controller which will expose the endpoint and second one we need to create a class which as a method called fetchData which will do the job to communicating to resource server and get the data .
+14) ![img_1015.png](img_1015.png)
+15) ![img_1016.png](img_1016.png)
+16) then start the application:
+17) ![img_1017.png](img_1017.png)
+18) ![img_1018.png](img_1018.png)
+19) means we need to pass the token of keyclock using postman
+20) ![img_1019.png](img_1019.png)
+21) ![img_1020.png](img_1020.png)
+22) ![img_1021.png](img_1021.png)
+23) ![img_1022.png](img_1022.png)
+24) other way is doing is 
+25) ![img_1023.png](img_1023.png)
+26) ![img_1024.png](img_1024.png)
+27) ![img_1025.png](img_1025.png)
+28) ![img_1026.png](img_1026.png)
+29) ![img_1027.png](img_1027.png)
+30) so till now we are getting token from postman and validating it then generation new token and by tat new token we are calling requst to resource service 
+31) ![img_1028.png](img_1028.png)
+32) now we are going to use the same token which we are sending by postman
+33) ![img_1029.png](img_1029.png)
+34) ![img_1030.png](img_1030.png)
+35) 

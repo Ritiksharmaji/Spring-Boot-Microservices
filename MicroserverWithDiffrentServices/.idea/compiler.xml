@@ -20,10 +20,13 @@
         <module name="EurekaServer" />
         <module name="Oauth" />
         <module name="SpringCloudServerEcommerce" />
+        <module name="resourceservice" />
         <module name="eurekaEcommerce" />
         <module name="apiGateWay" />
         <module name="consumer (1) (com.example.consumer)" />
         <module name="producer" />
+        <module name="pure-client" />
+        <module name="NormalClientWithOAuthServer" />
         <module name="consumer" />
       </profile>
       <profile name="Annotation profile for provider" enabled="true">
@@ -67,6 +70,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="EurekaServer" options="-parameters" />
+      <module name="NormalClientWithOAuthServer" options="-parameters" />
       <module name="Oauth" options="-parameters" />
       <module name="SpringCloudServerEcommerce" options="-parameters" />
       <module name="apiGateWay" options="-parameters" />
@@ -80,6 +84,8 @@
       <module name="notification" options="-parameters" />
       <module name="producer" options="-parameters" />
       <module name="provider" options="-parameters" />
+      <module name="pure-client" options="-parameters" />
+      <module name="resourceservice" options="-parameters" />
     </option>
   </component>
 </project>
