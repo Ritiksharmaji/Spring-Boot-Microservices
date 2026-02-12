@@ -1568,3 +1568,1060 @@ If you know:
 * OAuth2 interview preparation (MNC level)
 
 Just say **“next”** 🔥
+
+## ========== Introduction to PKCE Flow from 0 to 100 ===========
+Perfect 👌 Let’s understand **PKCE (Proof Key for Code Exchange)** from absolute beginner level to advanced level — step by step.
+
+I’ll explain it in a way that makes it crystal clear for interviews + real projects.
+
+---
+
+# 🔥 1️⃣ Why PKCE Even Exists?
+
+Before PKCE, we had:
+
+### OAuth2 Authorization Code Flow
+
+```
+Client → Authorization Server → Get Code
+Client → Exchange Code → Get Token
+```
+
+This works fine for:
+
+* Backend applications (confidential clients)
+* Apps that can securely store client_secret
+
+---
+
+## ❌ The Problem
+
+Public clients like:
+
+* Mobile Apps
+* React Apps
+* SPA (Single Page Apps)
+* Desktop apps
+
+CANNOT safely store `client_secret`.
+
+If attacker steals the authorization code,
+they can exchange it for token.
+
+🚨 This is called:
+**Authorization Code Interception Attack**
+
+---
+
+# 💡 2️⃣ What PKCE Solves
+
+PKCE prevents:
+
+> Even if someone steals the authorization code,
+> they cannot exchange it for a token.
+
+Without knowing the secret proof.
+
+---
+
+# 🧠 3️⃣ PKCE in Simple Words
+
+PKCE adds a **dynamic secret per request**.
+
+Instead of:
+
+```
+Client Secret (static)
+```
+
+We generate:
+
+```
+Code Verifier (random secret)
+Code Challenge (hashed version of verifier)
+```
+
+---
+
+# 🔥 4️⃣ Full PKCE Flow (Step by Step)
+
+Let’s go 0 → 100
+
+---
+
+## Step 1: Client Generates Code Verifier
+
+Random high-entropy string:
+
+```
+code_verifier = random_128_char_string
+```
+
+Example:
+
+```
+dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+```
+
+---
+
+## Step 2: Create Code Challenge
+
+We hash it:
+
+```
+code_challenge = BASE64URL(SHA256(code_verifier))
+```
+
+Now we have:
+
+* code_verifier (secret)
+* code_challenge (public)
+
+---
+
+## Step 3: Authorization Request
+
+Client redirects user:
+
+```
+GET /authorize?
+  response_type=code
+  &client_id=abc
+  &code_challenge=XYZ
+  &code_challenge_method=S256
+```
+
+Important:
+
+We DO NOT send code_verifier here.
+
+---
+
+## Step 4: User Logs In
+
+Authorization server:
+
+* Authenticates user
+* Stores:
+
+    * authorization_code
+    * code_challenge
+
+---
+
+## Step 5: Authorization Server Sends Code
+
+```
+Client receives:
+?code=AUTH_CODE_123
+```
+
+---
+
+## Step 6: Token Exchange
+
+Now client sends:
+
+```
+POST /token
+  grant_type=authorization_code
+  code=AUTH_CODE_123
+  code_verifier=original_secret
+```
+
+---
+
+## Step 7: Server Verifies
+
+Server:
+
+1. Takes received `code_verifier`
+2. Hashes it
+3. Compares with stored `code_challenge`
+
+If match → issue token
+If not → reject
+
+---
+
+# 🔥 Why This Is Secure
+
+Even if attacker steals:
+
+```
+authorization_code
+```
+
+They still need:
+
+```
+code_verifier
+```
+
+Which was never sent publicly.
+
+So token exchange fails.
+
+---
+
+# 🧠 5️⃣ Visual Flow
+
+```
+Client:
+  generate verifier
+  create challenge
+       ↓
+Authorization Server:
+  store challenge
+       ↓
+Client:
+  send verifier
+       ↓
+Server:
+  hash verifier
+  compare with stored challenge
+       ↓
+If match → token
+```
+
+---
+
+# 🔥 6️⃣ PKCE vs Client Secret
+
+| Feature                 | Client Secret | PKCE |
+| ----------------------- | ------------- | ---- |
+| Static secret           | Yes           | No   |
+| Safe for SPA            | ❌             | ✅    |
+| Safe for mobile         | ❌             | ✅    |
+| Required in modern apps | No            | YES  |
+
+---
+
+# 🚀 7️⃣ Where PKCE Is Mandatory Today
+
+PKCE is REQUIRED for:
+
+* Mobile apps
+* React apps
+* Public clients
+* OAuth2 Authorization Code flow in modern systems
+
+Even backend apps now often use PKCE.
+
+---
+
+# 🔥 8️⃣ In Keycloak
+
+To enable PKCE:
+
+Client → Settings:
+
+* Access Type: Public
+* Enable PKCE
+* Method: S256
+
+That’s it.
+
+---
+
+# 🏆 9️⃣ Interview Level Explanation
+
+If interviewer asks:
+
+> What is PKCE?
+
+Answer:
+
+"PKCE is a security extension to OAuth2 Authorization Code Flow that prevents authorization code interception attacks by introducing a dynamic per-request secret called code_verifier and its hashed form code_challenge. It ensures that the client exchanging the authorization code is the same client that initiated the request."
+
+---
+
+# 🎯 10️⃣ Real-World Architecture
+
+Without PKCE (Bad for SPA):
+
+```
+React App → Backend → Keycloak
+```
+
+With PKCE (Modern Standard):
+
+```
+React App → Keycloak (PKCE) → Get Token
+React App → Backend (Bearer token)
+```
+
+---
+
+# 🔥 11️⃣ PKCE + Spring Boot
+
+Spring Boot automatically supports PKCE when:
+
+```
+authorization-grant-type: authorization_code
+```
+
+and client is public.
+
+---
+
+# 💎 12️⃣ Common Misunderstandings
+
+❌ PKCE is NOT encryption
+❌ PKCE is NOT replacing JWT
+❌ PKCE is NOT for client_credentials
+
+✅ PKCE is only for Authorization Code flow
+
+---
+
+# 🏁 Final Summary
+
+PKCE:
+
+* Protects authorization code
+* Removes need for client secret in public apps
+* Uses:
+
+    * code_verifier
+    * code_challenge
+* Required for SPA and mobile
+* Modern OAuth standard
+
+---
+
+If you want next, I can explain:
+
+* 🔥 PKCE vs Implicit Flow
+* 🔥 PKCE vs Client Credentials
+* 🔥 PKCE in Spring Boot + Keycloak full example
+* 🔥 PKCE attack simulation explanation
+
+Tell me which direction you want 😄
+
+## ============ PKCE in Spring Boot + Keycloak full example ====
+Perfect 🔥
+Let’s build **PKCE in Spring Boot + Keycloak (Full Working Example)** step-by-step.
+
+We’ll build this architecture:
+
+```
+Browser
+   ↓
+Spring Boot App (OAuth2 Client with PKCE)
+   ↓
+Keycloak (Authorization Server)
+```
+
+We’ll use:
+
+* ✅ Authorization Code Flow
+* ✅ PKCE (S256)
+* ✅ No client secret (Public client)
+* ✅ Spring Boot 3.x
+* ✅ Keycloak 26.x
+
+---
+
+# 🚀 PART 1 — Configure Keycloak
+
+## 1️⃣ Start Keycloak
+
+```bash
+docker run -d -p 8483:8080 \
+-e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
+-e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
+quay.io/keycloak/keycloak:26.5.0 \
+start-dev --hostname=localhost
+```
+
+Open:
+
+```
+http://localhost:8483
+```
+
+Login:
+admin / admin
+
+---
+
+## 2️⃣ Create Realm
+
+Create realm:
+
+```
+auth2
+```
+
+---
+
+## 3️⃣ Create Client
+
+Go to → Clients → Create Client
+
+### Settings:
+
+| Setting               | Value          |
+| --------------------- | -------------- |
+| Client ID             | spring-pkce    |
+| Client Type           | OpenID Connect |
+| Access Type           | Public         |
+| Standard Flow         | ✅ Enabled      |
+| Client Authentication | ❌ Disabled     |
+
+---
+
+### 🔐 Enable PKCE
+
+In client settings:
+
+* Proof Key for Code Exchange: **Required**
+* Code Challenge Method: **S256**
+
+Save.
+
+---
+
+## 4️⃣ Create User
+
+Users → Create User
+
+Username: test
+Password: test
+Disable temporary password.
+
+---
+
+# 🚀 PART 2 — Spring Boot Application
+
+## 1️⃣ Dependencies (pom.xml)
+
+```xml
+<dependencies>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-oauth2-client</artifactId>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+
+</dependencies>
+```
+
+---
+
+## 2️⃣ application.yml
+
+```yaml
+server:
+  port: 8080
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            provider: keycloak
+            client-id: spring-pkce
+            authorization-grant-type: authorization_code
+            scope: openid, profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8483/realms/auth2
+```
+
+⚠️ Notice:
+
+* No client-secret
+* Authorization Code Flow
+* issuer-uri only (Spring auto fetches endpoints)
+
+---
+
+# 🚀 PART 3 — Security Configuration
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2Login(Customizer.withDefaults());
+
+        return http.build();
+    }
+}
+```
+
+That’s it.
+
+Spring automatically:
+
+* Detects public client
+* Enables PKCE
+* Generates code_verifier
+* Sends code_challenge
+* Handles token exchange
+
+You do NOT write PKCE code manually.
+
+---
+
+# 🚀 PART 4 — Controller
+
+```java
+@RestController
+public class HomeController {
+
+    @GetMapping("/")
+    public String home() {
+        return "Public Home";
+    }
+
+    @GetMapping("/secure")
+    public String secure(Authentication authentication) {
+        return "Hello " + authentication.getName();
+    }
+}
+```
+
+---
+
+# 🚀 PART 5 — Run Application
+
+Start Spring Boot:
+
+```
+http://localhost:8080/secure
+```
+
+You will be redirected to:
+
+```
+Keycloak login page
+```
+
+Login:
+
+```
+test / test
+```
+
+After login:
+
+You’ll see:
+
+```
+Hello test
+```
+
+---
+
+# 🔥 What Just Happened Internally
+
+Spring did this automatically:
+
+1️⃣ Generated random `code_verifier`
+2️⃣ Created `code_challenge = SHA256(verifier)`
+3️⃣ Sent `code_challenge` to Keycloak
+4️⃣ After login received authorization code
+5️⃣ Sent `code_verifier` to token endpoint
+6️⃣ Keycloak verified
+7️⃣ Issued access token
+
+You didn’t write a single PKCE line.
+
+---
+
+# 🧠 How to Verify PKCE Is Working
+
+Open browser DevTools → Network → Authorization request
+
+You’ll see:
+
+```
+code_challenge=abcxyz
+code_challenge_method=S256
+```
+
+That confirms PKCE.
+
+---
+
+# 🔥 Token Access (Optional)
+
+If you want to get access token inside controller:
+
+```java
+@GetMapping("/token")
+public String token(@AuthenticationPrincipal OAuth2User user,
+                    OAuth2AuthorizedClient authorizedClient) {
+
+    return authorizedClient.getAccessToken().getTokenValue();
+}
+```
+
+---
+
+# 🧠 Important Notes
+
+### PKCE is used only with:
+
+```
+authorization_code flow
+```
+
+### PKCE is NOT used with:
+
+```
+client_credentials
+```
+
+---
+
+# 🎯 Architecture Comparison
+
+## Without PKCE (Old way)
+
+```
+SPA → Backend → Keycloak
+```
+
+## With PKCE (Modern)
+
+```
+SPA → Keycloak (PKCE)
+SPA → Backend (Bearer token)
+```
+
+---
+
+# 🏆 Interview Answer
+
+If asked:
+
+> How does Spring Boot support PKCE?
+
+Answer:
+
+Spring Boot automatically enables PKCE when using Authorization Code Flow with a public client. It generates a code_verifier and code_challenge internally and handles verification during token exchange.
+
+---
+
+# 🎁 If You Want Next
+
+I can now explain:
+
+* 🔥 PKCE + React + Spring Boot backend
+* 🔥 PKCE + Microservices architecture
+* 🔥 Deep dive into how Spring internally implements PKCE
+* 🔥 Debugging PKCE failures
+* 🔥 PKCE vs Client Credentials architecture
+
+Tell me your next direction 😄
+
+## =========== 310. Implementing PKCE Flow with React ===
+## ========= PKCE + React + Spring Boot backend ====
+Excellent 🔥
+Now we’re moving into **real-world architecture**.
+
+We’ll build this modern production flow:
+
+```
+React (PKCE)  →  Keycloak  →  Access Token (JWT)
+React  →  Spring Boot Backend (Bearer token)
+Spring Boot validates JWT
+```
+
+This is the **correct architecture for SPA + backend**.
+
+---
+
+# 🏗️ Architecture Overview
+
+```
+1️⃣ React App
+   - Public client
+   - Uses PKCE
+   - Gets access token
+
+2️⃣ Keycloak
+   - Authorization Server
+   - Validates PKCE
+   - Issues JWT
+
+3️⃣ Spring Boot Backend
+   - Resource Server
+   - Validates JWT
+   - No login page
+```
+
+Important:
+
+Backend does NOT redirect to login.
+Frontend handles authentication.
+
+---
+
+# 🚀 PART 1 — Keycloak Setup
+
+## 1️⃣ Create Realm
+
+```
+auth2
+```
+
+---
+
+## 2️⃣ Create Client for React
+
+Client ID: `react-pkce`
+
+Settings:
+
+| Setting               | Value          |
+| --------------------- | -------------- |
+| Client Type           | OpenID Connect |
+| Access Type           | Public         |
+| Standard Flow         | ✅ Enabled      |
+| Client Authentication | ❌ Disabled     |
+| PKCE                  | Required       |
+| Code Challenge Method | S256           |
+
+---
+
+## 3️⃣ Configure Redirect URLs
+
+In client settings:
+
+```
+Valid Redirect URIs:
+http://localhost:3000/*
+
+Web Origins:
+http://localhost:3000
+```
+
+---
+
+## 4️⃣ Create User
+
+```
+username: test
+password: test
+```
+
+---
+
+# 🚀 PART 2 — React App with PKCE
+
+We’ll use official Keycloak JS adapter.
+
+---
+
+## 1️⃣ Install
+
+```bash
+npm install keycloak-js
+```
+
+---
+
+## 2️⃣ Create keycloak.js
+
+```javascript
+import Keycloak from "keycloak-js";
+
+const keycloak = new Keycloak({
+  url: "http://localhost:8483",
+  realm: "auth2",
+  clientId: "react-pkce"
+});
+
+export default keycloak;
+```
+
+---
+
+## 3️⃣ Update App.js
+
+```javascript
+import React, { useEffect, useState } from "react";
+import keycloak from "./keycloak";
+
+function App() {
+
+  const [authenticated, setAuthenticated] = useState(false);
+
+  useEffect(() => {
+    keycloak.init({
+      onLoad: "login-required",
+      pkceMethod: "S256"
+    }).then(auth => {
+      setAuthenticated(auth);
+    });
+  }, []);
+
+  const callBackend = async () => {
+    const response = await fetch("http://localhost:8080/api/secure", {
+      headers: {
+        Authorization: "Bearer " + keycloak.token
+      }
+    });
+
+    const data = await response.text();
+    alert(data);
+  };
+
+  if (!authenticated) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h1>Logged in as {keycloak.tokenParsed?.preferred_username}</h1>
+      <button onClick={callBackend}>Call Backend</button>
+    </div>
+  );
+}
+
+export default App;
+```
+
+---
+
+# 🔥 What Happens Here
+
+When app loads:
+
+```
+React → Keycloak (PKCE)
+```
+
+PKCE automatically:
+
+* Generates code_verifier
+* Generates code_challenge
+* Sends to Keycloak
+* Exchanges code
+* Gets access token
+
+Token stored in memory.
+
+---
+
+# 🚀 PART 3 — Spring Boot Backend (Resource Server)
+
+This backend ONLY validates token.
+
+No oauth2Login here.
+
+---
+
+## 1️⃣ Dependencies
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+```
+
+---
+
+## 2️⃣ application.yml
+
+```yaml
+server:
+  port: 8080
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8483/realms/auth2
+```
+
+---
+
+## 3️⃣ SecurityConfig
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/public").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2ResourceServer(oauth2 ->
+                oauth2.jwt(Customizer.withDefaults())
+            );
+
+        return http.build();
+    }
+}
+```
+
+---
+
+## 4️⃣ Controller
+
+```java
+@RestController
+@RequestMapping("/api")
+public class TestController {
+
+    @GetMapping("/public")
+    public String publicApi() {
+        return "Public API";
+    }
+
+    @GetMapping("/secure")
+    public String secure(Authentication authentication) {
+        return "Hello " + authentication.getName();
+    }
+}
+```
+
+---
+
+# 🧠 Full Flow Now
+
+### Step 1
+
+User opens:
+
+```
+http://localhost:3000
+```
+
+---
+
+### Step 2
+
+React redirects to:
+
+```
+Keycloak login
+```
+
+Using PKCE.
+
+---
+
+### Step 3
+
+After login:
+
+React gets JWT access token.
+
+---
+
+### Step 4
+
+React calls backend:
+
+```
+Authorization: Bearer eyJhbGciOi...
+```
+
+---
+
+### Step 5
+
+Spring Boot:
+
+* Fetches Keycloak public key
+* Verifies signature
+* Verifies issuer
+* Validates token
+
+If valid → returns response.
+
+---
+
+# 🔥 Why This Is Best Practice
+
+* No client secret in frontend
+* Secure PKCE flow
+* Backend is stateless
+* Scalable microservices friendly
+* Industry standard architecture
+
+---
+
+# 🚨 Important Production Notes
+
+1️⃣ Enable CORS in backend:
+
+```java
+http.cors(Customizer.withDefaults());
+```
+
+2️⃣ Enable refresh token handling in React:
+
+```javascript
+setInterval(() => {
+  keycloak.updateToken(30);
+}, 10000);
+```
+
+3️⃣ Always use HTTPS in production.
+
+---
+
+# 🏆 Interview Explanation
+
+If interviewer asks:
+
+> How do you implement PKCE with React and Spring Boot?
+
+You answer:
+
+"React acts as a public OAuth2 client using Authorization Code Flow with PKCE. It authenticates directly with Keycloak and obtains a JWT access token. The React app then sends the access token as a Bearer token to the Spring Boot backend, which acts as an OAuth2 Resource Server and validates the JWT using the issuer’s public key."
+
+---
+
+# 🔥 Next Level (Advanced)
+
+If you want, I can now explain:
+
+* 🔥 Role-based access with Keycloak + Spring
+* 🔥 How to map Keycloak roles in Spring Boot
+* 🔥 Multi-service microservice setup
+* 🔥 Token refresh deep dive
+* 🔥 Logout flow (frontend + backend)
+
+Tell me your next step 😄

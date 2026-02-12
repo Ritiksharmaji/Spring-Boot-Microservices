@@ -9,6 +9,7 @@
     <file url="file://$PROJECT_DIR$/SpringCloudServerEcommerce/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/apiGateWay/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/client-credentials/NormalClientWithOAuthServer/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/client-credentials/PKCE/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/client-credentials/pure-client/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/client-credentials/resourceservice/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/eurekaEcommerce/src/main/java" charset="UTF-8" />

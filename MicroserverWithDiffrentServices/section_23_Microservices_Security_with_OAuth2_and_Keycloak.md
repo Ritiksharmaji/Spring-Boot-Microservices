@@ -1236,4 +1236,84 @@ Just say 👉 **next** 🚀
 32) now we are going to use the same token which we are sending by postman
 33) ![img_1029.png](img_1029.png)
 34) ![img_1030.png](img_1030.png)
-35) 
+
+## ----- 307. Introduction to PKCE Flow -----
+1) ![img_1031.png](img_1031.png)
+2) ![img_1032.png](img_1032.png)
+3) ![img_1033.png](img_1033.png)
+4) ![img_1034.png](img_1034.png)
+5) ![img_1035.png](img_1035.png)
+
+## ======== 308. Implementing PKCE Flow ====
+1) now we are going to implement the pkce flow in a service for that we doing in separete service so create a spring boot project
+2) ![img_1036.png](img_1036.png)
+3) ![img_1037.png](img_1037.png)
+4) now we need to configure the KeyClock client to this servcies 
+5) now run the keycloak and login into it.
+6) and create a client for it 
+7) ![img_1038.png](img_1038.png)
+8) ![img_1039.png](img_1039.png)
+9) then add the frontend app url 
+10) ![img_1040.png](img_1040.png)
+11) ![img_1041.png](img_1041.png)
+12) ![img_1042.png](img_1042.png)
+13) ![img_1043.png](img_1043.png)
+14) now we need to add rhe security config file 
+15) ![img_1044.png](img_1044.png)
+16) then create a controller
+17) ![img_1045.png](img_1045.png)
+18) now run and test the application
+19) ![img_1046.png](img_1046.png)
+20) ![img_1047.png](img_1047.png)
+21) ![img_1048.png](img_1048.png)
+22) ![img_1049.png](img_1049.png)
+23) ![img_1050.png](img_1050.png)
+24) ![img_1051.png](img_1051.png)
+25) ![img_1052.png](img_1052.png)
+26) ![img_1053.png](img_1053.png)
+27) ![img_1054.png](img_1054.png)
+28) so if we want to get the user name that can also possibe 
+29) go to jwt.io website and paste the generated token there
+30) ![img_1055.png](img_1055.png)
+31) ![img_1056.png](img_1056.png)
+
+## =================== 309. Refresh Token in OAuth2 =====
+1) ![img_1057.png](img_1057.png)
+2) ![img_1058.png](img_1058.png)
+3) ![img_1059.png](img_1059.png)
+4) ![img_1060.png](img_1060.png)
+
+
+## =========== 310. Implementing PKCE Flow with React ====
+1) we need to create a react app using vite
+2) ![img_1061.png](img_1061.png)
+3) ![img_1062.png](img_1062.png)
+4) now we are going to config the react with react-oauth2-pkce beacuse it don't support by default
+5) for that we need to use the external library which is : npm i react-oauth2-code-pkce
+6) ![img_1063.png](img_1063.png)
+7) ![img_1064.png](img_1064.png)
+8) ![img_1065.png](img_1065.png)
+9) ![img_1066.png](img_1066.png)
+10) then automatically frontend app will protected 
+11) ![img_1067.png](img_1067.png)
+12) ![img_1068.png](img_1068.png)
+13) ![img_1069.png](img_1069.png)
+14) ![img_1070.png](img_1070.png)
+15) ![img_1071.png](img_1071.png)
+16) now we will access the backend api ones user will login 
+17) ![img_1072.png](img_1072.png)
+18) ![img_1073.png](img_1073.png)
+19) ![img_1074.png](img_1074.png)
+20) so we need to enable the cross-origin from backend
+21) ![img_1075.png](img_1075.png)
+22) ![img_1076.png](img_1076.png)
+23) ![img_1077.png](img_1077.png)
+24) ![img_1078.png](img_1078.png)
+25) ![img_1079.png](img_1079.png)
+
+## ======= 311. Resource to learn more =====
+1) ![img_1080.png](img_1080.png)
+2) https://oauth.net/2/
+3) https://auth0.com/
+4) ![img_1081.png](img_1081.png)
+5) 

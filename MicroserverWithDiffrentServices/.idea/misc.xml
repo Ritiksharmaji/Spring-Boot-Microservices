@@ -21,6 +21,7 @@
         <option value="$PROJECT_DIR$/client-credentials/resourceservice/pom.xml" />
         <option value="$PROJECT_DIR$/client-credentials/pure-client/pom.xml" />
         <option value="$PROJECT_DIR$/client-credentials/NormalClientWithOAuthServer/pom.xml" />
+        <option value="$PROJECT_DIR$/client-credentials/PKCE/pom.xml" />
       </list>
     </option>
   </component>

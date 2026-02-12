@@ -23,6 +23,7 @@
         <module name="resourceservice" />
         <module name="eurekaEcommerce" />
         <module name="apiGateWay" />
+        <module name="PKCE" />
         <module name="consumer (1) (com.example.consumer)" />
         <module name="producer" />
         <module name="pure-client" />
@@ -72,6 +73,7 @@
       <module name="EurekaServer" options="-parameters" />
       <module name="NormalClientWithOAuthServer" options="-parameters" />
       <module name="Oauth" options="-parameters" />
+      <module name="PKCE" options="-parameters" />
       <module name="SpringCloudServerEcommerce" options="-parameters" />
       <module name="apiGateWay" options="-parameters" />
       <module name="consumer" options="-parameters" />
