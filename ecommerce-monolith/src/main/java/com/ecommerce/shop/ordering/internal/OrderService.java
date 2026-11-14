@@ -9,6 +9,7 @@ import com.ecommerce.shop.ordering.OrderPayments;
 import com.ecommerce.shop.ordering.OrderPlaced;
 import com.ecommerce.shop.ordering.OrderStatus;
 import com.ecommerce.shop.ordering.OrderStatusChanged;
+import com.ecommerce.shop.ordering.PaymentMethod;
 import com.ecommerce.shop.shared.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,14 +20,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import static com.ecommerce.shop.ordering.internal.OrderingDtos.OrderResponse;
+import static com.ecommerce.shop.ordering.internal.OrderingDtos.*;
 
 /**
- * Checkout and order lifecycle. Unlike the microservices version, stock reservation, the order,
- * clearing the cart and the OrderPlaced event all commit in ONE local transaction — no compensation
- * is needed if saving fails. Payment happens asynchronously after commit (payment module).
+ * Checkout and order lifecycle. Stock reservation, the order, clearing the cart and the
+ * OrderPlaced event all commit in ONE local transaction. Payment happens asynchronously after
+ * commit (payment module); cash-on-delivery orders are confirmed without a charge.
  */
 @Slf4j
 @Service
@@ -40,29 +44,32 @@ class OrderService implements OrderPayments {
     private final ApplicationEventPublisher events;
 
     @Transactional
-    public OrderResponse checkout(long userId) {
+    public OrderResponse checkout(long userId, CheckoutRequest request) {
+        CheckoutRequest checkout = request == null ? new CheckoutRequest(null, null, null) : request;
         List<CartItem> items = cart.findByUserIdOrderByIdAsc(userId);
         if (items.isEmpty()) {
             throw BusinessException.invalid("Empty Cart", "Your cart is empty");
         }
         Customer customer = customers.findCustomer(userId)
-                .filter(c -> c.address() != null)
-                .orElseThrow(() -> BusinessException.invalid("Profile Incomplete",
-                        "Add your delivery address (PUT /api/users/me) before placing an order"));
+                .orElseThrow(() -> BusinessException.unauthorized("Account not found"));
 
         Order order = new Order();
         order.setUserId(userId);
         order.setStatus(OrderStatus.PENDING);
-        order.setStatusReason("Awaiting payment");
+        order.setPaymentMethod(checkout.paymentMethod() == null ? PaymentMethod.CARD : checkout.paymentMethod());
+        order.setPaymentStatus(OrderPaymentStatus.PENDING);
+        order.setStatusReason(order.getPaymentMethod() == PaymentMethod.CASH ? "Confirming your order" : "Awaiting payment");
         order.setCustomerEmail(customer.email());
         order.setCustomerName(customer.fullName());
-        Customer.DeliveryAddress a = customer.address();
-        order.setShippingAddress(new ShippingAddress(a.street(), a.city(), a.state(), a.country(), a.zipcode()));
+        order.setNotes(checkout.notes());
+        applyDeliveryAddress(order, checkout.shippingAddress(), customer);
+
         for (CartItem item : items) {
             ProductInfo product = catalog.findActiveProduct(item.getProductId())
                     .orElseThrow(() -> BusinessException.invalid("Product Unavailable",
                             "'" + item.getProductName() + "' is no longer available; remove it from your cart"));
-            order.addItem(new OrderItem(product.id(), product.name(), item.getQuantity(), product.price()));
+            order.addItem(new OrderItem(product.id(), product.name(), item.getSize(), product.imageUrl(),
+                    item.getQuantity(), product.price()));
         }
         order.setTotalAmount(order.getItems().stream().map(OrderItem::subTotal).reduce(BigDecimal.ZERO, BigDecimal::add));
 
@@ -70,11 +77,29 @@ class OrderService implements OrderPayments {
         orders.save(order);
         cart.deleteAllByUserId(userId);
         events.publishEvent(new OrderPlaced(order.getId(), userId, order.getCustomerEmail(), order.getCustomerName(),
-                order.getTotalAmount(), order.getItems().stream()
-                .map(i -> new OrderPlaced.Line(i.getProductId(), i.getProductName(), i.getQuantity(), i.getUnitPrice()))
+                order.getTotalAmount(), order.getPaymentMethod(), order.getItems().stream()
+                .map(i -> new OrderPlaced.Line(i.getProductId(), i.getProductName(), i.getSize(), i.getQuantity(), i.getUnitPrice()))
                 .toList()));
-        log.info("Order {} placed by user {} for {}", order.getId(), userId, order.getTotalAmount());
+        log.info("Order {} placed by user {} for {} ({})", order.getId(), userId, order.getTotalAmount(), order.getPaymentMethod());
         return OrderResponse.from(order);
+    }
+
+    private void applyDeliveryAddress(Order order, DeliveryAddress given, Customer customer) {
+        if (given != null) {
+            order.setShippingAddress(new ShippingAddress(given.street().trim(), given.city().trim(), given.state(),
+                    given.country().trim(), given.zipcode().trim()));
+            order.setRecipientName(given.lastName() == null || given.lastName().isBlank()
+                    ? given.firstName().trim() : given.firstName().trim() + " " + given.lastName().trim());
+            order.setRecipientPhone(given.phone());
+            return;
+        }
+        Customer.DeliveryAddress a = customer.address();
+        if (a == null) {
+            throw BusinessException.invalid("Profile Incomplete",
+                    "Enter a delivery address or save one in your profile before placing an order");
+        }
+        order.setShippingAddress(new ShippingAddress(a.street(), a.city(), a.state(), a.country(), a.zipcode()));
+        order.setRecipientName(customer.fullName());
     }
 
     @Transactional(readOnly = true)
@@ -111,22 +136,45 @@ class OrderService implements OrderPayments {
     @Override
     @Transactional
     public void paymentSucceeded(long orderId) {
-        orders.findById(orderId)
-                .filter(o -> o.getStatus() == OrderStatus.PENDING)
-                .ifPresentOrElse(o -> transition(o, OrderStatus.CONFIRMED, "Payment received"),
-                        () -> log.info("Payment success for order {} ignored (not pending)", orderId));
+        pending(orderId).ifPresent(o -> {
+            o.setPaymentStatus(OrderPaymentStatus.PAID);
+            transition(o, OrderStatus.CONFIRMED, "Payment received");
+        });
     }
 
     @Override
     @Transactional
     public void paymentFailed(long orderId, String reason) {
-        orders.findById(orderId)
-                .filter(o -> o.getStatus() == OrderStatus.PENDING)
-                .ifPresentOrElse(o -> transition(o, OrderStatus.CANCELLED, "Payment failed: " + reason),
-                        () -> log.info("Payment failure for order {} ignored (not pending)", orderId));
+        pending(orderId).ifPresent(o -> {
+            o.setPaymentStatus(OrderPaymentStatus.FAILED);
+            transition(o, OrderStatus.CANCELLED, "Payment failed: " + reason);
+        });
     }
 
-    /** State machine + stock release + event, all in the caller's transaction. */
+    @Override
+    @Transactional
+    public void cashOnDeliveryAccepted(long orderId) {
+        pending(orderId).ifPresent(o -> {
+            o.setPaymentStatus(OrderPaymentStatus.CASH_ON_DELIVERY);
+            transition(o, OrderStatus.CONFIRMED, "Cash on delivery");
+        });
+    }
+
+    @Override
+    @Transactional
+    public void paymentRefunded(long orderId) {
+        orders.findById(orderId).ifPresent(o -> o.setPaymentStatus(OrderPaymentStatus.REFUNDED));
+    }
+
+    private java.util.Optional<Order> pending(long orderId) {
+        java.util.Optional<Order> order = orders.findById(orderId).filter(o -> o.getStatus() == OrderStatus.PENDING);
+        if (order.isEmpty()) {
+            log.info("Payment outcome for order {} ignored (not pending)", orderId);
+        }
+        return order;
+    }
+
+    /** State machine + stock release + payment status + event, all in the caller's transaction. */
     private void transition(Order order, OrderStatus next, String reason) {
         OrderStatus previous = order.getStatus();
         if (!previous.canTransitionTo(next)) {
@@ -137,6 +185,13 @@ class OrderService implements OrderPayments {
         order.setStatusReason(reason);
         if (next == OrderStatus.CANCELLED) {
             catalog.release(stockLines(order));
+            if (order.getPaymentStatus() == OrderPaymentStatus.CASH_ON_DELIVERY
+                    || order.getPaymentStatus() == OrderPaymentStatus.PENDING) {
+                order.setPaymentStatus(OrderPaymentStatus.NOT_CHARGED);
+            }
+        }
+        if (next == OrderStatus.DELIVERED && order.getPaymentMethod() == PaymentMethod.CASH) {
+            order.setPaymentStatus(OrderPaymentStatus.PAID);   // cash collected on delivery
         }
         orders.saveAndFlush(order);
         events.publishEvent(new OrderStatusChanged(order.getId(), order.getUserId(), order.getCustomerEmail(),
@@ -144,8 +199,12 @@ class OrderService implements OrderPayments {
         log.info("Order {}: {} -> {}", order.getId(), previous, next);
     }
 
+    /** One line per product (sizes of the same product share its stock). */
     private List<StockLine> stockLines(Order order) {
-        return order.getItems().stream().map(i -> new StockLine(i.getProductId(), i.getQuantity())).toList();
+        Map<Long, Integer> perProduct = order.getItems().stream()
+                .collect(Collectors.groupingBy(OrderItem::getProductId, Collectors.summingInt(OrderItem::getQuantity)));
+        Collection<Map.Entry<Long, Integer>> entries = perProduct.entrySet();
+        return entries.stream().map(e -> new StockLine(e.getKey(), e.getValue())).toList();
     }
 
     private Order own(long userId, long orderId) {

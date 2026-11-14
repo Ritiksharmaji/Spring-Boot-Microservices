@@ -1,7 +1,12 @@
 package com.ecommerce.shop.payment.internal;
 
 enum PaymentStatus {
-    COMPLETED, FAILED, REFUNDED,
-    /** order cancelled before payment was attempted: never charge it */
-    SKIPPED
+    /** card charged, or cash collected on delivery */
+    COMPLETED,
+    FAILED,
+    REFUNDED,
+    /** order cancelled before payment: never charge it */
+    SKIPPED,
+    /** cash on delivery, not collected yet */
+    CASH_ON_DELIVERY
 }

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 final class ProductDtos {
 
@@ -18,17 +19,24 @@ final class ProductDtos {
             @NotNull(message = "stockQuantity is required") @Min(value = 0, message = "stockQuantity cannot be negative")
             Integer stockQuantity,
             @Size(max = 100) String category,
+            @Size(max = 100) String subCategory,
+            @Size(max = 10, message = "at most 10 sizes") List<@NotBlank @Size(max = 10) String> sizes,
+            Boolean bestseller,
             @Size(max = 500) String imageUrl,
+            @Size(max = 8, message = "at most 8 images") List<@NotBlank @Size(max = 500) String> images,
             Boolean active) {
     }
 
     record ProductResponse(Long id, String name, String description, BigDecimal price, Integer stockQuantity,
-                           String category, String imageUrl, Boolean active,
+                           String category, String subCategory, List<String> sizes, Boolean bestseller,
+                           String imageUrl, List<String> images, Boolean active,
                            LocalDateTime createdAt, LocalDateTime updatedAt) {
 
         static ProductResponse from(Product p) {
+            List<String> images = p.allImages();
             return new ProductResponse(p.getId(), p.getName(), p.getDescription(), p.getPrice(), p.getStockQuantity(),
-                    p.getCategory(), p.getImageUrl(), p.getActive(), p.getCreatedAt(), p.getUpdatedAt());
+                    p.getCategory(), p.getSubCategory(), p.sizes(), p.getBestseller(),
+                    images.isEmpty() ? null : images.getFirst(), images, p.getActive(), p.getCreatedAt(), p.getUpdatedAt());
         }
     }
 }
