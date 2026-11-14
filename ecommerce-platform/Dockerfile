@@ -6,7 +6,7 @@
 # using Spring Boot's layered jar (dependencies change rarely -> better caching).
 # ---------------------------------------------------------------------------
 
-FROM maven:3.9.9-eclipse-temurin-21-alpine AS build
+FROM maven:3.9-eclipse-temurin-26-alpine AS build
 ARG MODULE
 WORKDIR /workspace
 
