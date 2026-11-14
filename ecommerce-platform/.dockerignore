@@ -1,0 +1,14 @@
+**/target/
+**/logs/
+**/*.log
+**/.env
+.env
+**/.idea/
+**/*.iml
+.git
+docs/
+postman/
+deploy/
+docker/
+*.md
+**/*.png

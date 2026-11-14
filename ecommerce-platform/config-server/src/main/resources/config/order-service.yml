@@ -4,8 +4,8 @@ server:
 spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:orderdb}
-    username: ${DB_USERNAME:embarkx}
-    password: ${DB_PASSWORD:embarkx}
+    username: ${DB_USERNAME:ecom}
+    password: ${DB_PASSWORD:ecom}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

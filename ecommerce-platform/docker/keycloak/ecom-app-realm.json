@@ -1,0 +1,158 @@
+{
+  "realm": "ecom-app",
+  "displayName": "E-Commerce Shop",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      {
+        "name": "CUSTOMER",
+        "description": "Shop: profile, cart, own orders"
+      },
+      {
+        "name": "ADMIN",
+        "description": "Manage catalog, users, all orders and payments"
+      },
+      {
+        "name": "default-roles-ecom-app",
+        "description": "Default roles for new users",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "offline_access",
+            "uma_authorization",
+            "CUSTOMER"
+          ]
+        }
+      },
+      {
+        "name": "offline_access",
+        "description": "${role_offline-access}",
+        "composite": false
+      },
+      {
+        "name": "uma_authorization",
+        "description": "${role_uma_authorization}",
+        "composite": false
+      }
+    ]
+  },
+  "defaultRole": {
+    "name": "default-roles-ecom-app",
+    "description": "Roles every new (self-registered) user gets",
+    "composite": true,
+    "composites": {
+      "realm": [
+        "offline_access",
+        "uma_authorization",
+        "CUSTOMER"
+      ]
+    }
+  },
+  "clients": [
+    {
+      "clientId": "oauth2-ecom-pkce",
+      "name": "E-Commerce web / mobile client",
+      "description": "Public client: Authorization Code + PKCE for browsers/apps; password grant enabled for local testing (Postman)",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:5173/*",
+        "https://oauth.pstmn.io/v1/callback"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*##http://localhost:5173/*"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email",
+        "basic"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@shop.local",
+      "emailVerified": true,
+      "firstName": "Shop",
+      "lastName": "Admin",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Admin@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-ecom-app",
+        "ADMIN"
+      ]
+    },
+    {
+      "username": "customer",
+      "email": "customer@shop.local",
+      "emailVerified": true,
+      "firstName": "Riya",
+      "lastName": "Customer",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Customer@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-ecom-app"
+      ]
+    },
+    {
+      "username": "customer2",
+      "email": "customer2@shop.local",
+      "emailVerified": true,
+      "firstName": "Arjun",
+      "lastName": "Buyer",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Customer@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-ecom-app"
+      ]
+    }
+  ]
+}

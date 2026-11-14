@@ -85,10 +85,25 @@ Stock reservation is not retried because it is not idempotent.
 
 Requires JDK 21. All modules share one parent POM (Spring Boot 3.5.9, Spring Cloud 2025.0.1).
 
-## Run locally
+## Run locally (Docker)
 
-Start order: `config-server` → `discovery-server` → `user-service`, `product-service`, `order-service`,
-`notification-service`, `payment-service` → `api-gateway`.
+```bash
+cp .env.example .env                                  # optional: adjust credentials
+docker compose up -d --build                          # whole system (~3-5 min first build)
+docker compose --profile observability up -d          # + Prometheus, Grafana, Loki
+docker compose ps                                     # wait until everything is healthy
+```
 
-Infrastructure needed on localhost (a full `docker-compose` is added in `branch-18-4`):
-PostgreSQL, MongoDB, RabbitMQ, Redis, Keycloak, Zipkin, Mailpit.
+| URL | What |
+|---|---|
+| http://localhost:8080 | API gateway (all `/api/**` calls) |
+| http://localhost:8483 | Keycloak — realm `ecom-app`, users `admin / Admin@123`, `customer / Customer@123` |
+| http://localhost:8761 | Eureka dashboard |
+| http://localhost:15672 | RabbitMQ (guest / guest) |
+| http://localhost:9411 | Zipkin traces |
+| http://localhost:8025 | Mailpit — order emails |
+| http://localhost:3001 | Grafana (admin / admin) — "E-Commerce Overview" dashboard |
+
+To run a service from the IDE instead, start only the infrastructure
+(`docker compose up -d postgres mongodb rabbitmq redis keycloak zipkin mailpit`), then
+`config-server` → `discovery-server` → the services → `api-gateway`; defaults point to localhost.

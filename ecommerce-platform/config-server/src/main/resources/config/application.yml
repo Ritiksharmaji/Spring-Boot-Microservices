@@ -34,9 +34,14 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true     # /actuator/health/liveness and /readiness (used by Docker health checks)
   health:
     circuitbreakers:
       enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}   # lets Grafana filter every metric by service
   tracing:
     sampling:
       probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
