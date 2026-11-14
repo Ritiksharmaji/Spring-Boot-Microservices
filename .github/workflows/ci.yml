@@ -3,10 +3,10 @@ name: CI
 on:
   push:
     branches: [main, "branch-18*"]
-    paths: ["ecommerce-platform/**", ".github/workflows/**"]
+    paths: ["backend/microservices/**", ".github/workflows/**"]
   pull_request:
     branches: [main]
-    paths: ["ecommerce-platform/**", ".github/workflows/**"]
+    paths: ["backend/microservices/**", ".github/workflows/**"]
   workflow_dispatch:
     inputs:
       publish_images:
@@ -23,7 +23,7 @@ permissions:
 
 defaults:
   run:
-    working-directory: ecommerce-platform
+    working-directory: backend/microservices
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -64,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: ecommerce-platform/*/target/surefire-reports/
+          path: backend/microservices/*/target/surefire-reports/
           retention-days: 14
 
       - name: Upload coverage reports
@@ -72,7 +72,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
-          path: ecommerce-platform/*/target/site/jacoco/
+          path: backend/microservices/*/target/site/jacoco/
           retention-days: 14
 
   # ---------------------------------------------------------------------------
@@ -106,7 +106,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: compose-logs
-          path: ecommerce-platform/compose-logs.txt
+          path: backend/microservices/compose-logs.txt
 
       - name: Stop stack
         if: always()
@@ -153,7 +153,7 @@ jobs:
 
       - uses: docker/build-push-action@v6
         with:
-          context: ecommerce-platform
+          context: backend/microservices
           build-args: MODULE=${{ matrix.module }}
           platforms: linux/amd64
           push: true

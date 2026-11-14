@@ -3,10 +3,10 @@ name: CodeQL
 on:
   push:
     branches: [main]
-    paths: ["ecommerce-platform/**"]
+    paths: ["backend/microservices/**"]
   pull_request:
     branches: [main]
-    paths: ["ecommerce-platform/**"]
+    paths: ["backend/microservices/**"]
   schedule:
     - cron: "0 3 * * 1"
 
@@ -30,6 +30,6 @@ jobs:
           languages: java-kotlin
           build-mode: manual
       - name: Build
-        working-directory: ecommerce-platform
+        working-directory: backend/microservices
         run: ./mvnw -B -ntp -DskipTests package
       - uses: github/codeql-action/analyze@v3
