@@ -8,6 +8,11 @@ on:
     branches: [main]
     paths: ["ecommerce-platform/**", ".github/workflows/**"]
   workflow_dispatch:
+    inputs:
+      publish_images:
+        description: "Also build and push the 8 service images to GHCR (needed only before a deployment)"
+        type: boolean
+        default: false
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -111,7 +116,9 @@ jobs:
   publish-images:
     name: Publish images (${{ matrix.module }})
     needs: e2e
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Manual only (Actions -> CI -> Run workflow -> publish_images), so registry storage is used
+    # only when you actually prepare a deployment.
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_images
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -127,8 +127,9 @@ Set in GitHub → Settings:
 | Variable | `DEPLOY_ENABLED` | `true` |
 | Variable | `API_DOMAIN` | e.g. `shop-api.onekampus.com` (post-deploy health check) |
 
-Release flow: merge to `main` → CI tests, runs the end-to-end smoke test, publishes images
-`:sha-xxxxxxx` and `:latest` → `git tag v1.0.0 && git push origin v1.0.0` → deployed.
+Release flow: merge to `main` → CI tests and runs the end-to-end smoke test → run the **CI**
+workflow manually with **publish_images** ticked (Actions → CI → Run workflow) to push images
+`:sha-xxxxxxx` and `:latest` (manual on purpose, so registry storage is only used when deploying) → `git tag v1.0.0 && git push origin v1.0.0` → deployed.
 
 **Rollback:** run the workflow manually with an older `image_tag` (e.g. `sha-1a2b3c4`), or on the
 server `IMAGE_TAG=sha-1a2b3c4 ./scripts/deploy.sh`. Database schemas are only ever extended

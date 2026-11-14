@@ -36,7 +36,7 @@ This repository is both a **learning log** and a **finished product**.
 | `branch-18-3-payment-service-and-order-saga` | payment-service, choreography saga, transactional outbox, RabbitMQ with DLQs, email notifications |
 | `branch-18-4-dockerize-all-services-full-compose` | Dockerfile, full Compose stack, Keycloak realm import, Prometheus/Loki/Grafana |
 | `branch-18-5-testing-and-openapi-docs` | Testcontainers, slice tests, JaCoCo, OpenAPI + aggregated Swagger UI |
-| `branch-18-6-ci-cd-github-actions` | CI with end-to-end smoke test, GHCR images, deploy workflow, CodeQL, Dependabot |
+| `branch-18-6-ci-cd-github-actions` | CI with end-to-end smoke test, on-demand GHCR images, deploy workflow, CodeQL, Dependabot |
 | `branch-18-7-deploy-aws-lightsail` | production compose, Nginx + TLS, prod realm, server/deploy/backup scripts, CORS |
 | `branch-18-8-readme-architecture-docs` | system design, flows, API reference, events, ADRs, Postman collection, guides |
 
