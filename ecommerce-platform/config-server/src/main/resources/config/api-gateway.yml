@@ -10,7 +10,11 @@ spring:
     oauth2:
       resourceserver:
         jwt:
+          # "iss" claim expected in tokens (the public Keycloak URL clients log in through)
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8483/realms/ecom-app}
+          # where the gateway downloads signing keys (internal URL in Docker); fetched lazily,
+          # so the gateway does not need Keycloak to be up at startup
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8483/realms/ecom-app/protocol/openid-connect/certs}
 
 app:
   eureka-dashboard-url: ${EUREKA_DASHBOARD_URL:http://localhost:8761}
