@@ -1,6 +1,6 @@
 # Deployment — shared Lightsail apps-server
 
-The shop runs as one more container on the existing **apps-server** (Lightsail 2 GB, Mumbai,
+The shop is a React storefront (static files) plus one more container on the existing **apps-server** (Lightsail 2 GB, Mumbai,
 `16.4.118.190`) next to Dabba and the job portal — **no extra cost**.
 
 ```mermaid
@@ -9,7 +9,8 @@ flowchart LR
     subgraph apps-server[/opt/apps · docker compose "apps"/]
       caddy -->|dabba.onekampus.com| dabba[dabba-api + dabba-web]
       caddy -->|jobs / jobs-api| jobs[job-api + static web]
-      caddy -->|shop.onekampus.com| shop[shop-api<br/>640 MB limit · ~380 MB used]
+      caddy -->|shop.onekampus.com| web[React build<br/>static files /srv/shop]
+      caddy -->|shop-api.onekampus.com| shop[shop-api<br/>640 MB limit · ~380 MB used]
       dabba --> pg[(Postgres 17<br/>dabba · shopdb)]
       shop --> pg
       dabba --> redis[(Redis)]
@@ -34,9 +35,10 @@ instance → snapshot → create a larger instance from it, ~USD 24/month); noth
 | File | Repo | Purpose |
 |---|---|---|
 | `deploy/compose.yml` | `dabba-platform` | the shared server's compose file — contains the `shop-api` service |
-| `deploy/Caddyfile` | `dabba-platform` | all three sites, including `shop.onekampus.com` |
+| `deploy/Caddyfile` | `dabba-platform` | all sites, including `shop.onekampus.com` (static React) and `shop-api.onekampus.com` (API) |
 | `ecommerce-monolith/deploy/Dockerfile` | this repo | runtime-only image (jar built locally) |
-| `ecommerce-monolith/deploy/deploy.sh` | this repo | build + upload + first-run setup + start |
+| `ecommerce-monolith/deploy/deploy.sh` | this repo | API: build + upload + first-run setup + start; syncs the shared Caddyfile/compose |
+| `ecommerce-frontend/deploy/deploy.sh` | this repo | storefront: `npm run build` (API URL from `.env.production`) + upload to `/opt/apps/sites/shop` |
 | `/opt/apps/.env` | server only | secrets: `SHOP_DB_PASSWORD`, `SHOP_JWT_SECRET`, `SHOP_ADMIN_EMAIL`, `SHOP_ADMIN_PASSWORD`, optional `SHOP_DEMO_MODE` |
 
 The dabba-platform repo is the single source of truth for the shared files; both apps' deploy
@@ -44,22 +46,24 @@ scripts sync them, so neither can remove the other's service.
 
 ## First deployment
 
-1. **DNS** (GoDaddy): add an **A record `shop` → `16.4.118.190`** (the `*` wildcard points elsewhere,
-   so an explicit record is needed, like `jobs`).
-2. Deploy:
+1. **DNS** (GoDaddy): A records **`shop` → `16.4.118.190`** and **`shop-api` → `16.4.118.190`**.
+2. Deploy the storefront files first (nothing serves them until Caddy is reloaded), then the API:
    ```bash
-   cd Spring-Boot-Microservices/ecommerce-monolith
-   ./deploy/deploy.sh
+   cd Spring-Boot-Microservices
+   ./ecommerce-frontend/deploy/deploy.sh
+   ./ecommerce-monolith/deploy/deploy.sh      # also syncs the Caddyfile and reloads Caddy
    ```
    First run only: generates the four `SHOP_*` secrets into `/opt/apps/.env` and prints the admin
    login once, creates role `shop` and database `shopdb` in the shared Postgres.
-3. Caddy obtains the Let's Encrypt certificate on the first HTTPS request to `shop.onekampus.com`.
-4. Open https://shop.onekampus.com — demo customer `customer@shop.demo` / `Customer@123`.
+3. Caddy obtains the Let's Encrypt certificates on the first HTTPS request to each domain.
+4. Open https://shop.onekampus.com — demo customer `customer@shop.demo` / `Customer@123`;
+   API docs at https://shop-api.onekampus.com/swagger-ui.html.
 
 ## Updates and rollback
 
 ```bash
-./deploy/deploy.sh                       # rebuild jar, upload, restart shop-api only
+./ecommerce-monolith/deploy/deploy.sh    # API: rebuild jar, upload, restart shop-api only
+./ecommerce-frontend/deploy/deploy.sh    # storefront: rebuild and upload static files (no restart)
 ```
 Rollback: check out the previous commit and run `deploy.sh` again. Flyway migrations are additive,
 so an older jar keeps working with a newer schema (Hibernate `validate` only checks mapped columns).
