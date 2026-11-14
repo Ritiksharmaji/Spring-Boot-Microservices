@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop · Spring Modulith demo</title>
+<meta name="description" content="Live demo of an e-commerce backend built with Spring Boot and Spring Modulith">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #f7f7f9; --surface: #ffffff; --text: #1b1d23; --muted: #646a78; --line: #e3e5ea;
+    --accent: #3b5bdb; --accent-text: #ffffff; --ok: #2b8a3e; --warn: #e67700; --bad: #c92a2a;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131417; --surface: #1c1e23; --text: #eceef2; --muted: #9aa0ad; --line: #2c2f36;
+            --accent: #748ffc; --accent-text: #0d0f14; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  header { position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .bar { max-width: 1100px; margin: 0 auto; padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .brand { font-weight: 700; font-size: 18px; margin-right: auto; display: flex; gap: 8px; align-items: center; }
+  .brand small { font-weight: 400; color: var(--muted); font-size: 12px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  button, .btn { font: inherit; border: 1px solid var(--line); background: var(--surface); color: var(--text);
+                 border-radius: 8px; padding: 7px 12px; cursor: pointer; text-decoration: none; display: inline-block; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  button:disabled { opacity: .5; cursor: default; }
+  input, select { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+                  background: var(--surface); color: var(--text); width: 100%; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 16px; }
+  .tabs button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+  .card img { width: 100%; aspect-ratio: 3/2; object-fit: cover; background: var(--line); }
+  .card .body { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .card h3 { margin: 0; font-size: 15px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .price { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .spacer { flex: 1; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  .pill { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
+  .PENDING { color: var(--warn); } .CONFIRMED, .DELIVERED, .COMPLETED { color: var(--ok); }
+  .CANCELLED, .FAILED { color: var(--bad); } .SHIPPED, .REFUNDED { color: var(--accent); }
+  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg);
+           padding: 10px 16px; border-radius: 8px; max-width: calc(100% - 32px); display: none; }
+  .form { display: grid; gap: 10px; max-width: 420px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .hint { background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+  footer { max-width: 1100px; margin: 24px auto; padding: 0 16px 24px; color: var(--muted); font-size: 13px; }
+  footer a { color: var(--accent); }
+  @media (max-width: 560px) { .two { grid-template-columns: 1fr; } .brand small { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">🛒 Shop <small>Spring Boot · Spring Modulith demo</small></div>
+    <span id="who" class="muted"></span>
+    <button id="authBtn"></button>
+  </div>
+</header>
+
+<main>
+  <nav class="tabs" aria-label="Sections">
+    <button data-view="catalog" aria-pressed="true">Products</button>
+    <button data-view="cart">Cart <span id="cartCount"></span></button>
+    <button data-view="orders">My orders</button>
+    <button data-view="profile">Profile</button>
+    <button data-view="about">About</button>
+  </nav>
+
+  <section id="catalog">
+    <div class="row" style="margin-bottom:12px">
+      <input id="search" placeholder="Search products…" aria-label="Search products">
+      <select id="category" aria-label="Category" style="max-width:180px">
+        <option value="">All categories</option><option>electronics</option><option>books</option>
+        <option>fashion</option><option>home</option>
+      </select>
+    </div>
+    <div id="products" class="grid"></div>
+  </section>
+
+  <section id="cart" hidden></section>
+  <section id="orders" hidden></section>
+  <section id="profile" hidden></section>
+
+  <section id="login" hidden>
+    <div class="panel form">
+      <h2 style="margin:0">Log in</h2>
+      <div class="hint">Demo account: <b>customer@shop.demo</b> / <b>Customer@123</b></div>
+      <input id="email" type="email" placeholder="Email" value="customer@shop.demo" autocomplete="username">
+      <input id="password" type="password" placeholder="Password" value="Customer@123" autocomplete="current-password">
+      <div class="row"><button class="primary" id="doLogin">Log in</button><button id="doRegister">Create account</button></div>
+      <p class="muted" style="margin:0">Creating an account only needs a name, email and a password with letters and digits.</p>
+    </div>
+  </section>
+
+  <section id="about" hidden>
+    <div class="panel">
+      <h2 style="margin-top:0">What is this?</h2>
+      <p>A live demo of an e-commerce backend written in <b>Java 21 / Spring Boot 3.5</b> as a
+        <b>modular monolith</b> (Spring Modulith): identity, catalog, ordering, payment and notification modules with
+        verified boundaries, communicating through <b>transactional domain events</b>.</p>
+      <p>Checkout reserves stock atomically, the order starts <span class="pill PENDING">PENDING</span>, the payment module
+        charges it asynchronously and the order becomes <span class="pill CONFIRMED">CONFIRMED</span>
+        (orders above ₹50,000 are declined by the simulated card → <span class="pill CANCELLED">CANCELLED</span>, stock returned).</p>
+      <p>The same system also exists as <b>8 Spring Cloud microservices</b> (gateway, Keycloak, RabbitMQ saga with outbox,
+        Eureka, Config Server, Zipkin/Grafana) in the same repository.</p>
+      <p class="row" style="flex-wrap:wrap">
+        <a class="btn" href="swagger-ui.html">API docs (Swagger)</a>
+        <a class="btn" href="https://github.com/Ritiksharmaji/Spring-Boot-Microservices" target="_blank" rel="noopener">Source on GitHub</a>
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Demo data only — no real payments. ·
+  <a href="swagger-ui.html">API</a> ·
+  <a href="https://github.com/Ritiksharmaji/Spring-Boot-Microservices" target="_blank" rel="noopener">GitHub</a>
+</footer>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const money = n => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+let token = null, user = null, polling = null;
+try { token = sessionStorage.getItem('token'); user = JSON.parse(sessionStorage.getItem('user') || 'null'); } catch (e) {}
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 3500); }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+async function api(method, path, body) {
+  const res = await fetch(path, { method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+                                  body: body ? JSON.stringify(body) : undefined });
+  if (res.status === 401 && token) { logout(); throw new Error('Session expired, please log in again'); }
+  const data = res.status === 204 ? null : await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.detail || data?.title || ('HTTP ' + res.status));
+  return data;
+}
+
+function setAuth(t, u) {
+  token = t; user = u;
+  try { if (t) { sessionStorage.setItem('token', t); sessionStorage.setItem('user', JSON.stringify(u)); } else { sessionStorage.clear(); } } catch (e) {}
+  renderHeader();
+}
+function logout() { setAuth(null, null); show('catalog'); }
+function renderHeader() {
+  $('#who').textContent = user ? user.firstName + (user.role === 'ADMIN' ? ' (admin)' : '') : '';
+  $('#authBtn').textContent = user ? 'Log out' : 'Log in';
+  if (user) refreshCartCount(); else $('#cartCount').textContent = '';
+}
+$('#authBtn').onclick = () => user ? logout() : show('login');
+
+function show(view) {
+  if (['cart', 'orders', 'profile'].includes(view) && !token) { toast('Please log in first'); view = 'login'; }
+  for (const id of ['catalog', 'cart', 'orders', 'profile', 'login', 'about']) $('#' + id).hidden = id !== view;
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === view));
+  clearInterval(polling);
+  ({ catalog: loadProducts, cart: loadCart, orders: loadOrders, profile: loadProfile }[view] || (() => {}))();
+}
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => show(b.dataset.view));
+
+// ---------------- catalog ----------------
+async function loadProducts() {
+  const q = $('#search').value.trim(), cat = $('#category').value;
+  const url = q ? '/api/products/search?size=48&keyword=' + encodeURIComponent(q)
+                : '/api/products?size=48' + (cat ? '&category=' + encodeURIComponent(cat) : '');
+  try {
+    const page = await api('GET', url);
+    $('#products').innerHTML = page.content.length ? page.content.map(p => `
+      <article class="card">
+        <img src="${esc(p.imageUrl || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <div class="body">
+          <h3>${esc(p.name)}</h3>
+          <div class="muted">${esc(p.description || '')}</div>
+          <div class="spacer"></div>
+          <div class="row"><span class="price">${money(p.price)}</span><span class="spacer"></span>
+            <span class="muted">${p.stockQuantity} in stock</span></div>
+          <button class="primary" ${p.stockQuantity ? '' : 'disabled'} onclick="addToCart(${p.id})">Add to cart</button>
+        </div>
+      </article>`).join('') : '<p class="muted">No products found.</p>';
+  } catch (e) { $('#products').innerHTML = '<p class="muted">' + esc(e.message) + '</p>'; }
+}
+let searchTimer; $('#search').oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadProducts, 300); };
+$('#category').onchange = () => { $('#search').value = ''; loadProducts(); };
+
+async function addToCart(productId) {
+  if (!token) { toast('Log in to add items'); return show('login'); }
+  try { const cart = await api('POST', '/api/cart/items', { productId, quantity: 1 }); $('#cartCount').textContent = '(' + cart.totalItems + ')'; toast('Added to cart'); }
+  catch (e) { toast(e.message); }
+}
+async function refreshCartCount() { try { const c = await api('GET', '/api/cart'); $('#cartCount').textContent = c.totalItems ? '(' + c.totalItems + ')' : ''; } catch (e) {} }
+
+// ---------------- cart ----------------
+async function loadCart() {
+  try {
+    const c = await api('GET', '/api/cart');
+    $('#cartCount').textContent = c.totalItems ? '(' + c.totalItems + ')' : '';
+    $('#cart').innerHTML = `<div class="panel">${c.items.length ? `
+      <table><thead><tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead><tbody>
+      ${c.items.map(i => `<tr><td>${esc(i.productName)}</td><td>${money(i.unitPrice)}</td>
+        <td><div class="row"><button onclick="setQty(${i.productId},${i.quantity - 1})" aria-label="Less">−</button>${i.quantity}
+            <button onclick="setQty(${i.productId},${i.quantity + 1})" aria-label="More">+</button></div></td>
+        <td>${money(i.subTotal)}</td><td><button onclick="removeItem(${i.productId})">Remove</button></td></tr>`).join('')}
+      </tbody></table>
+      <div class="row" style="margin-top:14px"><b>Total ${money(c.totalAmount)}</b><span class="spacer"></span>
+        <button class="primary" onclick="checkout()">Place order</button></div>` : '<p class="muted">Your cart is empty.</p>'}</div>`;
+  } catch (e) { toast(e.message); }
+}
+async function setQty(id, q) { try { q < 1 ? await api('DELETE', '/api/cart/items/' + id) : await api('PUT', '/api/cart/items/' + id, { quantity: q }); } catch (e) { toast(e.message); } loadCart(); }
+async function removeItem(id) { try { await api('DELETE', '/api/cart/items/' + id); } catch (e) { toast(e.message); } loadCart(); }
+async function checkout() {
+  try { const o = await api('POST', '/api/orders'); toast('Order #' + o.id + ' placed — waiting for payment'); show('orders'); }
+  catch (e) { toast(e.message); if (/address/i.test(e.message)) show('profile'); }
+}
+
+// ---------------- orders ----------------
+async function loadOrders() {
+  try {
+    const page = await api('GET', '/api/orders?size=20');
+    $('#orders').innerHTML = page.content.length ? page.content.map(o => `
+      <div class="panel">
+        <div class="row"><b>Order #${o.id}</b><span class="pill ${o.status}">${o.status}</span><span class="spacer"></span>
+          <span class="price">${money(o.totalAmount)}</span></div>
+        <div class="muted">${esc(o.statusReason || '')} · ${new Date(o.createdAt).toLocaleString()}</div>
+        <div class="muted">${o.items.map(i => esc(i.productName) + ' × ' + i.quantity).join(', ')}</div>
+        ${['PENDING', 'CONFIRMED'].includes(o.status) ? `<button style="margin-top:8px" onclick="cancelOrder(${o.id})">Cancel order</button>` : ''}
+      </div>`).join('') : '<div class="panel muted">No orders yet.</div>';
+    if (page.content.some(o => o.status === 'PENDING')) { clearInterval(polling); polling = setInterval(loadOrders, 1500); }
+    else clearInterval(polling);
+  } catch (e) { toast(e.message); }
+}
+async function cancelOrder(id) { try { await api('POST', '/api/orders/' + id + '/cancel'); toast('Order cancelled — stock returned, payment refunded'); } catch (e) { toast(e.message); } loadOrders(); }
+
+// ---------------- profile ----------------
+async function loadProfile() {
+  try {
+    const u = await api('GET', '/api/users/me'); const a = u.address || {};
+    $('#profile').innerHTML = `<div class="panel form">
+      <h2 style="margin:0">Profile & delivery address</h2>
+      <div class="muted">${esc(u.email)} · ${u.role}</div>
+      <div class="two"><input id="pf" placeholder="First name" value="${esc(u.firstName)}"><input id="pl" placeholder="Last name" value="${esc(u.lastName || '')}"></div>
+      <input id="pp" placeholder="Phone (+91…)" value="${esc(u.phone || '')}">
+      <input id="as" placeholder="Street" value="${esc(a.street || '')}">
+      <div class="two"><input id="ac" placeholder="City" value="${esc(a.city || '')}"><input id="at" placeholder="State" value="${esc(a.state || '')}"></div>
+      <div class="two"><input id="ay" placeholder="Country" value="${esc(a.country || '')}"><input id="az" placeholder="ZIP" value="${esc(a.zipcode || '')}"></div>
+      <button class="primary" onclick="saveProfile()">Save</button></div>`;
+  } catch (e) { toast(e.message); }
+}
+async function saveProfile() {
+  const v = id => $('#' + id).value.trim() || null;
+  try {
+    await api('PUT', '/api/users/me', { firstName: v('pf'), lastName: v('pl'), phone: v('pp'),
+      address: { street: v('as'), city: v('ac'), state: v('at'), country: v('ay'), zipcode: v('az') } });
+    toast('Saved');
+  } catch (e) { toast(e.message); }
+}
+
+// ---------------- auth ----------------
+$('#doLogin').onclick = async () => {
+  try { const r = await api('POST', '/api/auth/login', { email: $('#email').value, password: $('#password').value }); setAuth(r.accessToken, r.user); toast('Welcome, ' + r.user.firstName); show('catalog'); }
+  catch (e) { toast(e.message); }
+};
+$('#doRegister').onclick = async () => {
+  const email = $('#email').value, name = email.split('@')[0] || 'Customer';
+  try { const r = await api('POST', '/api/auth/register', { firstName: name, email, password: $('#password').value }); setAuth(r.accessToken, r.user); toast('Account created — add your address in Profile'); show('profile'); }
+  catch (e) { toast(e.message); }
+};
+
+renderHeader();
+show('catalog');
+</script>
+</body>
+</html>
