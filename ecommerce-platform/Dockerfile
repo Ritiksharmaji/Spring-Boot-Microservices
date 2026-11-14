@@ -31,7 +31,7 @@ RUN --mount=type=cache,target=/root/.m2 \
  && java -Djarmode=tools -jar /workspace/app.jar extract --layers --launcher --destination /workspace/extracted
 
 # ---------------------------------------------------------------------------
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 ARG MODULE
 LABEL org.opencontainers.image.title="${MODULE}" \
       org.opencontainers.image.source="https://github.com/Ritiksharmaji/Spring-Boot-Microservices"
