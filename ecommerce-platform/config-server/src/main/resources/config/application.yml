@@ -59,6 +59,16 @@ logging:
       max-file-size: 5MB
       max-history: 7
 
+# OpenAPI docs: served at /v3/api-docs of each service and aggregated by the gateway (/swagger-ui.html).
+# Set API_DOCS_ENABLED=false to switch them off.
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:true}
+  swagger-ui:
+    enabled: ${API_DOCS_ENABLED:true}
+  paths-to-exclude: /internal/**, /message
+  default-produces-media-type: application/json
+
 info:
   app:
     version: 1.0.0

@@ -77,6 +77,15 @@ public class GatewayConfig {
                                 .setName("paymentBreaker")
                                 .setFallbackUri("forward:/fallback/payments")))
                         .uri("lb://payment-service"))
+                // OpenAPI documents of each service, aggregated by the gateway's Swagger UI
+                .route("docs-user-service", r -> r.path("/docs/user-service/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs")).uri("lb://user-service"))
+                .route("docs-product-service", r -> r.path("/docs/product-service/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs")).uri("lb://product-service"))
+                .route("docs-order-service", r -> r.path("/docs/order-service/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs")).uri("lb://order-service"))
+                .route("docs-payment-service", r -> r.path("/docs/payment-service/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs")).uri("lb://payment-service"))
                 // Eureka dashboard (ADMIN only, see SecurityConfig)
                 .route("eureka-server", r -> r
                         .path("/eureka/main")

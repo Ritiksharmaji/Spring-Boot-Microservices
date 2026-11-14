@@ -40,6 +40,9 @@ public class SecurityConfig {
                 .authorizeExchange(ex -> ex
                         // public
                         .pathMatchers("/actuator/health/**", "/actuator/info", "/fallback/**").permitAll()
+                        // API documentation (switch off in production with API_DOCS_ENABLED=false)
+                        .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**",
+                                "/docs/*/v3/api-docs").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
                         // admin
                         .pathMatchers("/api/products/**", "/api/products").hasRole("ADMIN")
