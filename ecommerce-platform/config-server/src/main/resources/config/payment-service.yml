@@ -43,6 +43,11 @@ spring:
             consumer:
               auto-bind-dlq: true
               republish-to-dlq: true
+          paymentResult-out-0:
+            producer:
+              # must declare the consumer queue exactly like the consumer does (with its DLQ),
+              # otherwise RabbitMQ rejects the second declaration (PRECONDITION_FAILED)
+              auto-bind-dlq: true
 
 app:
   payment:
