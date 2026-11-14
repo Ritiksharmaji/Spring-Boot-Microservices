@@ -29,7 +29,7 @@ grep -q 'shop-api:' "$SHARED/compose.yml" || { echo "shop-api service missing in
 grep -q 'shop.onekampus.com' "$SHARED/Caddyfile" || { echo "shop site missing in $SHARED/Caddyfile"; exit 1; }
 
 echo "==> Building jar"
-(cd "$APP_DIR" && JAVA_HOME="${JAVA_HOME:-$(/usr/libexec/java_home -v 21)}" ./mvnw -B -q -DskipTests package)
+(cd "$APP_DIR" && JAVA_HOME="${DEPLOY_JAVA_HOME:-$(/usr/libexec/java_home -v 21)}" ./mvnw -B -q -DskipTests package)
 JAR=$(ls "$APP_DIR"/target/ecommerce-monolith-*.jar | grep -v original | head -1)
 
 echo "==> Shared server files (compose.yml, Caddyfile) from $SHARED"
@@ -41,44 +41,8 @@ scp -q -i "$KEY" "$APP_DIR/deploy/Dockerfile" "$HOST:$REMOTE/shop-api/Dockerfile
 scp -q -i "$KEY" "$JAR" "$HOST:$REMOTE/shop-api/shop.jar"
 
 echo "==> Secrets, database, start"
-"${SSH[@]}" "bash -s" <<'REMOTE_SCRIPT'
-set -euo pipefail
-cd /opt/apps
-test -f .env || { echo "Missing /opt/apps/.env"; exit 1; }
-
-add_secret() {  # add_secret NAME VALUE  (only if NAME is not in .env yet)
-  grep -q "^$1=" .env || { echo "$1=$2" >> .env; echo "   generated $1"; GENERATED=1; }
-}
-GENERATED=0
-add_secret SHOP_DB_PASSWORD "$(openssl rand -hex 16)"
-add_secret SHOP_JWT_SECRET "$(openssl rand -hex 32)"
-add_secret SHOP_ADMIN_EMAIL "admin@shop.onekampus.com"
-add_secret SHOP_ADMIN_PASSWORD "$(openssl rand -base64 18 | tr -d '/+=' | cut -c1-16)A1"
-set -a; source .env; set +a
-
-docker compose up -d postgres >/dev/null
-for i in $(seq 1 30); do docker compose exec -T postgres pg_isready -U dabba -d dabba >/dev/null 2>&1 && break; sleep 2; done
-PSQL="docker compose exec -T postgres psql -U dabba -d dabba -tAq"
-if [ "$($PSQL -c "SELECT 1 FROM pg_roles WHERE rolname='shop'")" != "1" ]; then
-  $PSQL -c "CREATE ROLE shop LOGIN PASSWORD '${SHOP_DB_PASSWORD}'"
-  echo "   created role shop"
-fi
-if [ "$($PSQL -c "SELECT 1 FROM pg_database WHERE datname='shopdb'")" != "1" ]; then
-  $PSQL -c "CREATE DATABASE shopdb OWNER shop"
-  echo "   created database shopdb"
-fi
-
-docker compose up -d --build shop-api
-for i in $(seq 1 60); do
-  [ "$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q shop-api)")" = healthy ] && break; sleep 3
-done
-docker compose ps shop-api
-docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || true
-docker image prune -f >/dev/null
-if [ "$GENERATED" = 1 ]; then
-  echo "   admin login: $SHOP_ADMIN_EMAIL / $SHOP_ADMIN_PASSWORD   (stored in /opt/apps/.env)"
-fi
-REMOTE_SCRIPT
+scp -q -i "$KEY" "$APP_DIR/deploy/remote-setup.sh" "$HOST:$REMOTE/shop-api/remote-setup.sh"
+"${SSH[@]}" "bash $REMOTE/shop-api/remote-setup.sh"
 
 echo "==> Health"
 curl -sf https://shop.onekampus.com/actuator/health && echo || echo "warning: https://shop.onekampus.com not reachable yet (DNS / certificate?)"
