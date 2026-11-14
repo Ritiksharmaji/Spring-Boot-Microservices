@@ -26,14 +26,14 @@ interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> search(@Param("keyword") String keyword, Pageable pageable);
 
     /** Atomic: decrements only if enough stock is left; returns 0 otherwise (no oversell). */
-    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Modifying(flushAutomatically = true)  // runs inside the caller's transaction: do not detach its entities
     @Query("""
             UPDATE Product p SET p.stockQuantity = p.stockQuantity - :quantity
             WHERE p.id = :id AND p.active = true AND p.stockQuantity >= :quantity
             """)
     int decreaseStock(@Param("id") Long id, @Param("quantity") int quantity);
 
-    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Modifying(flushAutomatically = true)  // runs inside the caller's transaction: do not detach its entities
     @Query("UPDATE Product p SET p.stockQuantity = p.stockQuantity + :quantity WHERE p.id = :id")
     int increaseStock(@Param("id") Long id, @Param("quantity") int quantity);
 }
