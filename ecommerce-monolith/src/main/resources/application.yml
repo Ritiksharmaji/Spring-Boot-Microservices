@@ -1,0 +1,96 @@
+# E-commerce modular monolith. Every host/secret is an environment variable with a local default.
+server:
+  port: ${SERVER_PORT:8086}
+  forward-headers-strategy: framework   # behind Caddy/Nginx: real client IP and https scheme
+  shutdown: graceful
+
+spring:
+  application:
+    name: ecommerce-monolith
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:shopdb}
+    username: ${DB_USERNAME:ecom}
+    password: ${DB_PASSWORD:ecom}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:8}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate          # schema is owned by Flyway (src/main/resources/db/migration)
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Kolkata
+  flyway:
+    enabled: true
+  jackson:
+    time-zone: Asia/Kolkata
+  modulith:
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: true           # event_publication table (transactional event registry)
+      republish-outstanding-events-on-restart: true
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${MAIL_STARTTLS:false}
+
+app:
+  security:
+    # HS256 signing key, at least 32 characters. ALWAYS set JWT_SECRET in production.
+    jwt-secret: ${JWT_SECRET:local-development-secret-change-me-0123456789}
+    token-ttl: ${JWT_TTL:PT2H}
+    issuer: ${JWT_ISSUER:ecommerce-monolith}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  bootstrap:
+    # created at start-up when no admin exists yet
+    admin-email: ${ADMIN_EMAIL:}
+    admin-password: ${ADMIN_PASSWORD:}
+  demo:
+    # seeds a sample catalog and a public demo customer (for the live demo site)
+    enabled: ${DEMO_MODE:false}
+  payment:
+    max-amount: ${PAYMENT_MAX_AMOUNT:50000.00}
+  notification:
+    from: ${MAIL_FROM:no-reply@shop.local}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,modulith
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    mail:
+      enabled: false
+
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:true}
+  swagger-ui:
+    enabled: ${API_DOCS_ENABLED:true}
+    path: /swagger-ui.html
+    operations-sorter: method
+  default-produces-media-type: application/json
+
+info:
+  app:
+    name: ecommerce-monolith
+    description: E-commerce platform as a Spring Modulith modular monolith
+    version: 1.0.0
+
+logging:
+  level:
+    com.ecommerce.shop: INFO
