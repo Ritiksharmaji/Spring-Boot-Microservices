@@ -58,3 +58,5 @@ and validation settings under test are the production ones.
 | Auditing not active in `@DataMongoTest` slices | CI (Testcontainers) |
 | Polling a RabbitMQ queue before the binder declared it | CI (Testcontainers) |
 | CORS pre-flight needs Spring Cloud Gateway `globalcors`, not Spring Security CORS | `GatewayCorsTest` |
+| Services cached an empty registry for ~60 s after start-up → 503 on first calls (now 5 s refresh) | end-to-end smoke test in CI |
+| Gateway retry filter crashed on an already-committed 503 fallback (edge retry removed) | end-to-end smoke test in CI |

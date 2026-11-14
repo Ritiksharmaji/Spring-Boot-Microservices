@@ -9,7 +9,7 @@
 | `422 Profile Incomplete` at checkout | no profile/address | `PUT /api/users/me` with an address |
 | `409 Insufficient Stock` | stock lower than cart quantity | reduce quantity / admin increases stock |
 | `503 Service Unavailable` | downstream not registered yet or down; breaker open | `docker compose ps`; Eureka dashboard; wait 10 s for the breaker to half-open |
-| Gateway 503 right after start | Eureka registry not fetched yet (up to 30 s) | retry after a few seconds |
+| 503 right after start-up | instances not yet in the clients' registry cache (refreshed every 5 s) | retry after ~10 s |
 | Order stays **PENDING** | payment-service down or RabbitMQ unreachable | `docker compose logs payment-service order-service`; RabbitMQ UI queue `order.created.payment-service`; `select * from outbox_event where published_at is null` |
 | Messages in a `*.dlq` queue | consumer threw 3 times | read the `x-exception-message` header in the RabbitMQ UI, fix, move messages back |
 | No emails in Mailpit | `MAIL_HOST` not set for notification-service | compose sets it to `mailpit`; IDE run: `MAIL_HOST=localhost` |

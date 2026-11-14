@@ -351,8 +351,7 @@ stateDiagram-v2
 
 | Layer | Mechanism | Configuration |
 |---|---|---|
-| Gateway → service | Circuit breaker per route + fallback (503 JSON) | 10-call window, 50 % failure rate, 10 s open |
-| Gateway → product (GET) | Retry | 3 retries, GET only |
+| Gateway → service | Circuit breaker per route + fallback (503 JSON); **no retries at the edge** (services retry their own reads; edge retries amplify outages) | 10-call window, 50 % failure rate, 10 s open |
 | Gateway | Redis token-bucket rate limit (per client IP) on the catalog | 10 req/s, burst 20 |
 | Nginx (prod) | per-IP request limit | 30 r/s API, 10 r/s auth |
 | order → product/user | Resilience4j circuit breaker **and** retry with exponential back-off | 3 attempts, 300 ms ×2; business errors (404/409) ignored |
@@ -371,6 +370,7 @@ stateDiagram-v2
 | Keycloak down | existing tokens keep working until expiry (gateway caches JWKS); new logins fail |
 | Config server down after start | running services keep their configuration |
 | Eureka down | clients use their cached registry |
+| Service (re)starts | registered and discoverable within ~5–15 s (registry fetch 5 s, load-balancer cache 5 s, heartbeat 10 s) |
 
 ---
 

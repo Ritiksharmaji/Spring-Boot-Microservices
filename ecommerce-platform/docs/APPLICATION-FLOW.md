@@ -130,7 +130,7 @@ sequenceDiagram
     participant DB as productdb
 
     C->>GW: GET /api/products?category=electronics&page=0&size=20
-    GW->>GW: GET /api/products/** is permitAll · rate limit · retry (GET) · breaker
+    GW->>GW: GET /api/products/** is permitAll · Redis rate limit · circuit breaker
     GW->>P: forward
     P->>DB: SELECT ... WHERE active AND category ILIKE ... LIMIT 20
     P-->>C: { content: [...], page: { size, number, totalElements, totalPages } }

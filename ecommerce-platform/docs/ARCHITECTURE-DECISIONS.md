@@ -96,7 +96,8 @@ accepts payment results; 3 attempts then dead-letter queue.
 ### ADR-011 Resilience policy
 **Decision:** reads (`getProduct`, `getUser`, stock release) retry 3× with exponential back-off;
 stock **reservation is never retried** (not idempotent); every downstream has a circuit breaker;
-`BusinessException`s (404, 409, 422) are ignored by breakers and retries.
+`BusinessException`s (404, 409, 422) are ignored by breakers and retries. The gateway does not retry
+(only breaker + fallback): edge retries multiply traffic during outages and services already retry internally.
 **Consequences:** transient faults are absorbed, outages fail fast with 503, user errors are not
 mistaken for outages.
 
