@@ -1,6 +1,7 @@
 package com.ecommerce.shop.ordering.internal;
 
 import com.ecommerce.shop.ordering.OrderStatus;
+import com.ecommerce.shop.ordering.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -42,6 +43,18 @@ class Order {
 
     @Column(nullable = false)
     private String customerName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentMethod paymentMethod = PaymentMethod.CARD;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OrderPaymentStatus paymentStatus = OrderPaymentStatus.PENDING;
+
+    private String recipientName;
+    private String recipientPhone;
+    private String notes;
 
     @Embedded
     private ShippingAddress shippingAddress;

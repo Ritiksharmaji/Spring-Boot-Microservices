@@ -59,7 +59,8 @@ public class SecurityConfig {
                         // signed-in users
                         .requestMatchers("/api/users/me").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers("/api/users", "/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/cart", "/api/cart/**", "/api/orders", "/api/orders/**", "/api/payments/**")
+                        .requestMatchers("/api/cart", "/api/cart/**", "/api/orders", "/api/orders/**", "/api/payments/**",
+                                "/api/addresses", "/api/addresses/**", "/api/wishlist", "/api/wishlist/**")
                             .hasAnyRole("CUSTOMER", "ADMIN")
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))

@@ -23,6 +23,7 @@ class IdentityService implements CustomerDirectory {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokens;
     private final LoginAttemptGuard loginGuard;
+    private final AddressService addresses;
 
     /** Self-registration always creates a CUSTOMER. */
     @Transactional
@@ -56,7 +57,7 @@ class IdentityService implements CustomerDirectory {
 
     @Transactional(readOnly = true)
     public UserResponse me(long userId) {
-        return UserResponse.from(find(userId));
+        return response(find(userId));
     }
 
     /** Updates name, phone and delivery address. Email and role are not changeable here. */
@@ -68,23 +69,20 @@ class IdentityService implements CustomerDirectory {
         user.setPhone(request.phone());
         if (request.address() != null) {
             AddressDto a = request.address();
-            user.setStreet(a.street());
-            user.setCity(a.city());
-            user.setState(a.state());
-            user.setCountry(a.country());
-            user.setZipcode(a.zipcode());
+            addresses.upsertDefault(userId, new AddressRequest("Home", user.getFirstName(), user.getLastName(),
+                    request.phone(), a.street(), a.city(), a.state(), a.zipcode(), a.country(), true));
         }
-        return UserResponse.from(user);
+        return response(user);
     }
 
     @Transactional(readOnly = true)
     public Page<UserResponse> list(Pageable pageable) {
-        return users.findAll(pageable).map(UserResponse::from);
+        return users.findAll(pageable).map(this::response);
     }
 
     @Transactional(readOnly = true)
     public UserResponse get(long id) {
-        return UserResponse.from(find(id));
+        return response(find(id));
     }
 
     @Transactional
@@ -94,20 +92,24 @@ class IdentityService implements CustomerDirectory {
         }
         User user = find(id);
         user.setRole(role);
-        return UserResponse.from(user);
+        return response(user);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Customer> findCustomer(long userId) {
         return users.findById(userId).map(u -> new Customer(u.getId(), u.getEmail(), u.fullName(),
-                u.hasAddress()
-                        ? new Customer.DeliveryAddress(u.getStreet(), u.getCity(), u.getState(), u.getCountry(), u.getZipcode())
-                        : null));
+                addresses.defaultAddress(userId)
+                        .map(a -> new Customer.DeliveryAddress(a.getStreet(), a.getCity(), a.getState(), a.getCountry(), a.getZipcode()))
+                        .orElse(null)));
     }
 
     private TokenResponse token(User user) {
-        return new TokenResponse(tokens.issue(user), "Bearer", tokens.ttlSeconds(), UserResponse.from(user));
+        return new TokenResponse(tokens.issue(user), "Bearer", tokens.ttlSeconds(), response(user));
+    }
+
+    private UserResponse response(User user) {
+        return UserResponse.from(user, user.getId() == null ? null : addresses.defaultAddress(user.getId()).orElse(null));
     }
 
     private User find(long id) {
