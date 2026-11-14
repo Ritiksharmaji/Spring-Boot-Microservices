@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # Build the e-commerce monolith locally and (re)start it on the shared Lightsail
-# apps-server (next to Dabba and the job portal), served at https://shop.onekampus.com.
+# apps-server (next to Dabba and the job portal), served at https://shop-api.onekampus.com.
 #
 #   ecommerce-monolith/deploy/deploy.sh            (from anywhere)
 #
@@ -26,7 +26,7 @@ SHARED="${SHARED_DEPLOY_DIR:-$(cd "$APP_DIR/../.." && pwd)/dabba-platform/deploy
 SSH=(ssh -i "$KEY" "$HOST")
 
 grep -q 'shop-api:' "$SHARED/compose.yml" || { echo "shop-api service missing in $SHARED/compose.yml"; exit 1; }
-grep -q 'shop.onekampus.com' "$SHARED/Caddyfile" || { echo "shop site missing in $SHARED/Caddyfile"; exit 1; }
+grep -q "shop-api.onekampus.com" "$SHARED/Caddyfile" || { echo "shop-api site missing in $SHARED/Caddyfile"; exit 1; }
 
 echo "==> Building jar"
 (cd "$APP_DIR" && JAVA_HOME="${DEPLOY_JAVA_HOME:-$(/usr/libexec/java_home -v 21)}" ./mvnw -B -q -DskipTests package)
@@ -45,5 +45,5 @@ scp -q -i "$KEY" "$APP_DIR/deploy/remote-setup.sh" "$HOST:$REMOTE/shop-api/remot
 "${SSH[@]}" "bash $REMOTE/shop-api/remote-setup.sh"
 
 echo "==> Health"
-curl -sf https://shop.onekampus.com/actuator/health && echo || echo "warning: https://shop.onekampus.com not reachable yet (DNS / certificate?)"
-echo "==> Done: https://shop.onekampus.com"
+curl -sf https://shop-api.onekampus.com/actuator/health && echo || echo "warning: https://shop-api.onekampus.com not reachable yet (DNS / certificate?)"
+echo "==> Done: API https://shop-api.onekampus.com (storefront: ecommerce-frontend/deploy/deploy.sh)"

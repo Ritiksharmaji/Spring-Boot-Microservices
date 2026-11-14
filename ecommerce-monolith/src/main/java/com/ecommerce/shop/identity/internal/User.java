@@ -37,12 +37,6 @@ class User {
     @Column(nullable = false)
     private Role role = Role.CUSTOMER;
 
-    private String street;
-    private String city;
-    private String state;
-    private String country;
-    private String zipcode;
-
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -50,10 +44,6 @@ class User {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-
-    boolean hasAddress() {
-        return street != null && city != null && country != null && zipcode != null;
-    }
 
     String fullName() {
         return lastName == null || lastName.isBlank() ? firstName : firstName + " " + lastName;

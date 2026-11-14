@@ -26,9 +26,10 @@
   **end-to-end smoke test**, publishes images to GHCR and deploys to **AWS Lightsail** behind Nginx + Let's Encrypt.
 
 **Modular monolith bullets** (live link):
-- Rebuilt the same platform as a **Spring Modulith modular monolith** (5 modules, boundaries verified
-  in CI, transactional domain events with an event publication registry) — **live at
-  https://shop.onekampus.com**, running in ~380 MB alongside two other apps on a shared 2 GB server.
+- Rebuilt the same platform as a **Spring Modulith modular monolith** (6 modules, boundaries verified
+  in CI, transactional domain events with an event publication registry, Flyway) with a **React 18 + Vite +
+  Tailwind storefront** — **live at https://shop.onekampus.com** (API https://shop-api.onekampus.com),
+  running in ~380 MB alongside two other apps on a shared 2 GB server.
 - Documented the **monolith vs microservices trade-offs** of the same system (one ACID checkout vs saga +
   outbox, ~USD 0 vs ~USD 44/month hosting, deployment and failure-isolation differences).
 

@@ -29,14 +29,21 @@ class OrderItem {
     private String productName;
 
     @Column(nullable = false)
+    private String size = "";
+
+    private String imageUrl;
+
+    @Column(nullable = false)
     private Integer quantity;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice;
 
-    OrderItem(Long productId, String productName, Integer quantity, BigDecimal unitPrice) {
+    OrderItem(Long productId, String productName, String size, String imageUrl, Integer quantity, BigDecimal unitPrice) {
         this.productId = productId;
         this.productName = productName;
+        this.size = size == null ? "" : size;
+        this.imageUrl = imageUrl;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
     }

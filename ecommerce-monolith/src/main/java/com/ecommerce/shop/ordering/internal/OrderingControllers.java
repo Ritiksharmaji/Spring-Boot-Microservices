@@ -38,17 +38,19 @@ class CartController {
         return ResponseEntity.status(HttpStatus.CREATED).body(cart.add(CurrentUser.id(jwt), request));
     }
 
-    @Operation(summary = "Set the quantity of a line")
+    @Operation(summary = "Set the quantity of a line (size: query parameter for products with sizes)")
     @PutMapping("/items/{productId}")
     CartResponse setQuantity(@AuthenticationPrincipal Jwt jwt, @PathVariable long productId,
+                             @RequestParam(required = false) String size,
                              @Valid @RequestBody QuantityRequest request) {
-        return cart.setQuantity(CurrentUser.id(jwt), productId, request.quantity());
+        return cart.setQuantity(CurrentUser.id(jwt), productId, size, request.quantity());
     }
 
-    @Operation(summary = "Remove a line")
+    @Operation(summary = "Remove a line (size: query parameter for products with sizes)")
     @DeleteMapping("/items/{productId}")
-    ResponseEntity<Void> remove(@AuthenticationPrincipal Jwt jwt, @PathVariable long productId) {
-        cart.remove(CurrentUser.id(jwt), productId);
+    ResponseEntity<Void> remove(@AuthenticationPrincipal Jwt jwt, @PathVariable long productId,
+                                @RequestParam(required = false) String size) {
+        cart.remove(CurrentUser.id(jwt), productId, size);
         return ResponseEntity.noContent().build();
     }
 
@@ -68,10 +70,12 @@ class OrderController {
 
     private final OrderService orders;
 
-    @Operation(summary = "Checkout the cart (order starts PENDING until paid)")
+    @Operation(summary = "Checkout the cart. Body optional: shippingAddress (else the default saved address), "
+            + "paymentMethod CARD (simulated, asynchronous) or CASH (cash on delivery), notes")
     @PostMapping
-    ResponseEntity<OrderResponse> checkout(@AuthenticationPrincipal Jwt jwt) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(orders.checkout(CurrentUser.id(jwt)));
+    ResponseEntity<OrderResponse> checkout(@AuthenticationPrincipal Jwt jwt,
+                                           @Valid @RequestBody(required = false) CheckoutRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(orders.checkout(CurrentUser.id(jwt), request));
     }
 
     @Operation(summary = "My orders, newest first")

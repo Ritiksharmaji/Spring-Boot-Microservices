@@ -4,6 +4,7 @@ import com.ecommerce.shop.ordering.OrderPayments;
 import com.ecommerce.shop.ordering.OrderPlaced;
 import com.ecommerce.shop.ordering.OrderStatus;
 import com.ecommerce.shop.ordering.OrderStatusChanged;
+import com.ecommerce.shop.ordering.PaymentMethod;
 import com.ecommerce.shop.shared.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,23 +38,37 @@ class PaymentService {
             payment.setOrderId(event.orderId());
             payment.setUserId(event.userId());
             payment.setAmount(event.totalAmount());
-            PaymentProvider.Result result = provider.charge(event.orderId(), event.totalAmount());
-            payment.setStatus(result.success() ? PaymentStatus.COMPLETED : PaymentStatus.FAILED);
-            payment.setTransactionRef(result.reference());
-            payment.setFailureReason(result.failureReason());
+            if (event.paymentMethod() == PaymentMethod.CASH) {
+                payment.setStatus(PaymentStatus.CASH_ON_DELIVERY);       // nothing to charge now
+            } else {
+                PaymentProvider.Result result = provider.charge(event.orderId(), event.totalAmount());
+                payment.setStatus(result.success() ? PaymentStatus.COMPLETED : PaymentStatus.FAILED);
+                payment.setTransactionRef(result.reference());
+                payment.setFailureReason(result.failureReason());
+            }
             payments.saveAndFlush(payment);
             log.info("Order {}: payment {}", event.orderId(), payment.getStatus());
         }
         switch (payment.getStatus()) {
             case COMPLETED -> orderPayments.paymentSucceeded(event.orderId());
             case FAILED -> orderPayments.paymentFailed(event.orderId(), payment.getFailureReason());
+            case CASH_ON_DELIVERY -> orderPayments.cashOnDeliveryAccepted(event.orderId());
             default -> log.info("Order {} not charged ({})", event.orderId(), payment.getStatus());
         }
     }
 
-    /** Refund after cancellation; if the order was cancelled before payment, make sure it never gets charged. */
+    /**
+     * Cancelled: refund a captured card payment, drop an uncollected cash payment, or make sure an
+     * order cancelled before payment never gets charged. Delivered: cash has been collected.
+     */
     @ApplicationModuleListener
     void on(OrderStatusChanged event) {
+        if (event.status() == OrderStatus.DELIVERED) {
+            payments.findByOrderId(event.orderId())
+                    .filter(p -> p.getStatus() == PaymentStatus.CASH_ON_DELIVERY)
+                    .ifPresent(p -> p.setStatus(PaymentStatus.COMPLETED));
+            return;
+        }
         if (event.status() != OrderStatus.CANCELLED) {
             return;
         }
@@ -62,7 +77,11 @@ class PaymentService {
                 provider.refund(payment.getTransactionRef(), payment.getAmount());
                 payment.setStatus(PaymentStatus.REFUNDED);
                 payment.setRefundedAt(LocalDateTime.now());
+                orderPayments.paymentRefunded(event.orderId());
                 log.info("Order {} cancelled: payment {} refunded", event.orderId(), payment.getId());
+            } else if (payment.getStatus() == PaymentStatus.CASH_ON_DELIVERY) {
+                payment.setStatus(PaymentStatus.SKIPPED);
+                payment.setFailureReason("Order cancelled before delivery");
             }
         }, () -> {
             Payment skipped = new Payment();

@@ -29,6 +29,7 @@ class CatalogService implements Catalog {
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> list(String category, Pageable pageable) {
+        // list views load the image collections in batches (@BatchSize), not one query per product
         Page<Product> page = StringUtils.hasText(category)
                 ? products.findByActiveTrueAndCategoryIgnoreCase(category.trim(), pageable)
                 : products.findByActiveTrue(pageable);
@@ -74,7 +75,8 @@ class CatalogService implements Catalog {
     @Transactional(readOnly = true)
     public Optional<ProductInfo> findActiveProduct(long productId) {
         return products.findByIdAndActiveTrue(productId)
-                .map(p -> new ProductInfo(p.getId(), p.getName(), p.getPrice(), p.getStockQuantity()));
+                .map(p -> new ProductInfo(p.getId(), p.getName(), p.getPrice(), p.getStockQuantity(), p.sizes(),
+                        p.allImages().isEmpty() ? null : p.allImages().getFirst()));
     }
 
     @Override
@@ -101,7 +103,14 @@ class CatalogService implements Catalog {
         p.setPrice(r.price());
         p.setStockQuantity(r.stockQuantity());
         p.setCategory(r.category());
-        p.setImageUrl(r.imageUrl());
+        p.setSubCategory(r.subCategory());
+        p.setSizes(r.sizes());
+        p.setBestseller(Boolean.TRUE.equals(r.bestseller()));
+        List<String> images = r.images() != null && !r.images().isEmpty() ? r.images()
+                : r.imageUrl() == null ? List.of() : List.of(r.imageUrl());
+        p.getImages().clear();
+        p.getImages().addAll(images);
+        p.setImageUrl(images.isEmpty() ? null : images.getFirst());
         if (r.active() != null) {
             p.setActive(r.active());
         }

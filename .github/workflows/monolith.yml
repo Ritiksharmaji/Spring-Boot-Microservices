@@ -2,7 +2,7 @@ name: Monolith CI
 
 on:
   push:
-    branches: [main, "branch-19*"]
+    branches: [main, "branch-19*", "branch-20*"]
     paths: ["ecommerce-monolith/**", ".github/workflows/monolith.yml"]
   pull_request:
     branches: [main]

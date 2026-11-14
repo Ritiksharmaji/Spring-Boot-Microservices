@@ -17,6 +17,12 @@ interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByIdAndActiveTrue(Long id);
 
+    boolean existsByActiveTrueAndCategoryIn(java.util.Collection<String> categories);
+
+    @Modifying
+    @Query("UPDATE Product p SET p.active = false WHERE p.active = true")
+    int retireAllActive();
+
     @Query("""
             SELECT p FROM Product p
             WHERE p.active = true AND p.stockQuantity > 0

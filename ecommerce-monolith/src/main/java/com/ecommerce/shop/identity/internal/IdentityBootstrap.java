@@ -24,6 +24,7 @@ class IdentityBootstrap implements ApplicationRunner {
     static final String DEMO_PASSWORD = "Customer@123";
 
     private final UserRepository users;
+    private final AddressService addresses;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.bootstrap.admin-email:}")
@@ -57,12 +58,9 @@ class IdentityBootstrap implements ApplicationRunner {
             u.setFirstName("Demo");
             u.setLastName("Customer");
             u.setPhone("+919876543210");
-            u.setStreet("MG Road 1");
-            u.setCity("Pune");
-            u.setState("MH");
-            u.setCountry("India");
-            u.setZipcode("411001");
-            users.save(u);
+            users.saveAndFlush(u);
+            addresses.create(u.getId(), new IdentityDtos.AddressRequest("Home", "Demo", "Customer", "+919876543210",
+                    "MG Road 1", "Pune", "MH", "411001", "India", true));
             log.info("Demo mode: created demo customer {}", DEMO_EMAIL);
         }
     }

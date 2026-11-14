@@ -13,12 +13,26 @@ deployment. **Start here → [ecommerce-platform/README.md](ecommerce-platform/R
 cd ecommerce-platform && docker compose up -d --build
 ```
 
-### 🌐 [`ecommerce-monolith/`](ecommerce-monolith) — the same system as a modular monolith (live)
+### 🌐 Live full-stack shop — React + Spring Boot modular monolith
 
-The identical feature set built as **one Spring Boot application with Spring Modulith modules**
-(identity, catalog, ordering, payment, notification), transactional domain events instead of a
-broker, one PostgreSQL database — running at **https://shop.onekampus.com** for ~380 MB of memory.
-Read the comparison: [MONOLITH-VS-MICROSERVICES.md](ecommerce-monolith/docs/MONOLITH-VS-MICROSERVICES.md).
+| | Folder | Live |
+|---|---|---|
+| **Frontend** — React 18, Vite, Tailwind | [`ecommerce-frontend/`](ecommerce-frontend) | **https://shop.onekampus.com** |
+| **Backend** — Spring Boot 3.5 + Spring Modulith, PostgreSQL | [`ecommerce-monolith/`](ecommerce-monolith) | **https://shop-api.onekampus.com** ([Swagger](https://shop-api.onekampus.com/swagger-ui.html)) |
+
+Demo login `customer@shop.demo` / `Customer@123`. The backend is the same system as the
+microservices, built as **one application with enforced module boundaries** (identity, catalog,
+ordering, payment, notification, wishlist) and transactional domain events instead of a broker —
+it runs in ~380 MB on a shared 2 GB server. Comparison:
+[MONOLITH-VS-MICROSERVICES.md](ecommerce-monolith/docs/MONOLITH-VS-MICROSERVICES.md).
+
+```
+Spring-Boot-Microservices/
+├── ecommerce-platform/    8 Spring Cloud microservices (local + CI)
+├── ecommerce-monolith/    Spring Modulith backend (live API)
+├── ecommerce-frontend/    React storefront (live)
+└── MicroserverWithDiffrentServices/, ConfigurationManagment/   course notes (learning branches)
+```
 
 ### 📚 Learning branches — how it was built
 
@@ -50,3 +64,13 @@ The `branch-19-*` series built the modular monolith:
 | 2. Cart, orders, payments, notifications via Modulith events | `branch-19-2-cart-orders-payments-modulith-events` |
 | 3. Storefront page, Docker, apps-server deploy kit, CI | `branch-19-3-docker-and-apps-server-deploy` |
 | 4. Docs, comparison, Postman | `branch-19-4-docs-monolith-vs-microservices` |
+| 5. Live deployment fixes | `branch-19-5-live-deploy-fixes` |
+
+The `branch-20-*` series made it full-stack with React:
+
+| Step | Branch |
+|---|---|
+| 1. Sizes, images, address book, wishlist, cash on delivery (backend) | `branch-20-1-backend-sizes-images-wishlist-addresses-cod` |
+| 2. React storefront on the Spring Boot API | `branch-20-2-react-frontend-on-monolith-api` |
+| 3. Deploy shop.onekampus.com (React) + shop-api.onekampus.com (API) | `branch-20-3-deploy-shop-frontend-and-shop-api` |
+| 4. Documentation | `branch-20-4-docs-full-stack` |
