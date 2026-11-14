@@ -1,0 +1,29 @@
+server:
+  port: ${SERVER_PORT:8082}
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:productdb}
+    username: ${DB_USERNAME:ecom}
+    password: ${DB_PASSWORD:ecom}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Kolkata
+
+app:
+  message: "Hello-product-auto-refresh"
+
+info:
+  app:
+    name: product-service
+    description: Product catalog service
+
+logging:
+  level:
+    com.app_ecom.product: DEBUG

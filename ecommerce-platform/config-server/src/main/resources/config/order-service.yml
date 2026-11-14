@@ -1,0 +1,110 @@
+server:
+  port: ${SERVER_PORT:8083}
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:orderdb}
+    username: ${DB_USERNAME:ecom}
+    password: ${DB_PASSWORD:ecom}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Kolkata
+  cloud:
+    function:
+      definition: paymentResult
+    stream:
+      bindings:
+        # saga input: payment outcome from payment-service
+        paymentResult-in-0:
+          destination: payment.result
+          group: order-service
+          consumer:
+            max-attempts: 3
+        # outputs written through the transactional outbox
+        orderCreated-out-0:
+          destination: order.created
+          producer:
+            required-groups: payment-service
+        orderStatus-out-0:
+          destination: order.status
+          producer:
+            required-groups: notification-service,payment-service
+      rabbit:
+        bindings:
+          paymentResult-in-0:
+            consumer:
+              auto-bind-dlq: true        # failed messages go to payment.result.order-service.dlq
+              republish-to-dlq: true
+          orderCreated-out-0:
+            producer:
+              # must declare the consumer queue exactly like the consumer does (with its DLQ),
+              # otherwise RabbitMQ rejects the second declaration (PRECONDITION_FAILED)
+              auto-bind-dlq: true
+          orderStatus-out-0:
+            producer:
+              # must declare the consumer queue exactly like the consumer does (with its DLQ),
+              # otherwise RabbitMQ rejects the second declaration (PRECONDITION_FAILED)
+              auto-bind-dlq: true
+
+app:
+  message: "Hello-order-auto-refresh"
+  outbox:
+    poll-interval-ms: 1000
+    batch-size: 50
+    retention-days: 7
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        registerHealthIndicator: true
+        # business errors (404, out of stock...) are not failures of the downstream service
+        ignoreExceptions:
+          - com.app_ecom.exception.BusinessException
+    instances:
+      productService:
+        baseConfig: default
+      userService:
+        baseConfig: default
+  retry:
+    configs:
+      default:
+        maxAttempts: 3
+        waitDuration: 300ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        ignoreExceptions:
+          - com.app_ecom.exception.BusinessException
+    instances:
+      productService:
+        baseConfig: default
+      userService:
+        baseConfig: default
+  ratelimiter:
+    instances:
+      messageRateLimiter:
+        limitForPeriod: 2
+        limitRefreshPeriod: 4s
+        timeoutDuration: 0
+
+info:
+  app:
+    name: order-service
+    description: Cart and order service
+
+logging:
+  level:
+    com.app_ecom: DEBUG

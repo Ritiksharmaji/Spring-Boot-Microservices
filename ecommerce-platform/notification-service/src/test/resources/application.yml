@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: notification-service
+  config:
+    import: "optional:file:../config-server/src/main/resources/config/notification-service.yml"
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+    stream:
+      default-binder: integration   # in-memory test binder instead of RabbitMQ
+eureka:
+  client:
+    enabled: false

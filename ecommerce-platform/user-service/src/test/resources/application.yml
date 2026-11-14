@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: user-service
+  config:
+    import: "optional:file:../config-server/src/main/resources/config/user-service.yml"
+  cloud:
+    config:
+      enabled: false
+    bus:
+      enabled: false
+    discovery:
+      enabled: false
+eureka:
+  client:
+    enabled: false

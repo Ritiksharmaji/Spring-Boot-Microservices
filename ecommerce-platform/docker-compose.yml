@@ -1,0 +1,345 @@
+# =============================================================================
+# E-commerce platform — full local stack
+#
+#   docker compose up -d --build                         # core system
+#   docker compose --profile observability up -d         # + Prometheus, Grafana, Loki
+#   docker compose down            (add -v to wipe data)
+#
+# Entry points
+#   API gateway ........ http://localhost:8080
+#   Keycloak ........... http://localhost:8483   (admin console: admin / admin)
+#   Eureka dashboard ... http://localhost:8761
+#   RabbitMQ UI ........ http://localhost:15672  (guest / guest)
+#   Zipkin ............. http://localhost:9411
+#   Mailpit (emails) ... http://localhost:8025
+#   Grafana ............ http://localhost:3001   (admin / admin, observability profile)
+#   Prometheus ......... http://localhost:9090   (observability profile)
+# =============================================================================
+
+name: ecommerce
+
+x-java-service: &java-service
+  restart: unless-stopped
+  networks: [backend]
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+x-common-env: &common-env
+  CONFIG_SERVER_URL: http://config-server:8888
+  EUREKA_URL: http://discovery-server:8761/eureka/
+  RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: 5672
+  RABBIT_USERNAME: ${RABBITMQ_USER:-guest}
+  RABBIT_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+  RABBITMQ_VHOST: /
+  RABBITMQ_SSL: "false"
+  ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+  TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_PROBABILITY:-1.0}
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_USERNAME: ${POSTGRES_USER:-ecom}
+  DB_PASSWORD: ${POSTGRES_PASSWORD:-ecom}
+
+x-healthcheck: &java-healthcheck
+  interval: 10s
+  timeout: 5s
+  retries: 18
+  start_period: 40s
+
+services:
+  # ------------------------------------------------------------------ infra
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ecom}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ecom}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    mem_limit: 256m
+    networks: [backend]
+
+  mongodb:
+    image: mongo:7.0
+    restart: unless-stopped
+    command: ["--wiredTigerCacheSizeGB", "0.25"]
+    volumes: [mongo_data:/data/db]
+    ports: ["27017:27017"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 384m
+    networks: [backend]
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    volumes: [rabbitmq_data:/var/lib/rabbitmq]
+    ports: ["5672:5672", "15672:15672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+    mem_limit: 320m
+    networks: [backend]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 96m
+    networks: [backend]
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    restart: unless-stopped
+    command: ["start-dev", "--import-realm", "--http-port=8080"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloakdb
+      KC_DB_USERNAME: ${POSTGRES_USER:-ecom}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-ecom}
+      # Tokens always carry iss=http://localhost:8483/realms/ecom-app (the URL clients use),
+      # while containers can still reach Keycloak at http://keycloak:8080 (backchannel).
+      KC_HOSTNAME: http://localhost:8483
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HEALTH_ENABLED: "true"
+      JAVA_OPTS_KC_HEAP: "-XX:MaxRAMPercentage=70"
+    volumes:
+      - ./docker/keycloak/ecom-app-realm.json:/opt/keycloak/data/import/ecom-app-realm.json:ro
+    ports: ["8483:8080"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    mem_limit: 768m
+    networks: [backend]
+
+  zipkin:
+    image: openzipkin/zipkin:3.4
+    restart: unless-stopped
+    environment:
+      JAVA_OPTS: "-Xms64m -Xmx192m"
+    ports: ["9411:9411"]
+    mem_limit: 320m
+    networks: [backend]
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    restart: unless-stopped
+    ports: ["8025:8025", "1025:1025"]
+    mem_limit: 64m
+    networks: [backend]
+
+  # ------------------------------------------------------- spring cloud core
+  config-server:
+    <<: *java-service
+    build: { context: ., args: { MODULE: config-server } }
+    image: ecommerce/config-server:local
+    environment:
+      <<: *common-env
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+    healthcheck:
+      <<: *java-healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health/readiness | grep -q UP"]
+    mem_limit: 320m
+
+  discovery-server:
+    <<: *java-service
+    build: { context: ., args: { MODULE: discovery-server } }
+    image: ecommerce/discovery-server:local
+    environment:
+      EUREKA_HOSTNAME: discovery-server
+    ports: ["8761:8761"]
+    healthcheck:
+      <<: *java-healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health/readiness | grep -q UP"]
+    mem_limit: 320m
+
+  # --------------------------------------------------------- business services
+  user-service:
+    <<: *java-service
+    build: { context: ., args: { MODULE: user-service } }
+    image: ecommerce/user-service:local
+    environment:
+      <<: *common-env
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/userdb
+      SPRING_DATA_MONGODB_DATABASE: userdb
+    depends_on: &business-deps
+      config-server: { condition: service_healthy }
+      discovery-server: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      mongodb: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+    healthcheck:
+      <<: *java-healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness | grep -q UP"]
+    mem_limit: 400m
+
+  product-service:
+    <<: *java-service
+    build: { context: ., args: { MODULE: product-service } }
+    image: ecommerce/product-service:local
+    environment:
+      <<: *common-env
+      DB_NAME: productdb
+    depends_on: *business-deps
+    healthcheck:
+      <<: *java-healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health/readiness | grep -q UP"]
+    mem_limit: 400m
+
+  order-service:
+    <<: *java-service
+    build: { context: ., args: { MODULE: order-service } }
+    image: ecommerce/order-service:local
+    environment:
+      <<: *common-env
+      DB_NAME: orderdb
+    depends_on: *business-deps
+    healthcheck:
+      <<: *java-healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health/readiness | grep -q UP"]
+    mem_limit: 448m
+
+  payment-service:
+    <<: *java-service
+    build: { context: ., args: { MODULE: payment-service } }
+    image: ecommerce/payment-service:local
+    environment:
+      <<: *common-env
+      DB_NAME: paymentdb
+      PAYMENT_MAX_AMOUNT: ${PAYMENT_MAX_AMOUNT:-50000.00}
+    depends_on: *business-deps
+    healthcheck:
+      <<: *java-healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health/readiness | grep -q UP"]
+    mem_limit: 400m
+
+  notification-service:
+    <<: *java-service
+    build: { context: ., args: { MODULE: notification-service } }
+    image: ecommerce/notification-service:local
+    environment:
+      <<: *common-env
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_FROM: no-reply@shop.local
+    depends_on: *business-deps
+    healthcheck:
+      <<: *java-healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health/readiness | grep -q UP"]
+    mem_limit: 384m
+
+  # ------------------------------------------------------------- entry point
+  api-gateway:
+    <<: *java-service
+    build: { context: ., args: { MODULE: api-gateway } }
+    image: ecommerce/api-gateway:local
+    environment:
+      <<: *common-env
+      REDIS_HOST: redis
+      KEYCLOAK_ISSUER_URI: http://localhost:8483/realms/ecom-app
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/ecom-app/protocol/openid-connect/certs
+      EUREKA_DASHBOARD_URL: http://discovery-server:8761
+    ports: ["8080:8080"]
+    depends_on:
+      config-server: { condition: service_healthy }
+      discovery-server: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      <<: *java-healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q UP"]
+    mem_limit: 400m
+
+  # ------------------------------------------- observability (opt-in profile)
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    profiles: [observability]
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports: ["9090:9090"]
+    mem_limit: 256m
+    networks: [backend]
+
+  loki:
+    image: grafana/loki:3.3.2
+    profiles: [observability]
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes: [loki_data:/loki]
+    mem_limit: 256m
+    networks: [backend]
+
+  promtail:
+    image: grafana/promtail:3.3.2
+    profiles: [observability]
+    restart: unless-stopped
+    command: ["-config.file=/etc/promtail/promtail.yml"]
+    volumes:
+      - ./docker/promtail/promtail.yml:/etc/promtail/promtail.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on: [loki]
+    mem_limit: 128m
+    networks: [backend]
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    profiles: [observability]
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports: ["3001:3000"]
+    depends_on: [prometheus, loki]
+    mem_limit: 256m
+    networks: [backend]
+
+networks:
+  backend:
+    name: ecommerce-backend
+
+volumes:
+  postgres_data:
+  mongo_data:
+  rabbitmq_data:
+  prometheus_data:
+  loki_data:
+  grafana_data:

@@ -1,0 +1,16 @@
+# Test setup: real service config from the config-server folder, no Config Server / Eureka / Bus.
+spring:
+  application:
+    name: product-service
+  config:
+    import: "optional:file:../config-server/src/main/resources/config/product-service.yml"
+  cloud:
+    config:
+      enabled: false
+    bus:
+      enabled: false
+    discovery:
+      enabled: false
+eureka:
+  client:
+    enabled: false

@@ -1,0 +1,49 @@
+#spring:
+#  application:
+#    name: auth-code-flow
+#
+#  security:
+#    oauth2:
+#      client:
+#        registration:
+#          oauth2-authorization-code-flow:
+#            client-id: oauth2-authrization-flow
+#            client-secret: GkvraQEvRllMqJnTtClSthPihVR1fkqf
+#            authorization-grant-type: authorization_code
+#            redirect-uri: http://localhost:8080/login/oauth2/code/oauth2-authorization-code-flow
+#            issuer-url: http://localhost:8483/realms/auth2
+#            scope:
+#              - openid
+#              - profile
+#              - email
+#
+#        provider:
+#          oauth2-authorization-code-flow:
+#            issuer-url: http://localhost:8483/realms/auth2
+#            authorization-uri: https://auth-server/oauth2/authorize
+#            token-uri: https://auth-server/oauth2/token
+#            user-info-uri: https://auth-server/userinfo
+#            user-name-attribute: sub
+
+## --------- by fixing -----------
+spring:
+  application:
+    name: auth-code-flow
+
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: oauth2-authrization-flow
+            client-secret: GkvraQEvRllMqJnTtClSthPihVR1fkqf
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8080/login/oauth2/code/oauth2-authorization-code-flow
+            scope:
+              - openid
+              - profile
+              - email
+
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8483/realms/auth2

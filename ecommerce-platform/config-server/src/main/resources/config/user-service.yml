@@ -1,0 +1,18 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/userdb}
+      database: ${SPRING_DATA_MONGODB_DATABASE:userdb}
+      auto-index-creation: true   # creates the unique email / keycloakId indexes
+
+info:
+  app:
+    name: user-service
+    description: User management service
+
+logging:
+  level:
+    com.app_ecom.user: DEBUG

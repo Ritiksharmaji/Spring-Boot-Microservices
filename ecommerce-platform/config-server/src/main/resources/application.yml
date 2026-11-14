@@ -1,0 +1,36 @@
+server:
+  port: ${SERVER_PORT:8888}
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          # Config files are packaged inside the jar (src/main/resources/config).
+          # Override with CONFIG_REPO_LOCATION (e.g. file:/config/) to edit config without rebuilding.
+          search-locations: ${CONFIG_REPO_LOCATION:classpath:/config}
+  # RabbitMQ is used by Spring Cloud Bus to broadcast refresh events to all services
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBIT_USERNAME:guest}
+    password: ${RABBIT_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    connection-timeout: 30000
+    ssl:
+      enabled: ${RABBITMQ_SSL:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,busrefresh
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true

@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: payment-service
+  config:
+    import: "optional:file:../config-server/src/main/resources/config/payment-service.yml"
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+    stream:
+      default-binder: integration   # in-memory test binder instead of RabbitMQ
+eureka:
+  client:
+    enabled: false

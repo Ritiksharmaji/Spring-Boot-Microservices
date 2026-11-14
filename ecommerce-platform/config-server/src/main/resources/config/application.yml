@@ -1,0 +1,82 @@
+# Shared configuration served to every config client
+# (user-service, product-service, order-service, api-gateway).
+# A service's own file ({spring.application.name}.yml) overrides these values.
+# Every host/credential is an environment variable with a local-development default.
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+    # discover new/restarted instances within seconds instead of the 30 s default
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+spring:
+  cloud:
+    loadbalancer:
+      cache:
+        ttl: 5s   # client-side load balancer refreshes its instance list from the Eureka cache every 5 s
+  # RabbitMQ is used by Spring Cloud Bus to broadcast config refreshes (/actuator/busrefresh)
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBIT_USERNAME:guest}
+    password: ${RABBIT_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    connection-timeout: 30000
+    ssl:
+      enabled: ${RABBITMQ_SSL:false}
+  jackson:
+    time-zone: Asia/Kolkata
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,refresh,busrefresh,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true     # /actuator/health/liveness and /readiness (used by Docker health checks)
+  health:
+    circuitbreakers:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}   # lets Grafana filter every metric by service
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_URL:http://localhost:9411/api/v2/spans}
+
+logging:
+  level:
+    root: INFO
+  file:
+    name: logs/${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      max-file-size: 5MB
+      max-history: 7
+
+# OpenAPI docs: served at /v3/api-docs of each service and aggregated by the gateway (/swagger-ui.html).
+# Set API_DOCS_ENABLED=false to switch them off.
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:true}
+  swagger-ui:
+    enabled: ${API_DOCS_ENABLED:true}
+  paths-to-exclude: /internal/**, /message
+  default-produces-media-type: application/json
+
+info:
+  app:
+    version: 1.0.0

@@ -1,0 +1,64 @@
+server:
+  port: ${SERVER_PORT:8085}
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:paymentdb}
+    username: ${DB_USERNAME:ecom}
+    password: ${DB_PASSWORD:ecom}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: ${JPA_SHOW_SQL:false}
+  cloud:
+    function:
+      definition: orderCreated;orderStatus
+    stream:
+      bindings:
+        # saga input: new orders to charge
+        orderCreated-in-0:
+          destination: order.created
+          group: payment-service
+          consumer:
+            max-attempts: 3
+        # cancellations -> refunds
+        orderStatus-in-0:
+          destination: order.status
+          group: payment-service
+          consumer:
+            max-attempts: 3
+        # saga output: payment outcome
+        paymentResult-out-0:
+          destination: payment.result
+          producer:
+            required-groups: order-service
+      rabbit:
+        bindings:
+          orderCreated-in-0:
+            consumer:
+              auto-bind-dlq: true
+              republish-to-dlq: true
+          orderStatus-in-0:
+            consumer:
+              auto-bind-dlq: true
+              republish-to-dlq: true
+          paymentResult-out-0:
+            producer:
+              # must declare the consumer queue exactly like the consumer does (with its DLQ),
+              # otherwise RabbitMQ rejects the second declaration (PRECONDITION_FAILED)
+              auto-bind-dlq: true
+
+app:
+  payment:
+    # Simulated payment provider: orders above this amount are declined (handy to demo the failure path)
+    max-amount: ${PAYMENT_MAX_AMOUNT:50000.00}
+
+info:
+  app:
+    name: payment-service
+    description: Payment processing (order saga participant)
+
+logging:
+  level:
+    com.ecommerce.payment: DEBUG

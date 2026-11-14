@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: spring-services
+    metrics_path: /actuator/prometheus
+    # every service tags its metrics with application=<spring.application.name>
+    static_configs:
+      - targets: ["api-gateway:8080"]
+      - targets: ["user-service:8081"]
+      - targets: ["product-service:8082"]
+      - targets: ["order-service:8083"]
+      - targets: ["notification-service:8084"]
+      - targets: ["payment-service:8085"]
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
