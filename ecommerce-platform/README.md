@@ -1,109 +1,141 @@
 # E-Commerce Platform — Spring Boot Microservices
 
-Production version of the e-commerce backend built through the learning branches
-(`branch-2` … `branch-17-2`). Completion work happens on the `branch-18-*` series.
+[![CI](https://github.com/Ritiksharmaji/Spring-Boot-Microservices/actions/workflows/ci.yml/badge.svg)](https://github.com/Ritiksharmaji/Spring-Boot-Microservices/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Ritiksharmaji/Spring-Boot-Microservices/actions/workflows/codeql.yml/badge.svg)](https://github.com/Ritiksharmaji/Spring-Boot-Microservices/actions/workflows/codeql.yml)
+![Java 21](https://img.shields.io/badge/Java-21-orange) ![Spring Boot 3.5](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen) ![Spring Cloud 2025](https://img.shields.io/badge/Spring%20Cloud-2025.0-brightgreen)
+
+A production-style e-commerce backend: **8 Spring Boot microservices** behind an API gateway,
+**Keycloak** OAuth2 security, a **choreography saga with a transactional outbox over RabbitMQ**
+for checkout, **Resilience4j**, full **observability**, **Testcontainers + end-to-end CI**, and a
+**Docker / AWS Lightsail** deployment.
+
+```mermaid
+flowchart LR
+    C[Client] -->|JWT| GW[API Gateway<br/>security · routing · rate limit · breakers]
+    C -->|login| KC[Keycloak]
+    GW --> U[user-service<br/>MongoDB]
+    GW --> P[product-service<br/>PostgreSQL]
+    GW --> O[order-service<br/>PostgreSQL + outbox]
+    GW --> Pay[payment-service<br/>PostgreSQL]
+    O -->|REST| P
+    O -->|REST| U
+    O <-->|order.created · payment.result · order.status| MQ[[RabbitMQ]]
+    Pay <--> MQ
+    N[notification-service] <--> MQ
+    N --> Mail[SMTP]
+    subgraph Spring Cloud
+      CFG[Config Server] --- BUS((Bus)) 
+      EU[Eureka]
+    end
+```
+
+## Highlights
+
+- **Checkout saga:** stock reserved atomically → order `PENDING` → payment → `CONFIRMED`, or `CANCELLED` with stock released; refunds on cancellation.
+- **No lost events, no double charges:** transactional outbox, idempotent consumers, retries + dead-letter queues.
+- **No overselling:** conditional `UPDATE … WHERE stock >= qty`, proven by a 30-thread PostgreSQL test.
+- **Security:** Keycloak (PKCE), JWT validation and roles (`CUSTOMER`/`ADMIN`) at the gateway, identity headers set only from the token (impersonation blocked), CORS, rate limiting.
+- **Resilience:** circuit breakers, retries with back-off (reads only), fallbacks; business errors never trip breakers.
+- **Observability:** Prometheus + Grafana dashboard, Loki logs, Zipkin traces, all linked by trace id.
+- **Quality:** 49 automated tests — unit, integration, Testcontainers (PostgreSQL, MongoDB, RabbitMQ) — plus a full-stack smoke test in CI.
+- **Delivery:** one Dockerfile for all services, one-command Compose stack, images on GHCR, SSH deploy + rollback to AWS Lightsail with Nginx + Let's Encrypt.
 
 ## Services
 
-| Service | Port | Responsibility |
-|---|---|---|
-| `config-server` | 8888 | Centralized configuration (Spring Cloud Config, native profile) |
-| `discovery-server` | 8761 | Service registry (Netflix Eureka) |
-| `api-gateway` | 8080 | Single entry point: routing, Keycloak JWT security, Redis rate limiting, circuit breakers |
-| `user-service` | 8081 | Users and addresses (MongoDB) |
-| `product-service` | 8082 | Product catalog (PostgreSQL) |
-| `order-service` | 8083 | Cart and orders (PostgreSQL); calls user and product services; drives the order saga (transactional outbox) |
-| `notification-service` | 8084 | Emails customers on order status changes (consumes `order.status`) |
-| `payment-service` | 8085 | Charges / refunds orders (consumes `order.created`, publishes `payment.result`) |
-
-Service configuration lives in `config-server/src/main/resources/config/`:
-`application.yml` holds shared settings, `{service-name}.yml` holds per-service settings.
-All hosts and credentials come from environment variables — see [`.env.example`](.env.example).
-
-## Security model
-
-The API gateway validates the Keycloak JWT and is the only public entry point.
-
-| Role | Can do |
-|---|---|
-| anonymous | browse and search products |
-| `CUSTOMER` | own profile (`/api/users/me`), cart, place / view / cancel own orders |
-| `ADMIN` | everything above + manage products, list users, all orders, change order status |
-
-The gateway **removes any `X-User-*` header sent by the client** and sets
-`X-User-ID` (JWT `sub`), `X-User-Email` and `X-User-Roles` from the verified token,
-so a caller can never act as another user. `/internal/**` endpoints (service-to-service)
-are never routed by the gateway.
-
-## API overview (through the gateway, port 8080)
-
-| Method | Path | Who | Description |
+| Service | Port | Responsibility | Data |
 |---|---|---|---|
-| GET | `/api/products?category=&page=&size=` | public | Paged catalog |
-| GET | `/api/products/{id}`, `/api/products/search?keyword=` | public | Product details / search |
-| POST, PUT, DELETE | `/api/products[/{id}]` | ADMIN | Manage catalog (delete = soft delete) |
-| GET, PUT | `/api/users/me` | CUSTOMER | View / create-or-update own profile and address |
-| GET, POST, PUT | `/api/users[/{id}]` | ADMIN | Manage users |
-| GET, DELETE | `/api/cart` | CUSTOMER | View / clear cart (live prices, totals) |
-| POST | `/api/cart/items` | CUSTOMER | Add product (stock-checked) |
-| PUT, DELETE | `/api/cart/items/{productId}` | CUSTOMER | Change quantity / remove |
-| POST | `/api/orders` | CUSTOMER | Checkout |
-| GET | `/api/orders`, `/api/orders/{id}` | CUSTOMER | Own order history / details |
-| POST | `/api/orders/{id}/cancel` | CUSTOMER | Cancel (PENDING/CONFIRMED only, stock is returned) |
-| GET | `/api/orders/admin` | ADMIN | All orders |
-| GET | `/api/payments/orders/{orderId}` | CUSTOMER | Payment status of own order |
-| GET | `/api/payments/admin` | ADMIN | All payments |
-| PATCH | `/api/orders/{id}/status` | ADMIN | `CONFIRMED → SHIPPED → DELIVERED` |
+| `api-gateway` | 8080 | entry point: routing, JWT/roles, CORS, Redis rate limit, breakers, Swagger UI | Redis |
+| `config-server` | 8888 | centralized configuration, Spring Cloud Bus refresh | — |
+| `discovery-server` | 8761 | Eureka service registry | — |
+| `user-service` | 8081 | profiles and addresses linked to Keycloak accounts | MongoDB `userdb` |
+| `product-service` | 8082 | catalog, search, atomic stock reservation | PostgreSQL `productdb` |
+| `order-service` | 8083 | cart, checkout, order lifecycle, saga, outbox | PostgreSQL `orderdb` |
+| `notification-service` | 8084 | order emails from `order.status` events | — |
+| `payment-service` | 8085 | idempotent charges, refunds | PostgreSQL `paymentdb` |
 
-Errors are returned as RFC 7807 `application/problem+json`
-(400 validation, 404 not found, 409 insufficient stock, 422 invalid state, 503 dependency down).
-
-### Checkout flow
-
-1. Cart must not be empty; the customer profile must have a delivery address.
-2. Current prices are re-read from product-service (cart prices may be stale).
-3. Stock for all lines is reserved in **one atomic call** (`UPDATE … WHERE stock >= qty`),
-   all-or-nothing, so concurrent orders cannot oversell.
-4. The order is saved as **PENDING** with a snapshot of prices, customer email and shipping address;
-   the cart is cleared and an `OrderCreated` event is written to the **outbox table in the same transaction**.
-   If saving fails, the reservation is released (compensation).
-5. The outbox publisher sends `order.created` to RabbitMQ; payment-service charges the order (idempotent)
-   and publishes `payment.result`.
-6. order-service moves the order to **CONFIRMED**, or to **CANCELLED** and releases the stock if the payment
-   failed, and publishes `order.status`; notification-service emails the customer, payment-service refunds
-   cancelled orders.
-
-Calls to product/user services go through Resilience4j: retries with exponential back-off for
-reads, a circuit breaker per service, and business errors (404/409) never count as failures.
-Stock reservation is not retried because it is not idempotent.
-
-## Build
+## Quick start
 
 ```bash
-./mvnw clean package -DskipTests
+cd ecommerce-platform
+docker compose up -d --build                    # ~3-5 min the first time
+docker compose ps                               # wait until all are (healthy)
+./scripts/smoke-test.sh                         # optional: full end-to-end check
 ```
 
-Requires JDK 21. All modules share one parent POM (Spring Boot 3.5.9, Spring Cloud 2025.0.1).
-
-## Run locally (Docker)
-
-```bash
-cp .env.example .env                                  # optional: adjust credentials
-docker compose up -d --build                          # whole system (~3-5 min first build)
-docker compose --profile observability up -d          # + Prometheus, Grafana, Loki
-docker compose ps                                     # wait until everything is healthy
-```
-
-| URL | What |
+| URL | |
 |---|---|
-| http://localhost:8080 | API gateway (all `/api/**` calls) |
-| http://localhost:8483 | Keycloak — realm `ecom-app`, users `admin / Admin@123`, `customer / Customer@123` |
-| http://localhost:8761 | Eureka dashboard |
+| http://localhost:8080/swagger-ui.html | API docs (all services) |
+| http://localhost:8483 | Keycloak — users `admin / Admin@123`, `customer / Customer@123` |
+| http://localhost:8761 | Eureka |
 | http://localhost:15672 | RabbitMQ (guest / guest) |
-| http://localhost:9411 | Zipkin traces |
+| http://localhost:9411 | Zipkin |
 | http://localhost:8025 | Mailpit — order emails |
-| http://localhost:3001 | Grafana (admin / admin) — "E-Commerce Overview" dashboard |
+| http://localhost:3001 | Grafana (`docker compose --profile observability up -d`) |
 
-To run a service from the IDE instead, start only the infrastructure
-(`docker compose up -d postgres mongodb rabbitmq redis keycloak zipkin mailpit`), then
-`config-server` → `discovery-server` → the services → `api-gateway`; defaults point to localhost.
+Try it in 4 commands:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8483/realms/ecom-app/protocol/openid-connect/token \
+  -d grant_type=password -d client_id=oauth2-ecom-pkce -d username=customer -d password='Customer@123' | jq -r .access_token)
+curl -s http://localhost:8080/api/products | jq '.content'
+curl -s -X PUT http://localhost:8080/api/users/me -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"firstName":"Riya","email":"customer@shop.local","address":{"street":"MG Road","city":"Pune","country":"India","zipcode":"411001"}}'
+curl -s http://localhost:8080/api/orders -H "Authorization: Bearer $TOKEN" | jq
+```
+
+Full guided tour: **[docs/STEP-BY-STEP-FLOW.md](docs/STEP-BY-STEP-FLOW.md)** · Postman: **[postman/](postman)** ([guide](docs/POSTMAN.md)).
+
+## Documentation
+
+| | |
+|---|---|
+| [System design](docs/SYSTEM-DESIGN.md) | architecture, data, saga, resilience, scaling, trade-offs |
+| [Application flow](docs/APPLICATION-FLOW.md) | sequence diagrams of every flow |
+| [Step-by-step flow](docs/STEP-BY-STEP-FLOW.md) | run it and watch each step |
+| [API reference](docs/API-REFERENCE.md) | endpoints, payloads, errors |
+| [Events](docs/EVENTS.md) | RabbitMQ exchanges, queues, payloads |
+| [Security](docs/SECURITY.md) | access matrix, threat model |
+| [Observability](docs/OBSERVABILITY.md) | metrics, traces, logs, alerts |
+| [Testing](docs/TESTING.md) | suites and how to run them |
+| [Configuration](docs/CONFIGURATION.md) | config files, env vars, ports |
+| [Local development](docs/LOCAL-DEVELOPMENT.md) | IDE setup and debugging |
+| [Deployment](docs/DEPLOYMENT.md) | AWS Lightsail, CI/CD, backups, rollback |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | common problems |
+| [Architecture decisions](docs/ARCHITECTURE-DECISIONS.md) | why each choice was made |
+| [Project journey](docs/PROJECT-JOURNEY.md) | from course branches to this platform |
+| [Resume & interview](docs/RESUME-AND-INTERVIEW.md) | how to present the project |
+| [Changelog](CHANGELOG.md) | what each branch-18 step delivered |
+
+Each service folder also has its own README (endpoints, data, events, config, tests), e.g. [order-service](order-service/README.md).
+
+## Tech stack
+
+Java 21 · Spring Boot 3.5 · Spring Cloud 2025.0 (Gateway, Config, Netflix Eureka, LoadBalancer,
+Stream, Bus, Circuit Breaker) · Spring Security OAuth2 Resource Server · Keycloak 26 ·
+Spring Data JPA / MongoDB · PostgreSQL 16 · MongoDB 7 · RabbitMQ 3.13 · Redis 7 · Resilience4j ·
+Micrometer · Prometheus · Grafana · Loki · Zipkin · springdoc-openapi · JUnit 5 · Mockito ·
+Testcontainers · JaCoCo · Docker · Docker Compose · Nginx · Let's Encrypt · GitHub Actions · GHCR ·
+CodeQL · Dependabot · AWS Lightsail
+
+## Repository layout
+
+```
+ecommerce-platform/
+├── pom.xml                     parent POM (versions for all modules)
+├── Dockerfile                  one image recipe for every service (MODULE build arg)
+├── docker-compose.yml          full local stack (+ observability profile)
+├── .env.example                every environment variable with local defaults
+├── config-server/  discovery-server/  api-gateway/
+├── user-service/  product-service/  order-service/  payment-service/  notification-service/
+├── docker/                     Postgres init, Keycloak realm, Prometheus, Loki, Grafana
+├── deploy/                     production compose, Nginx, prod realm, server scripts
+├── scripts/smoke-test.sh       end-to-end test of a running stack
+├── postman/                    collection + environments
+└── docs/                       all documentation
+```
+
+## Build & test
+
+```bash
+./mvnw clean verify     # all modules + tests (+ Testcontainers when Docker runs) + coverage
+```
