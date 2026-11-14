@@ -9,10 +9,18 @@ eureka:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
     register-with-eureka: true
     fetch-registry: true
+    # discover new/restarted instances within seconds instead of the 30 s default
+    registry-fetch-interval-seconds: 5
   instance:
     prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
 
 spring:
+  cloud:
+    loadbalancer:
+      cache:
+        ttl: 5s   # client-side load balancer refreshes its instance list from the Eureka cache every 5 s
   # RabbitMQ is used by Spring Cloud Bus to broadcast config refreshes (/actuator/busrefresh)
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
