@@ -1,11 +1,13 @@
 package com.app_ecom.user;
 
+import com.app_ecom.user.config.MongoConfig;
 import com.app_ecom.user.model.User;
 import com.app_ecom.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
 import org.springframework.dao.DuplicateKeyException;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -16,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Real MongoDB (Testcontainers): unique indexes and auditing. Skipped without Docker. */
 @DataMongoTest
+@Import(MongoConfig.class) // slices skip @Configuration classes; auditing lives there
 @Testcontainers(disabledWithoutDocker = true)
 class UserRepositoryMongoContainerTest {
 
