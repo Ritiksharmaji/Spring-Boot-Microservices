@@ -41,6 +41,16 @@ spring:
             consumer:
               auto-bind-dlq: true        # failed messages go to payment.result.order-service.dlq
               republish-to-dlq: true
+          orderCreated-out-0:
+            producer:
+              # must declare the consumer queue exactly like the consumer does (with its DLQ),
+              # otherwise RabbitMQ rejects the second declaration (PRECONDITION_FAILED)
+              auto-bind-dlq: true
+          orderStatus-out-0:
+            producer:
+              # must declare the consumer queue exactly like the consumer does (with its DLQ),
+              # otherwise RabbitMQ rejects the second declaration (PRECONDITION_FAILED)
+              auto-bind-dlq: true
 
 app:
   message: "Hello-order-auto-refresh"
