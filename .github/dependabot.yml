@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /ecommerce-platform
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      spring:
+        patterns: ["org.springframework*", "io.micrometer*", "org.springdoc*"]
+  - package-ecosystem: docker
+    directory: /ecommerce-platform
+    schedule: { interval: monthly }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }
