@@ -3,88 +3,128 @@ package com.app_ecom.user.service;
 import com.app_ecom.user.dto.AddressDTO;
 import com.app_ecom.user.dto.UserRequest;
 import com.app_ecom.user.dto.UserResponse;
+import com.app_ecom.user.dto.UserRole;
+import com.app_ecom.user.exception.DuplicateResourceException;
+import com.app_ecom.user.exception.ResourceNotFoundException;
 import com.app_ecom.user.model.Address;
 import com.app_ecom.user.model.User;
 import com.app_ecom.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
+
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final List<User> users = new ArrayList<>();
+
     private final UserRepository userRepository;
-    private Long nextId = 1L;
 
-    public List<UserResponse> fetchAllUsers(){
-        return userRepository.findAll().stream()
-                .map(this::mapToUserResponse)
-                .collect(Collectors.toList());
+    // ---------- admin operations ----------
+
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream().map(this::toResponse).toList();
     }
 
-    public void addUser( UserRequest userRequest){
+    public UserResponse getUser(String id) {
+        return toResponse(userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User " + id + " not found")));
+    }
+
+    public UserResponse createUser(UserRequest request) {
+        ensureEmailFree(request.getEmail(), null);
         User user = new User();
-        updateUserFromRequest(user,userRequest);
-        userRepository.save(user);
-    }
-
-    public Optional<UserResponse> fetchUser(String id){
-        return userRepository.findById(id)
-                .map(this::mapToUserResponse);
-    }
-
-    // for updating user
-    public boolean updateUser(String id, UserRequest updateUser){
-        return userRepository.findById(id)
-                .map(existingUser->{
-                    updateUserFromRequest(existingUser, updateUser);
-                    userRepository.save(existingUser);
-                    return true;
-                }).orElse(false);
-    }
-
-    private void updateUserFromRequest(User user, UserRequest userRequest) {
-        user.setFirstName(userRequest.getFirstName());
-        user.setLastName(userRequest.getLastName());
-        user.setEmail(userRequest.getEmail());
-        user.setPhone(userRequest.getPhone());
-        if (userRequest.getAddress() != null){
-            Address address = new Address();
-            address.setStreet(userRequest.getAddress().getStreet());
-            address.setState(userRequest.getAddress().getState());
-            address.setZipcode(userRequest.getAddress().getZipcode());
-            address.setCountry(userRequest.getAddress().getCountry());
-            address.setCity(userRequest.getAddress().getCity());
-
-            user.setAddress(address);
-
+        apply(user, request);
+        if (request.getRole() != null) {
+            user.setRole(request.getRole());
         }
-
+        return toResponse(userRepository.save(user));
     }
 
-    private UserResponse mapToUserResponse(User user){
+    public UserResponse updateUser(String id, UserRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User " + id + " not found"));
+        ensureEmailFree(request.getEmail(), user.getId());
+        apply(user, request);
+        if (request.getRole() != null) {
+            user.setRole(request.getRole());
+        }
+        return toResponse(userRepository.save(user));
+    }
+
+    // ---------- self-service (current logged-in user) ----------
+
+    public UserResponse getByKeycloakId(String keycloakId) {
+        return toResponse(findByKeycloakId(keycloakId));
+    }
+
+    /**
+     * Creates or updates the profile of the logged-in user.
+     * The role is never taken from the request, so customers cannot promote themselves.
+     */
+    public UserResponse upsertMyProfile(String keycloakId, UserRequest request) {
+        User user = userRepository.findByKeycloakId(keycloakId).orElseGet(() -> {
+            User created = new User();
+            created.setKeycloakId(keycloakId);
+            created.setRole(UserRole.CUSTOMER);
+            return created;
+        });
+        ensureEmailFree(request.getEmail(), user.getId());
+        apply(user, request);
+        return toResponse(userRepository.save(user));
+    }
+
+    private User findByKeycloakId(String keycloakId) {
+        return userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Profile not found. Create it first with PUT /api/users/me"));
+    }
+
+    private void ensureEmailFree(String email, String currentUserId) {
+        userRepository.findByEmailIgnoreCase(email)
+                .filter(existing -> !existing.getId().equals(currentUserId))
+                .ifPresent(existing -> {
+                    throw new DuplicateResourceException("Email " + email + " is already registered");
+                });
+    }
+
+    private void apply(User user, UserRequest request) {
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setEmail(request.getEmail().toLowerCase());
+        user.setPhone(request.getPhone());
+        if (request.getAddress() != null) {
+            AddressDTO dto = request.getAddress();
+            Address address = new Address();
+            address.setStreet(dto.getStreet());
+            address.setCity(dto.getCity());
+            address.setState(dto.getState());
+            address.setCountry(dto.getCountry());
+            address.setZipcode(dto.getZipcode());
+            user.setAddress(address);
+        }
+    }
+
+    private UserResponse toResponse(User user) {
         UserResponse response = new UserResponse();
-        response.setId(String.valueOf(user.getId()));
+        response.setId(user.getId());
+        response.setKeycloakId(user.getKeycloakId());
         response.setFirstName(user.getFirstName());
         response.setLastName(user.getLastName());
         response.setEmail(user.getEmail());
-        response.setRole(user.getRole());
         response.setPhone(user.getPhone());
-        if(user.getAddress() != null){
-            AddressDTO addressDTO = new AddressDTO();
-            addressDTO.setStreet(user.getAddress().getStreet());
-            addressDTO.setCity(user.getAddress().getCity());
-            addressDTO.setState(user.getAddress().getState());
-            addressDTO.setCountry(user.getAddress().getCountry());
-            addressDTO.setZipcode(user.getAddress().getZipcode());
-            response.setAddress(addressDTO);
+        response.setRole(user.getRole());
+        response.setCreatedAt(user.getCreatedAt());
+        if (user.getAddress() != null) {
+            Address a = user.getAddress();
+            AddressDTO dto = new AddressDTO();
+            dto.setStreet(a.getStreet());
+            dto.setCity(a.getCity());
+            dto.setState(a.getState());
+            dto.setCountry(a.getCountry());
+            dto.setZipcode(a.getZipcode());
+            response.setAddress(dto);
         }
         return response;
-
     }
-
 }

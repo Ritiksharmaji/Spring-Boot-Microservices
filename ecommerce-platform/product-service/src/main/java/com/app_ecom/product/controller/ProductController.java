@@ -3,71 +3,60 @@ package com.app_ecom.product.controller;
 import com.app_ecom.product.dto.ProductRequest;
 import com.app_ecom.product.dto.ProductResponse;
 import com.app_ecom.product.service.ProductService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
+/**
+ * Public catalog API (reads are open; writes are restricted to ADMIN at the API gateway).
+ */
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/products")
 public class ProductController {
 
-
     private final ProductService productService;
 
-    // so basically we are creating productController constucter to auto inject we can use @AutoWired also or it
-    // or we can use @RequiredArgsConstructor at class level but that object should be final
-    //    public ProductController(ProductService productService) {
-    //        this.productService = productService;
-    //    }
-
-    @GetMapping("/simulate")
-    public ResponseEntity<String>simulateFailure(
-            @RequestParam(defaultValue = "false") boolean fail){
-        if(fail){
-            throw new RuntimeException("Simulated Failure For Testing");
-        }
-
-        return  ResponseEntity.ok("Product Service is Ok");
-    }
-
-    @PostMapping
-    public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductRequest productRequest){
-        return new ResponseEntity<ProductResponse>(productService.createProduct(productRequest),
-                HttpStatus.CREATED);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<ProductResponse> updateProduct(
-            @PathVariable Long id,  @RequestBody ProductRequest productRequest){
-        return productService.updateProduct(id, productRequest)
-                .map(ResponseEntity::ok)
-                .orElseGet(()-> ResponseEntity.notFound().build());
-    }
-
     @GetMapping
-    public ResponseEntity<List<ProductResponse>>getProducts(){
-        return  ResponseEntity.ok(productService.getAllProducts());
+    public Page<ProductResponse> getProducts(
+            @RequestParam(required = false) String category,
+            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return productService.getProducts(category, pageable);
     }
+
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
-
-        return productService.getProductById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void>deleteProduct(@PathVariable Long id){
-        Boolean deleted =  productService.deleteProduct(id);
-        return deleted ? ResponseEntity.noContent().build(): ResponseEntity.notFound().build();
+    public ProductResponse getProduct(@PathVariable Long id) {
+        return productService.getProduct(id);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ProductResponse>> searchProduct(@RequestParam  String keyword){
-        return ResponseEntity.ok(productService.searchProducts(keyword));
+    public Page<ProductResponse> search(@RequestParam @NotBlank String keyword,
+                                        @PageableDefault(size = 20) Pageable pageable) {
+        return productService.search(keyword, pageable);
+    }
+
+    @PostMapping
+    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createProduct(request));
+    }
+
+    @PutMapping("/{id}")
+    public ProductResponse updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
+        return productService.updateProduct(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
 }

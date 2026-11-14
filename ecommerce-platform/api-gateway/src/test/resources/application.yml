@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: "optional:file:../config-server/src/main/resources/config/api-gateway.yml"
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+eureka:
+  client:
+    enabled: false

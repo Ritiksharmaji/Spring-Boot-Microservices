@@ -1,0 +1,15 @@
+# Test setup: real service config (incl. resilience4j) from the config-server folder,
+# no Config Server / Eureka. Downstream HTTP clients and the message broker are mocked in tests.
+spring:
+  application:
+    name: order-service
+  config:
+    import: "optional:file:../config-server/src/main/resources/config/order-service.yml"
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+eureka:
+  client:
+    enabled: false
