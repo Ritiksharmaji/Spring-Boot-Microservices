@@ -43,12 +43,12 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
                         // admin
                         .pathMatchers("/api/products/**", "/api/products").hasRole("ADMIN")
-                        .pathMatchers("/api/orders/admin", "/api/orders/*/status").hasRole("ADMIN")
+                        .pathMatchers("/api/orders/admin", "/api/orders/*/status", "/api/payments/admin").hasRole("ADMIN")
                         .pathMatchers("/eureka/**", "/actuator/**").hasRole("ADMIN")
                         // signed-in customers (own profile, cart, orders)
                         .pathMatchers("/api/users/me").hasAnyRole("CUSTOMER", "ADMIN")
                         .pathMatchers("/api/users", "/api/users/**").hasRole("ADMIN")
-                        .pathMatchers("/api/cart/**", "/api/cart", "/api/orders/**", "/api/orders")
+                        .pathMatchers("/api/cart/**", "/api/cart", "/api/orders/**", "/api/orders", "/api/payments/**")
                             .hasAnyRole("CUSTOMER", "ADMIN")
                         // everything else is closed
                         .anyExchange().denyAll())

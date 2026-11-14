@@ -35,6 +35,13 @@ public class Order {
     @Column(nullable = false)
     private OrderStatus status = OrderStatus.PENDING;
 
+    /** Contact details captured at checkout, used for notifications. */
+    private String customerEmail;
+    private String customerName;
+
+    /** Why the order is in its current state (e.g. payment declined). */
+    private String statusReason;
+
     @Embedded
     private ShippingAddress shippingAddress;
 

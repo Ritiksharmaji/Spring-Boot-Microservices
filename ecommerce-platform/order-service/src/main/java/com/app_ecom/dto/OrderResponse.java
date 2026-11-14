@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Builder
-public record OrderResponse(Long id, String userId, OrderStatus status, BigDecimal totalAmount,
+public record OrderResponse(Long id, String userId, OrderStatus status, String statusReason, BigDecimal totalAmount,
                             List<OrderItemDTO> items, AddressDTO shippingAddress,
                             LocalDateTime createdAt, LocalDateTime updatedAt) {
 }
