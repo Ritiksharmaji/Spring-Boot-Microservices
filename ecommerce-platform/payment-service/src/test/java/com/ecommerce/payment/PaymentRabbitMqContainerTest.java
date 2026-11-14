@@ -3,6 +3,7 @@ package com.ecommerce.payment;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -50,9 +51,15 @@ class PaymentRabbitMqContainerTest {
         props.setContentType("application/json");
         rabbitTemplate.send("order.created", "#", new Message(json.getBytes(StandardCharsets.UTF_8), props));
 
+        // The result queue is declared by the binder on the first publish, so until then
+        // RabbitMQ answers 404 NOT_FOUND: keep polling for up to ~10 seconds.
         Message reply = null;
         for (int i = 0; i < 50 && reply == null; i++) {
-            reply = rabbitTemplate.receive("payment.result.order-service", 200);
+            try {
+                reply = rabbitTemplate.receive("payment.result.order-service", 200);
+            } catch (AmqpException queueNotDeclaredYet) {
+                Thread.sleep(200);
+            }
         }
         assertThat(reply).as("payment.result message").isNotNull();
         JsonNode result = mapper.readTree(reply.getBody());
