@@ -1,29 +1,65 @@
+# Dependency updates: ONE grouped pull request per project per month, minor + patch only.
+# Major upgrades (Spring Boot 4, Java 25, React 19, ...) break APIs and are done deliberately
+# as their own branch, so Dependabot does not propose them.
 version: 2
 updates:
   - package-ecosystem: maven
-    directory: /backend/microservices
-    schedule: { interval: weekly }
-    open-pull-requests-limit: 5
-    groups:
-      spring:
-        patterns: ["org.springframework*", "io.micrometer*", "org.springdoc*"]
-  - package-ecosystem: maven
     directory: /backend/monolith
-    schedule: { interval: weekly }
-    open-pull-requests-limit: 5
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
-      spring:
-        patterns: ["org.springframework*", "io.micrometer*", "org.springdoc*"]
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+  - package-ecosystem: maven
+    directory: /backend/microservices
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
   - package-ecosystem: npm
     directory: /frontend/web
-    schedule: { interval: monthly }
-    open-pull-requests-limit: 5
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
   - package-ecosystem: docker
-    directory: /backend/microservices
-    schedule: { interval: monthly }
-  - package-ecosystem: docker
-    directory: /backend/monolith
-    schedule: { interval: monthly }
+    directories: ["/backend/monolith", "/backend/microservices"]
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
   - package-ecosystem: github-actions
     directory: /
-    schedule: { interval: monthly }
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
