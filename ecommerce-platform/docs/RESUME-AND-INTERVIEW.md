@@ -25,6 +25,13 @@
   **Docker Compose** stack; **GitHub Actions** CI runs unit, integration, Testcontainers and a full-stack
   **end-to-end smoke test**, publishes images to GHCR and deploys to **AWS Lightsail** behind Nginx + Let's Encrypt.
 
+**Modular monolith bullets** (live link):
+- Rebuilt the same platform as a **Spring Modulith modular monolith** (5 modules, boundaries verified
+  in CI, transactional domain events with an event publication registry) — **live at
+  https://shop.onekampus.com**, running in ~380 MB alongside two other apps on a shared 2 GB server.
+- Documented the **monolith vs microservices trade-offs** of the same system (one ACID checkout vs saga +
+  outbox, ~USD 0 vs ~USD 44/month hosting, deployment and failure-isolation differences).
+
 **Full-stack version** (after adding the React frontend): replace the last bullet with
 - Built a **React** storefront and admin panel consuming the microservices through the gateway
   with Keycloak PKCE login.
@@ -64,4 +71,6 @@ end-to-end run in CI, and deployed with Docker to AWS."
 | How do you trace a request? | Micrometer Tracing propagates trace ids over HTTP and AMQP; Zipkin; logs carry the trace id → Loki/Grafana |
 | How do you test it? | pyramid: unit → integration (H2, mocked clients) → Testcontainers (real Postgres/Mongo/RabbitMQ) → full-stack smoke test in CI |
 | How is it deployed? | GitHub Actions builds images → GHCR → SSH deploy to Lightsail, Compose with health checks, Nginx TLS, rollback by image tag |
+| Why build it twice (monolith and microservices)? | to compare: the monolith gets one ACID transaction for checkout and costs nothing to host; microservices buy independent deploy/scale and fault isolation at the price of sagas, outbox, brokers and infrastructure — see MONOLITH-VS-MICROSERVICES.md |
+| How does Spring Modulith keep a monolith modular? | each top-level package is a module; only its top-level types are API; `ApplicationModules.verify()` in a test fails the build on internal access or cycles; modules talk through interfaces and events |
 | What would you improve? | Flyway, reservation expiry, real payment provider + webhooks, outbox SKIP LOCKED for replicas, Kubernetes/HPA, read cache |
