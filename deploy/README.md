@@ -34,4 +34,4 @@ Full guide (DNS, memory budget, rollback, backups, operations):
 with Docker Compose and in CI on every push; its production kit for a separate 8 GB server is in
 [`backend/microservices/deploy`](../backend/microservices/deploy) and
 [`backend/microservices/docs/DEPLOYMENT.md`](../backend/microservices/docs/DEPLOYMENT.md).
-**Mobile** ([`frontend/mobile`](../frontend/mobile)) is built with Expo/EAS, not deployed to the server.
+**Mobile** ([`frontend/mobile`](../frontend/mobile)) is released as Android APK/AAB builds (`cli/`: `npm run build:apk` / `build:aab`; `expo/`: EAS), not deployed to the server.

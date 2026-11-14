@@ -15,7 +15,7 @@ backend built two ways — as a **modular monolith** (live) and as **Spring Clou
 ```
 ├── frontend/
 │   ├── web/              React 18 · Vite · Tailwind storefront            → shop.onekampus.com
-│   └── mobile/           Expo / React Native app (imported, API connection pending)
+│   └── mobile/           React Native app: cli/ (React Native CLI) + expo/ (earlier version)
 ├── backend/
 │   ├── monolith/         Spring Boot 3.5 · Spring Modulith · PostgreSQL    → shop-api.onekampus.com
 │   └── microservices/    8 Spring Cloud services · Keycloak · RabbitMQ saga (local + CI)
@@ -27,7 +27,7 @@ backend built two ways — as a **modular monolith** (live) and as **Spring Clou
 | Folder | What | Run locally | Docs |
 |---|---|---|---|
 | [`frontend/web`](frontend/web) | React storefront: catalog, sizes, cart, wishlist, address book, checkout (card / cash on delivery), orders | `npm ci && npm run dev` | [README](frontend/web/README.md) |
-| [`frontend/mobile`](frontend/mobile) | Expo app (Android / iOS) | `npm ci && npx expo start` | [README](frontend/mobile/README.md) |
+| [`frontend/mobile`](frontend/mobile) | React Native app (Android / iOS) — `cli/` (React Native CLI 0.81) and `expo/` (Expo SDK 54); still on the Express API | `cd cli && npm ci && npm start` | [README](frontend/mobile/README.md) |
 | [`backend/monolith`](backend/monolith) | one Spring Boot app, 6 verified modules, transactional events, Flyway | `./mvnw spring-boot:run` | [README](backend/monolith/README.md) · [architecture](backend/monolith/docs/ARCHITECTURE.md) · [API](backend/monolith/docs/API.md) |
 | [`backend/microservices`](backend/microservices) | gateway, config, discovery, user, product, order, payment, notification; saga + outbox; observability | `docker compose up -d --build` | [README](backend/microservices/README.md) · [system design](backend/microservices/docs/SYSTEM-DESIGN.md) |
 | [`deploy`](deploy) | deployment of web + API to AWS Lightsail | `./deploy/deploy.sh all` | [README](deploy/README.md) |
