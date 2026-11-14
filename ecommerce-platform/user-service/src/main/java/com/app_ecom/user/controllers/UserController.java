@@ -1,5 +1,7 @@
 package com.app_ecom.user.controllers;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.app_ecom.user.dto.UserRequest;
 import com.app_ecom.user.dto.UserResponse;
 import com.app_ecom.user.service.UserService;
@@ -16,6 +18,7 @@ import java.util.List;
  * the gateway strips any value sent by the client.
  * Endpoints other than /me are ADMIN-only (enforced at the gateway).
  */
+@Tag(name = "Users", description = "Customer profile and user administration")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
@@ -26,12 +29,12 @@ public class UserController {
     // ---- current user ----
 
     @GetMapping("/me")
-    public UserResponse getMyProfile(@RequestHeader("X-User-ID") String keycloakId) {
+    public UserResponse getMyProfile(@Parameter(hidden = true) @RequestHeader("X-User-ID") String keycloakId) {
         return userService.getByKeycloakId(keycloakId);
     }
 
     @PutMapping("/me")
-    public UserResponse upsertMyProfile(@RequestHeader("X-User-ID") String keycloakId,
+    public UserResponse upsertMyProfile(@Parameter(hidden = true) @RequestHeader("X-User-ID") String keycloakId,
                                         @Valid @RequestBody UserRequest request) {
         return userService.upsertMyProfile(keycloakId, request);
     }

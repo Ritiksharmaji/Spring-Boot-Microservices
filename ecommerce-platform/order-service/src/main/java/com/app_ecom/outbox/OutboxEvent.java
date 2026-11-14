@@ -35,8 +35,8 @@ public class OutboxEvent {
     @Column(nullable = false)
     private String binding;
 
-    @Lob
-    @Column(nullable = false)
+    /** JSON body. Plain varchar/text column (not @Lob, which PostgreSQL would store as a large object). */
+    @Column(nullable = false, length = 65535)
     private String payload;
 
     @Column(nullable = false)

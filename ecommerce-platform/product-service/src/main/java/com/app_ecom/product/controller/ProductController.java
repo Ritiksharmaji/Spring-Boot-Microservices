@@ -1,5 +1,7 @@
 package com.app_ecom.product.controller;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.app_ecom.product.dto.ProductRequest;
 import com.app_ecom.product.dto.ProductResponse;
 import com.app_ecom.product.service.ProductService;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * Public catalog API (reads are open; writes are restricted to ADMIN at the API gateway).
  */
 @Validated
+@Tag(name = "Products", description = "Product catalog")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/products")
