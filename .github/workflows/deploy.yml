@@ -47,7 +47,7 @@ jobs:
           command_timeout: 15m
           script: |
             set -e
-            cd ~/ecommerce/deploy
+            cd ~/ecommerce/ecommerce-platform/deploy
             git -C ~/ecommerce fetch --quiet origin main && git -C ~/ecommerce reset --quiet --hard origin/main
             IMAGE_TAG=${{ steps.tag.outputs.value }} ./scripts/deploy.sh
 

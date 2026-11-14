@@ -38,6 +38,9 @@ public class SecurityConfig {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable) // stateless JWT API
                 .authorizeExchange(ex -> ex
+                        // CORS pre-flight requests carry no token; the gateway's globalcors config
+                        // (api-gateway.yml, CORS_ALLOWED_ORIGINS) decides which origins are allowed
+                        .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // public
                         .pathMatchers("/actuator/health/**", "/actuator/info", "/fallback/**").permitAll()
                         // API documentation (switch off in production with API_DOCS_ENABLED=false)
