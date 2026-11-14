@@ -3,7 +3,7 @@ name: Deploy to AWS Lightsail
 # Runs manually (choose an image tag) or when a version tag (v1.2.3) is pushed.
 # Needs repository secrets LIGHTSAIL_HOST, LIGHTSAIL_USER, LIGHTSAIL_SSH_KEY and
 # the repository variable DEPLOY_ENABLED=true (so forks / unconfigured repos skip it).
-# See ecommerce-platform/docs/DEPLOYMENT.md.
+# See backend/microservices/docs/DEPLOYMENT.md.
 
 on:
   workflow_dispatch:
@@ -47,7 +47,7 @@ jobs:
           command_timeout: 15m
           script: |
             set -e
-            cd ~/ecommerce/ecommerce-platform/deploy
+            cd ~/ecommerce/backend/microservices/deploy
             git -C ~/ecommerce fetch --quiet origin main && git -C ~/ecommerce reset --quiet --hard origin/main
             IMAGE_TAG=${{ steps.tag.outputs.value }} ./scripts/deploy.sh
 

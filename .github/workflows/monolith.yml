@@ -3,10 +3,10 @@ name: Monolith CI
 on:
   push:
     branches: [main, "branch-19*", "branch-20*"]
-    paths: ["ecommerce-monolith/**", ".github/workflows/monolith.yml"]
+    paths: ["backend/monolith/**", ".github/workflows/monolith.yml"]
   pull_request:
     branches: [main]
-    paths: ["ecommerce-monolith/**", ".github/workflows/monolith.yml"]
+    paths: ["backend/monolith/**", ".github/workflows/monolith.yml"]
   workflow_dispatch:
 
 concurrency:
@@ -18,7 +18,7 @@ permissions:
 
 defaults:
   run:
-    working-directory: ecommerce-monolith
+    working-directory: backend/monolith
 
 jobs:
   build-and-test:
@@ -45,9 +45,9 @@ jobs:
         with:
           name: monolith-reports
           path: |
-            ecommerce-monolith/target/surefire-reports/
-            ecommerce-monolith/target/site/jacoco/
-            ecommerce-monolith/target/spring-modulith-docs/
+            backend/monolith/target/surefire-reports/
+            backend/monolith/target/site/jacoco/
+            backend/monolith/target/spring-modulith-docs/
           retention-days: 14
 
   docker-image:

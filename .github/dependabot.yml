@@ -1,14 +1,28 @@
 version: 2
 updates:
   - package-ecosystem: maven
-    directory: /ecommerce-platform
+    directory: /backend/microservices
     schedule: { interval: weekly }
     open-pull-requests-limit: 5
     groups:
       spring:
         patterns: ["org.springframework*", "io.micrometer*", "org.springdoc*"]
+  - package-ecosystem: maven
+    directory: /backend/monolith
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      spring:
+        patterns: ["org.springframework*", "io.micrometer*", "org.springdoc*"]
+  - package-ecosystem: npm
+    directory: /frontend/web
+    schedule: { interval: monthly }
+    open-pull-requests-limit: 5
   - package-ecosystem: docker
-    directory: /ecommerce-platform
+    directory: /backend/microservices
+    schedule: { interval: monthly }
+  - package-ecosystem: docker
+    directory: /backend/monolith
     schedule: { interval: monthly }
   - package-ecosystem: github-actions
     directory: /

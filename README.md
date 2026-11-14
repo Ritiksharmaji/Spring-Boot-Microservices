@@ -1,49 +1,55 @@
-# Spring Boot Microservices — learning log → production platform
+# oneKampus Shop — full-stack e-commerce (Spring Boot · React)
 
-This repository has two parts:
+[![CI](https://github.com/Ritiksharmaji/Spring-Boot-Microservices/actions/workflows/ci.yml/badge.svg)](https://github.com/Ritiksharmaji/Spring-Boot-Microservices/actions/workflows/ci.yml)
+[![Monolith CI](https://github.com/Ritiksharmaji/Spring-Boot-Microservices/actions/workflows/monolith.yml/badge.svg)](https://github.com/Ritiksharmaji/Spring-Boot-Microservices/actions/workflows/monolith.yml)
+[![Frontend CI](https://github.com/Ritiksharmaji/Spring-Boot-Microservices/actions/workflows/frontend.yml/badge.svg)](https://github.com/Ritiksharmaji/Spring-Boot-Microservices/actions/workflows/frontend.yml)
 
-### 🚀 [`ecommerce-platform/`](ecommerce-platform) — the finished system
+Everything for the e-commerce system lives in this repository: web and mobile frontends, and the
+backend built two ways — as a **modular monolith** (live) and as **Spring Cloud microservices**.
 
-A production-style e-commerce backend with **8 Spring Boot microservices**: API gateway with
-Keycloak OAuth2, choreography saga with a transactional outbox over RabbitMQ, Resilience4j,
-Prometheus/Grafana/Loki/Zipkin, Testcontainers and end-to-end CI, Docker and AWS Lightsail
-deployment. **Start here → [ecommerce-platform/README.md](ecommerce-platform/README.md)**
+**Live:** shop **https://shop.onekampus.com** · API **https://shop-api.onekampus.com**
+([Swagger](https://shop-api.onekampus.com/swagger-ui.html)) · demo login `customer@shop.demo` / `Customer@123`
 
-```bash
-cd ecommerce-platform && docker compose up -d --build
+## Repository structure
+
+```
+├── frontend/
+│   ├── web/              React 18 · Vite · Tailwind storefront            → shop.onekampus.com
+│   └── mobile/           Expo / React Native app (imported, API connection pending)
+├── backend/
+│   ├── monolith/         Spring Boot 3.5 · Spring Modulith · PostgreSQL    → shop-api.onekampus.com
+│   └── microservices/    8 Spring Cloud services · Keycloak · RabbitMQ saga (local + CI)
+├── deploy/               one entry point: ./deploy/deploy.sh web | api | all
+├── learning/             course notes, screenshots and practice projects (learning branches)
+└── .github/workflows/    CI per project (paths-filtered) · CodeQL · deploy
 ```
 
-### 🌐 Live full-stack shop — React + Spring Boot modular monolith
+| Folder | What | Run locally | Docs |
+|---|---|---|---|
+| [`frontend/web`](frontend/web) | React storefront: catalog, sizes, cart, wishlist, address book, checkout (card / cash on delivery), orders | `npm ci && npm run dev` | [README](frontend/web/README.md) |
+| [`frontend/mobile`](frontend/mobile) | Expo app (Android / iOS) | `npm ci && npx expo start` | [README](frontend/mobile/README.md) |
+| [`backend/monolith`](backend/monolith) | one Spring Boot app, 6 verified modules, transactional events, Flyway | `./mvnw spring-boot:run` | [README](backend/monolith/README.md) · [architecture](backend/monolith/docs/ARCHITECTURE.md) · [API](backend/monolith/docs/API.md) |
+| [`backend/microservices`](backend/microservices) | gateway, config, discovery, user, product, order, payment, notification; saga + outbox; observability | `docker compose up -d --build` | [README](backend/microservices/README.md) · [system design](backend/microservices/docs/SYSTEM-DESIGN.md) |
+| [`deploy`](deploy) | deployment of web + API to AWS Lightsail | `./deploy/deploy.sh all` | [README](deploy/README.md) |
 
-| | Folder | Live |
+**Monolith or microservices?** Same business rules, same REST paths — compared in
+[MONOLITH-VS-MICROSERVICES.md](backend/monolith/docs/MONOLITH-VS-MICROSERVICES.md).
+
+## CI
+
+| Workflow | Runs when | Checks |
 |---|---|---|
-| **Frontend** — React 18, Vite, Tailwind | [`ecommerce-frontend/`](ecommerce-frontend) | **https://shop.onekampus.com** |
-| **Backend** — Spring Boot 3.5 + Spring Modulith, PostgreSQL | [`ecommerce-monolith/`](ecommerce-monolith) | **https://shop-api.onekampus.com** ([Swagger](https://shop-api.onekampus.com/swagger-ui.html)) |
+| Frontend CI | `frontend/web/**` changes | production build |
+| Monolith CI | `backend/monolith/**` changes | module boundaries, tests (H2 + PostgreSQL Testcontainers), Docker image |
+| CI | `backend/microservices/**` changes | unit/integration/Testcontainers tests, full Docker Compose end-to-end smoke test |
+| CodeQL | weekly + microservices changes | security analysis |
 
-Demo login `customer@shop.demo` / `Customer@123`. The backend is the same system as the
-microservices, built as **one application with enforced module boundaries** (identity, catalog,
-ordering, payment, notification, wishlist) and transactional domain events instead of a broker —
-it runs in ~380 MB on a shared 2 GB server. Comparison:
-[MONOLITH-VS-MICROSERVICES.md](ecommerce-monolith/docs/MONOLITH-VS-MICROSERVICES.md).
+## How it was built
 
-```
-Spring-Boot-Microservices/
-├── ecommerce-platform/    8 Spring Cloud microservices (local + CI)
-├── ecommerce-monolith/    Spring Modulith backend (live API)
-├── ecommerce-frontend/    React storefront (live)
-└── MicroserverWithDiffrentServices/, ConfigurationManagment/   course notes (learning branches)
-```
+`branch-2` … `branch-17-2` follow a Spring Boot microservices course (configuration, discovery,
+inter-service communication, API gateway, Resilience4j, RabbitMQ, Kafka, Keycloak); their notes are in
+[`learning/`](learning). The later series turned that into this product:
 
-### 📚 Learning branches — how it was built
-
-`branch-2` … `branch-17-2` follow a Spring Boot microservices course concept by concept
-(configuration, service discovery, inter-service communication, API gateway, Resilience4j,
-RabbitMQ, Kafka, Keycloak). The course notes and screenshots live in
-[`MicroserverWithDiffrentServices/`](MicroserverWithDiffrentServices) and
-[`ConfigurationManagment/`](ConfigurationManagment).
-
-The `branch-18-*` series turned that code into the platform above; see
-[docs/PROJECT-JOURNEY.md](ecommerce-platform/docs/PROJECT-JOURNEY.md) for the full map.
 
 | Completion step | Branch |
 |---|---|
@@ -74,3 +80,7 @@ The `branch-20-*` series made it full-stack with React:
 | 2. React storefront on the Spring Boot API | `branch-20-2-react-frontend-on-monolith-api` |
 | 3. Deploy shop.onekampus.com (React) + shop-api.onekampus.com (API) | `branch-20-3-deploy-shop-frontend-and-shop-api` |
 | 4. Documentation | `branch-20-4-docs-full-stack` |
+
+| Structure | Branch |
+|---|---|
+| frontend / backend / deploy / learning layout, mobile app imported | `branch-21-repository-structure` |
