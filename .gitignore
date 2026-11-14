@@ -1,0 +1,22 @@
+# Secrets - never commit real credentials (use .env.example as the template)
+.env
+.env.*
+!.env.example
+
+# Build output
+target/
+*.class
+*.jar
+!**/.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+logs/
+*.log
+*.log.*.gz
+
+# IDE / OS
+.idea/workspace.xml
+.idea/shelf/
+*.iml
+.vscode/
+.DS_Store

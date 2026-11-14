@@ -1,0 +1,59 @@
+# Shared configuration served to every config client
+# (user-service, product-service, order-service, api-gateway).
+# A service's own file ({spring.application.name}.yml) overrides these values.
+# Every host/credential is an environment variable with a local-development default.
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+spring:
+  # RabbitMQ is used by Spring Cloud Bus to broadcast config refreshes (/actuator/busrefresh)
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBIT_USERNAME:guest}
+    password: ${RABBIT_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    connection-timeout: 30000
+    ssl:
+      enabled: ${RABBITMQ_SSL:false}
+  jackson:
+    time-zone: Asia/Kolkata
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,refresh,busrefresh,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_URL:http://localhost:9411/api/v2/spans}
+
+logging:
+  level:
+    root: INFO
+  file:
+    name: logs/${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      max-file-size: 5MB
+      max-history: 7
+
+info:
+  app:
+    version: 1.0.0
