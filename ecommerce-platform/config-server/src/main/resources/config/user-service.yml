@@ -1,0 +1,17 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/userdb}
+      database: ${SPRING_DATA_MONGODB_DATABASE:userdb}
+
+info:
+  app:
+    name: user-service
+    description: User management service
+
+logging:
+  level:
+    com.app_ecom.user: DEBUG
