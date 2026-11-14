@@ -18,3 +18,5 @@
 | [ARCHITECTURE-DECISIONS.md](ARCHITECTURE-DECISIONS.md) | understand why each major decision was made |
 | [PROJECT-JOURNEY.md](PROJECT-JOURNEY.md) | see how the course branches became this platform |
 | [RESUME-AND-INTERVIEW.md](RESUME-AND-INTERVIEW.md) | present the project on a resume and in interviews |
+
+Also: [CHANGELOG](../CHANGELOG.md) and a README in every service folder, e.g. [order-service](../order-service/README.md), [payment-service](../payment-service/README.md), [api-gateway](../api-gateway/README.md).

@@ -104,6 +104,9 @@ Full guided tour: **[docs/STEP-BY-STEP-FLOW.md](docs/STEP-BY-STEP-FLOW.md)** · 
 | [Architecture decisions](docs/ARCHITECTURE-DECISIONS.md) | why each choice was made |
 | [Project journey](docs/PROJECT-JOURNEY.md) | from course branches to this platform |
 | [Resume & interview](docs/RESUME-AND-INTERVIEW.md) | how to present the project |
+| [Changelog](CHANGELOG.md) | what each branch-18 step delivered |
+
+Each service folder also has its own README (endpoints, data, events, config, tests), e.g. [order-service](order-service/README.md).
 
 ## Tech stack
 
