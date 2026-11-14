@@ -30,8 +30,8 @@ app:
 
 resilience4j:
   circuitbreaker:
-    instances:
-      productService:
+    configs:
+      default:
         slidingWindowType: COUNT_BASED
         slidingWindowSize: 10
         minimumNumberOfCalls: 5
@@ -40,14 +40,31 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         automaticTransitionFromOpenToHalfOpenEnabled: true
         registerHealthIndicator: true
-  retry:
+        # business errors (404, out of stock...) are not failures of the downstream service
+        ignoreExceptions:
+          - com.app_ecom.exception.BusinessException
     instances:
-      retryBreaker:
-        maxAttempts: 5
-        waitDuration: 500ms
+      productService:
+        baseConfig: default
+      userService:
+        baseConfig: default
+  retry:
+    configs:
+      default:
+        maxAttempts: 3
+        waitDuration: 300ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        ignoreExceptions:
+          - com.app_ecom.exception.BusinessException
+    instances:
+      productService:
+        baseConfig: default
+      userService:
+        baseConfig: default
   ratelimiter:
     instances:
-      retryBreaker:
+      messageRateLimiter:
         limitForPeriod: 2
         limitRefreshPeriod: 4s
         timeoutDuration: 0

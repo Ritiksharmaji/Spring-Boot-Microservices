@@ -1,4 +1,4 @@
-package com.app_ecom.conroller;
+package com.app_ecom.controller;
 
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -15,7 +15,7 @@ public class MessageController {
     private String message;
 
     @GetMapping("/message")
-    @RateLimiter(name = "retryBreaker", fallbackMethod="getMessageFallback")
+    @RateLimiter(name = "messageRateLimiter", fallbackMethod="getMessageFallback")
     public String getString(){
         return message;
     }

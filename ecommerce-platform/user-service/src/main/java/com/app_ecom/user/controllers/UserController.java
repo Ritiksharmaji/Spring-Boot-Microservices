@@ -3,62 +3,58 @@ package com.app_ecom.user.controllers;
 import com.app_ecom.user.dto.UserRequest;
 import com.app_ecom.user.dto.UserResponse;
 import com.app_ecom.user.service.UserService;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * X-User-ID is set by the API gateway from the verified JWT ("sub" claim);
+ * the gateway strips any value sent by the client.
+ * Endpoints other than /me are ADMIN-only (enforced at the gateway).
+ */
 @RestController
-@Slf4j
+@RequiredArgsConstructor
 @RequestMapping("/api/users")
 public class UserController {
+
     private final UserService userService;
 
+    // ---- current user ----
 
-
-    public UserController(UserService userService) {
-        this.userService = userService;
+    @GetMapping("/me")
+    public UserResponse getMyProfile(@RequestHeader("X-User-ID") String keycloakId) {
+        return userService.getByKeycloakId(keycloakId);
     }
 
-    // ✅ GET ALL USERS
+    @PutMapping("/me")
+    public UserResponse upsertMyProfile(@RequestHeader("X-User-ID") String keycloakId,
+                                        @Valid @RequestBody UserRequest request) {
+        return userService.upsertMyProfile(keycloakId, request);
+    }
+
+    // ---- admin ----
+
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getUsers() {
-
-        return ResponseEntity.ok(userService.fetchAllUsers());
+    public List<UserResponse> getUsers() {
+        return userService.getAllUsers();
     }
 
-    // ✅ CREATE USER
-    @PostMapping
-    public ResponseEntity<String> createUser(@RequestBody UserRequest userRequest) {
-        userService.addUser(userRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body("User Added");
-    }
-
-    // ✅ GET USER BY ID
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUser(@PathVariable String id) {
-
-        log.info("Request received for user: {}", id);
-
-        return userService.fetchUser(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public UserResponse getUser(@PathVariable String id) {
+        return userService.getUser(id);
     }
 
-    // ✅ UPDATE USER
+    @PostMapping
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateUser(
-            @PathVariable String id,
-            @RequestBody UserRequest updateUserRequest) {
-
-        boolean updated = userService.updateUser(id, updateUserRequest);
-
-        if (updated) {
-            return ResponseEntity.ok("User updated");
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public UserResponse updateUser(@PathVariable String id, @Valid @RequestBody UserRequest request) {
+        return userService.updateUser(id, request);
     }
 }

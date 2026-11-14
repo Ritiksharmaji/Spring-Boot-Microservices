@@ -1,8 +1,6 @@
 package com.app_ecom.model;
 
-
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,9 +10,10 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(uniqueConstraints = @UniqueConstraint(name = "uk_cart_user_product", columnNames = {"userId", "productId"}))
 @Getter
 @Setter
-@Entity
 @NoArgsConstructor
 public class CartItem {
 
@@ -22,22 +21,23 @@ public class CartItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @ManyToOne
-//    @JoinColumn(name = "user_id", nullable = false)
-//    private User user;
+    @Column(nullable = false)
     private String userId;
 
-//    @ManyToOne
-//    @JoinColumn(name = "product_id", nullable = false)
-    //private Product product;
-    private  Long productId;
+    @Column(nullable = false)
+    private Long productId;
 
-    private  Integer quantity;
+    private String productName;
+
+    @Column(nullable = false)
+    private Integer quantity;
+
+    /** Unit price when the item was added; refreshed from product-service at checkout. */
+    @Column(precision = 12, scale = 2)
     private BigDecimal price;
 
     @CreationTimestamp
     private LocalDateTime createAt;
     @UpdateTimestamp
     private LocalDateTime updateAt;
-
 }

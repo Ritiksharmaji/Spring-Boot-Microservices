@@ -1,93 +1,96 @@
 package com.app_ecom.service;
 
-import com.app_ecom.clients.ProductServiceClient;
-import com.app_ecom.clients.UserServiceClient;
 import com.app_ecom.dto.CartItemRequest;
+import com.app_ecom.dto.CartItemResponse;
+import com.app_ecom.dto.CartResponse;
 import com.app_ecom.dto.ProductResponse;
-import com.app_ecom.dto.UserResponse;
+import com.app_ecom.exception.InsufficientStockException;
+import com.app_ecom.exception.ResourceNotFoundException;
 import com.app_ecom.model.CartItem;
 import com.app_ecom.repository.CartItemRepository;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class CartService {
+
     private final CartItemRepository cartItemRepository;
-    private final ProductServiceClient productServiceClient;
-    private final UserServiceClient userServiceClient;
-    int attempt = 0;
+    private final ProductGateway productGateway;
 
-//    @CircuitBreaker(name = "productService", fallbackMethod = "productFallback")
-    @Retry(name = "retryBreaker", fallbackMethod = "productFallback")
-    public boolean addToCart(String userId, CartItemRequest request) {
-        System.out.println(" count of attempt is:"+ ++attempt);
-
-        // ============================= using loadbalancing ========================
-        // first find either product is Exit or not   throw the microservcie
-        // looking for product
-        ProductResponse productResponse =  productServiceClient.getProductDetails(request.getProductId());
-        System.out.println("product found" + productResponse);
-        if(productResponse == null){
-            return false;
-        }
-        // verifing the quentity
-        if(productResponse.getStockQuantity() < request.getQuantity())
-            return false;
-        // looking for user
-        UserResponse userResponse = userServiceClient.getUserDetails(userId);
-        System.out.println("user Found:"+ userResponse);
-        if(userResponse.getId() == null){
-            return  false;
-        }
-        CartItem existingCartItem = cartItemRepository.findByUserIdAndProductId(userId, Long.valueOf(request.getProductId()));
-        if (existingCartItem != null){
-            // update the quantity
-            existingCartItem.setQuantity(existingCartItem.getQuantity() + request.getQuantity());
-//            existingCartItem.setPrice(existingCartItem.getPrice().multiply(BigDecimal.valueOf(existingCartItem.getQuantity())));
-            existingCartItem.setPrice(BigDecimal.valueOf(3000.0));
-            cartItemRepository.save(existingCartItem);
-        }else{
-            // create the cartItem
-            CartItem cartItem = new CartItem();
-            cartItem.setUserId(userId);
-            cartItem.setProductId(Long.valueOf(String.valueOf(Long.valueOf(request.getProductId()))));
-            cartItem.setQuantity(request.getQuantity());
-            cartItem.setPrice(BigDecimal.valueOf(1000.0));
-            cartItemRepository.save(cartItem);
-        }
-        return true;
+    /** Adds a product (or increases its quantity) using the live price and stock from product-service. */
+    @Transactional
+    public CartResponse addToCart(String userId, CartItemRequest request) {
+        ProductResponse product = loadActiveProduct(request.productId());
+        CartItem item = cartItemRepository.findByUserIdAndProductId(userId, request.productId())
+                .orElseGet(() -> newItem(userId, request.productId()));
+        int newQuantity = (item.getQuantity() == null ? 0 : item.getQuantity()) + request.quantity();
+        applyProduct(item, product, newQuantity);
+        cartItemRepository.save(item);
+        return getCart(userId);
     }
 
-    public boolean deleteItemFromCart(String userId, Long productId) {
-       CartItem cartItem =  cartItemRepository.findByUserIdAndProductId(userId, productId);
-        if(cartItem != null){
-            cartItemRepository.delete(cartItem);
-            return true;
-        }
-
-        return false;
+    /** Sets the quantity of a product already in the cart. */
+    @Transactional
+    public CartResponse updateQuantity(String userId, Long productId, int quantity) {
+        CartItem item = cartItemRepository.findByUserIdAndProductId(userId, productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product " + productId + " is not in your cart"));
+        applyProduct(item, loadActiveProduct(productId), quantity);
+        return getCart(userId);
     }
 
-    public List<CartItem> getCart(String userId) {
-
-        return cartItemRepository.findByUserId(userId);
+    @Transactional
+    public void removeItem(String userId, Long productId) {
+        CartItem item = cartItemRepository.findByUserIdAndProductId(userId, productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product " + productId + " is not in your cart"));
+        cartItemRepository.delete(item);
     }
 
+    @Transactional(readOnly = true)
+    public CartResponse getCart(String userId) {
+        List<CartItemResponse> items = cartItemRepository.findByUserIdOrderByIdAsc(userId).stream()
+                .map(i -> new CartItemResponse(i.getProductId(), i.getProductName(), i.getPrice(), i.getQuantity(),
+                        i.getPrice().multiply(BigDecimal.valueOf(i.getQuantity()))))
+                .toList();
+        BigDecimal total = items.stream().map(CartItemResponse::subTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        int count = items.stream().mapToInt(CartItemResponse::quantity).sum();
+        return new CartResponse(items, count, total);
+    }
 
+    @Transactional(readOnly = true)
+    public List<CartItem> getCartItems(String userId) {
+        return cartItemRepository.findByUserIdOrderByIdAsc(userId);
+    }
+
+    @Transactional
     public void clearCart(String userId) {
-       cartItemRepository.deleteByUserId(userId);
+        cartItemRepository.deleteAllByUserId(userId);
     }
 
-    public boolean productFallback(String userId, CartItemRequest request, Exception ex) {
-        System.out.println("fallback called");
-        return false;
+    private ProductResponse loadActiveProduct(Long productId) {
+        return productGateway.getProduct(productId)
+                .filter(p -> !Boolean.FALSE.equals(p.getActive()))
+                .orElseThrow(() -> new ResourceNotFoundException("Product " + productId + " not found"));
+    }
+
+    private void applyProduct(CartItem item, ProductResponse product, int quantity) {
+        if (product.getStockQuantity() == null || product.getStockQuantity() < quantity) {
+            throw new InsufficientStockException("Only " + product.getStockQuantity()
+                    + " unit(s) of '" + product.getName() + "' available");
+        }
+        item.setQuantity(quantity);
+        item.setPrice(product.getPrice());
+        item.setProductName(product.getName());
+    }
+
+    private CartItem newItem(String userId, Long productId) {
+        CartItem item = new CartItem();
+        item.setUserId(userId);
+        item.setProductId(productId);
+        return item;
     }
 }
