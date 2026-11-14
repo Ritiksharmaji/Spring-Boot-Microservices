@@ -24,7 +24,11 @@ flowchart TB
       na[NotificationSender · Notification]
       ni[internal: OrderNotifications listeners, sender config]
     end
+    subgraph wishlist[wishlist]
+      wi[internal: WishlistItem, WishlistService, WishlistController]
+    end
     shared[shared · open: BusinessException, GlobalExceptionHandler,<br/>SecurityConfig, CurrentUser, EventPublicationMaintenance]
+    wishlist -->|uses| catalog
 
     ordering -->|uses| catalog
     ordering -->|uses| identity
@@ -95,6 +99,12 @@ stateDiagram-v2
 ```
 
 Every cancellation returns stock **in the same transaction** as the status change.
+
+**Payment methods.** `CARD`: the payment module charges after commit → `paymentSucceeded` / `paymentFailed`.
+`CASH`: the payment module records `CASH_ON_DELIVERY` and calls `cashOnDeliveryAccepted` (order CONFIRMED,
+payment status `CASH_ON_DELIVERY`); on `DELIVERED` the order's payment status becomes `PAID` and the payment
+`COMPLETED`; a cancelled cash order is `NOT_CHARGED`. Refunds of card payments are reported back with
+`paymentRefunded` so the order shows `REFUNDED`.
 
 ## 4. Security
 

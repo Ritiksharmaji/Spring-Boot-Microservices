@@ -3,9 +3,11 @@
 This repository contains the same e-commerce system twice:
 
 - **[`ecommerce-platform/`](../../ecommerce-platform)** — 8 Spring Cloud microservices
-- **[`ecommerce-monolith/`](..)** — one Spring Boot application with Spring Modulith modules (live at https://shop.onekampus.com)
+- **[`ecommerce-monolith/`](..)** — one Spring Boot application with Spring Modulith modules (live API https://shop-api.onekampus.com,
+  used by the React storefront https://shop.onekampus.com from [`ecommerce-frontend/`](../../ecommerce-frontend))
 
-Same features, same business rules, same REST paths. What differs is *how the parts talk,
+Same core features, same business rules, same REST paths. The monolith additionally serves the React
+storefront's extras (sizes, multiple images, address book, wishlist, cash on delivery). What differs is *how the parts talk,
 where consistency comes from, and what it costs to run*.
 
 ## Side by side
