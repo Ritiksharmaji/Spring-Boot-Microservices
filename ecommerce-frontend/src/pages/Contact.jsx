@@ -15,11 +15,14 @@ const Contact = () => {
         <img className='w-full md:max-w-[480px]' src={assets.contact_img} alt="" />
         <div className='flex flex-col justify-center items-start gap-6'>
           <p className='font-semibold text-xl text-gray-600'>Our Store</p>
-          <p className=' text-gray-500'>54709 Willms Station <br /> Suite 350, Washington, USA</p>
-          <p className=' text-gray-500'>Tel: (415) 555-0132 <br /> Email: admin@forever.com</p>
-          <p className='font-semibold text-xl text-gray-600'>Careers at Forever</p>
+          <p className=' text-gray-500'>Online store <br /> Delivering across India</p>
+          <p className=' text-gray-500'>
+            Tel: <a href='tel:+918125625828' className='hover:text-black'>+91 81256 25828</a> <br />
+            Email: <a href='mailto:ritiksharma555598@gmail.com' className='hover:text-black'>ritiksharma555598@gmail.com</a>
+          </p>
+          <p className='font-semibold text-xl text-gray-600'>Careers at oneKampus</p>
           <p className=' text-gray-500'>Learn more about our teams and job openings.</p>
-          <button className='border border-black px-8 py-4 text-sm hover:bg-black hover:text-white transition-all duration-500'>Explore Jobs</button>
+          <a href='https://jobs.onekampus.com' target='_blank' rel='noopener noreferrer' className='border border-black px-8 py-4 text-sm hover:bg-black hover:text-white transition-all duration-500'>Explore Jobs</a>
         </div>
       </div>
 
