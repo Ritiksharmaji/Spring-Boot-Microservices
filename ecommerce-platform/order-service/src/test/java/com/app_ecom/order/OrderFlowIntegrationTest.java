@@ -3,11 +3,16 @@ package com.app_ecom.order;
 import com.app_ecom.clients.ProductServiceClient;
 import com.app_ecom.clients.UserServiceClient;
 import com.app_ecom.dto.AddressDTO;
-import com.app_ecom.dto.OrderCreateEvent;
 import com.app_ecom.dto.ProductResponse;
 import com.app_ecom.dto.StockRequest;
 import com.app_ecom.dto.UserResponse;
+import com.app_ecom.messaging.PaymentResultEvent;
+import com.app_ecom.model.OrderStatus;
+import com.app_ecom.outbox.OutboxEvent;
+import com.app_ecom.outbox.OutboxPublisher;
+import com.app_ecom.outbox.OutboxRepository;
 import com.app_ecom.repository.CartItemRepository;
+import com.app_ecom.service.OrderService;
 import com.app_ecom.repository.OrderRepository;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
@@ -29,6 +34,8 @@ import org.springframework.web.client.ResourceAccessException;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -45,7 +52,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.datasource.username=sa",
         "spring.datasource.password=",
         "spring.datasource.driver-class-name=org.h2.Driver",
-        "spring.jpa.hibernate.ddl-auto=create-drop"
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "app.outbox.poll-interval-ms=3600000"   // tests trigger the outbox publisher explicitly
 })
 @AutoConfigureMockMvc
 class OrderFlowIntegrationTest {
@@ -57,6 +65,9 @@ class OrderFlowIntegrationTest {
     @Autowired OrderRepository orderRepository;
     @Autowired CartItemRepository cartItemRepository;
     @Autowired CircuitBreakerRegistry circuitBreakers;
+    @Autowired OutboxRepository outboxRepository;
+    @Autowired OutboxPublisher outboxPublisher;
+    @Autowired OrderService orderService;
 
     @MockitoBean ProductServiceClient productClient;
     @MockitoBean UserServiceClient userClient;
@@ -64,6 +75,7 @@ class OrderFlowIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        outboxRepository.deleteAll();
         orderRepository.deleteAll();
         cartItemRepository.deleteAll();
         circuitBreakers.getAllCircuitBreakers().forEach(CircuitBreaker::reset);
@@ -112,30 +124,89 @@ class OrderFlowIntegrationTest {
     // ---------------- checkout ----------------
 
     @Test
-    void placeOrder_reservesStock_savesSnapshot_clearsCart_publishesEvent() throws Exception {
+    void placeOrder_reservesStock_savesSnapshot_clearsCart_writesOutboxEvent() throws Exception {
         addToCart(ALICE, 1, 2);
         addToCart(ALICE, 2, 1);
 
-        mvc.perform(post("/api/orders").header("X-User-ID", ALICE))
+        String json = mvc.perform(post("/api/orders").header("X-User-ID", ALICE))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.status", is("CONFIRMED")))
+                .andExpect(jsonPath("$.status", is("PENDING")))           // waits for payment-service
+                .andExpect(jsonPath("$.statusReason", is("Awaiting payment")))
                 .andExpect(jsonPath("$.totalAmount", is(1099.00)))
                 .andExpect(jsonPath("$.items.length()", is(2)))
                 .andExpect(jsonPath("$.items[0].productName", is("Keyboard")))
-                .andExpect(jsonPath("$.shippingAddress.city", is("Pune")));
+                .andExpect(jsonPath("$.shippingAddress.city", is("Pune")))
+                .andReturn().getResponse().getContentAsString();
+        long orderId = Long.parseLong(json.replaceAll("^\\{\"id\":(\\d+).*", "$1"));
 
         ArgumentCaptor<StockRequest> reserved = ArgumentCaptor.forClass(StockRequest.class);
         verify(productClient).reserveStock(reserved.capture());
         assertThat(reserved.getValue().items()).extracting("productId", "quantity")
                 .containsExactly(org.assertj.core.groups.Tuple.tuple(1L, 2), org.assertj.core.groups.Tuple.tuple(2L, 1));
 
-        ArgumentCaptor<OrderCreateEvent> event = ArgumentCaptor.forClass(OrderCreateEvent.class);
-        verify(streamBridge).send(eq("createOrder-out-0"), event.capture());
-        assertThat(event.getValue().getTotalAmount()).isEqualByComparingTo("1099.00");
+        List<OutboxEvent> events = outboxRepository.findByAggregateIdOrderByIdAsc("order-" + orderId);
+        assertThat(events).extracting(OutboxEvent::getEventType).containsExactly("OrderCreated");
+        assertThat(events.get(0).getBinding()).isEqualTo("orderCreated-out-0");
+        assertThat(events.get(0).getPayload()).contains("\"totalAmount\":1099.00", "\"customerEmail\":\"alice@example.com\"");
 
         mvc.perform(get("/api/cart").header("X-User-ID", ALICE)).andExpect(jsonPath("$.totalItems", is(0)));
         mvc.perform(get("/api/orders").header("X-User-ID", ALICE))
                 .andExpect(jsonPath("$.content.length()", is(1)));
+    }
+
+    // ---------------- saga ----------------
+
+    @Test
+    void paymentCompleted_confirmsOrder_andIgnoresDuplicates() throws Exception {
+        long orderId = placeOrderFor(ALICE);
+
+        orderService.handlePaymentResult(payment(orderId, PaymentResultEvent.Status.COMPLETED, null));
+        orderService.handlePaymentResult(payment(orderId, PaymentResultEvent.Status.FAILED, "late duplicate"));
+
+        mvc.perform(get("/api/orders/{id}", orderId).header("X-User-ID", ALICE))
+                .andExpect(jsonPath("$.status", is("CONFIRMED")))
+                .andExpect(jsonPath("$.statusReason", is("Payment received")));
+        verify(productClient, never()).releaseStock(any());
+        assertThat(outboxRepository.findByAggregateIdOrderByIdAsc("order-" + orderId))
+                .extracting(OutboxEvent::getEventType).containsExactly("OrderCreated", "OrderStatusChanged");
+    }
+
+    @Test
+    void paymentFailed_cancelsOrder_andReleasesStock() throws Exception {
+        long orderId = placeOrderFor(ALICE);
+
+        orderService.handlePaymentResult(payment(orderId, PaymentResultEvent.Status.FAILED, "Card declined"));
+
+        mvc.perform(get("/api/orders/{id}", orderId).header("X-User-ID", ALICE))
+                .andExpect(jsonPath("$.status", is("CANCELLED")))
+                .andExpect(jsonPath("$.statusReason", is("Payment failed: Card declined")));
+        verify(productClient).releaseStock(any());
+        OutboxEvent statusEvent = outboxRepository.findByAggregateIdOrderByIdAsc("order-" + orderId).get(1);
+        assertThat(statusEvent.getBinding()).isEqualTo("orderStatus-out-0");
+        assertThat(statusEvent.getPayload()).contains("\"status\":\"CANCELLED\"", "\"previousStatus\":\"PENDING\"");
+    }
+
+    @Test
+    void outboxPublisherSendsPendingEventsOnceAndMarksThemPublished() throws Exception {
+        placeOrderFor(ALICE);
+        outboxPublisher.publishPending();
+        clearInvocations(streamBridge);
+
+        outboxPublisher.publishPending();   // nothing left to send
+
+        verify(streamBridge, never()).send(anyString(), any());
+        assertThat(outboxRepository.countByPublishedAtIsNull()).isZero();
+    }
+
+    @Test
+    void outboxKeepsEventsWhenBrokerIsDown() throws Exception {
+        when(streamBridge.send(anyString(), any())).thenReturn(false);
+        placeOrderFor(ALICE);
+
+        outboxPublisher.publishPending();
+
+        assertThat(outboxRepository.countByPublishedAtIsNull()).isEqualTo(1);
+        assertThat(outboxRepository.findAll().get(0).getAttempts()).isGreaterThanOrEqualTo(1);
     }
 
     @Test
@@ -214,6 +285,8 @@ class OrderFlowIntegrationTest {
     @Test
     void onlyAdminsChangeStatus_andOnlyValidTransitions() throws Exception {
         long orderId = placeOrderFor(ALICE);
+        updateStatus(orderId, "SHIPPED", "ADMIN").andExpect(status().isUnprocessableEntity()); // not paid yet
+        orderService.handlePaymentResult(payment(orderId, PaymentResultEvent.Status.COMPLETED, null));
 
         updateStatus(orderId, "SHIPPED", "CUSTOMER").andExpect(status().isForbidden());
         updateStatus(orderId, "SHIPPED", "ADMIN").andExpect(status().isOk())
@@ -249,6 +322,10 @@ class OrderFlowIntegrationTest {
         return Long.parseLong(json.replaceAll("^\\{\"id\":(\\d+).*", "$1"));
     }
 
+    private static PaymentResultEvent payment(long orderId, PaymentResultEvent.Status status, String reason) {
+        return new PaymentResultEvent(orderId, ALICE, 1L, status, new BigDecimal("499.50"), reason, LocalDateTime.now());
+    }
+
     private static ProductResponse product(long id, String name, String price, int stock) {
         ProductResponse p = new ProductResponse();
         p.setId(id);
@@ -269,6 +346,7 @@ class OrderFlowIntegrationTest {
         UserResponse u = new UserResponse();
         u.setId("u1");
         u.setFirstName("Alice");
+        u.setEmail("alice@example.com");
         u.setAddress(a);
         return u;
     }

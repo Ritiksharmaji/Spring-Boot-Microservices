@@ -1,0 +1,47 @@
+server:
+  port: ${SERVER_PORT:8084}
+
+spring:
+  cloud:
+    function:
+      definition: orderStatus
+    stream:
+      bindings:
+        orderStatus-in-0:
+          destination: order.status
+          group: notification-service
+          consumer:
+            max-attempts: 3
+      rabbit:
+        bindings:
+          orderStatus-in-0:
+            consumer:
+              auto-bind-dlq: true
+              republish-to-dlq: true
+  # SMTP (Mailpit locally: UI on http://localhost:8025). Leave MAIL_HOST empty to only log notifications.
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${MAIL_STARTTLS:false}
+
+app:
+  notification:
+    from: ${MAIL_FROM:no-reply@shop.local}
+
+management:
+  health:
+    mail:
+      enabled: false   # SMTP outages must not mark the service DOWN; sending failures are retried/dead-lettered
+
+info:
+  app:
+    name: notification-service
+    description: Sends order status notifications
+
+logging:
+  level:
+    com.notification: DEBUG

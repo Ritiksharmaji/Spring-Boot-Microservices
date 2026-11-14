@@ -1,193 +1,90 @@
 package com.ecommerce.apiGateWay;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import reactor.core.publisher.Mono;
 
+import java.net.InetSocketAddress;
+import java.util.Optional;
+
+/**
+ * Routes (resolved through Eureka with lb://) with a circuit breaker per downstream service.
+ * The product catalog, the busiest public endpoint, also gets retries for GETs and Redis rate limiting.
+ * /internal/** endpoints of the services are intentionally not routed.
+ */
 @Configuration
 public class GatewayConfig {
 
     @Value("${app.eureka-dashboard-url:http://localhost:8761}")
     private String eurekaDashboardUrl;
 
-
-    // by normal
-//    @Bean
-//    public RouteLocator customRoutes(RouteLocatorBuilder builder) {
-//
-//        return builder.routes()
-//
-//                // USER SERVICE (Direct URL)
-//                .route("user-service", r -> r
-//                        .path("/api/users/**")
-//                        .uri("lb://user-service"))
-//
-//                // PRODUCT SERVICE (Load Balanced via Eureka)
-//                .route("product-service", r -> r
-//                        .path("/api/products/**")
-//                        .filters(f -> f.circuitBreaker(config -> config
-//                                .setName("ecomBreaker")
-//                                .setFallbackUri("forward:/fallback/products")
-//                        ))
-//                        .uri("lb://product-service"))
-//
-//                // ORDER + CART SERVICE
-//                .route("order-service", r -> r
-//                        .path("/api/orders/**", "/api/cart/**")
-//                        .uri("lb://order-service"))
-//
-//                // EUREKA UI MAIN PAGE
-//                .route("eureka-server", r -> r
-//                        .path("/eureka/main")
-//                        .filters(f -> f.setPath("/"))
-//                        .uri(eurekaDashboardUrl))
-//
-//                // EUREKA STATIC CONTENT
-//                .route("eureka-server-static", r -> r
-//                        .path("/eureka/**")
-//                        .uri(eurekaDashboardUrl))
-//
-//                .build();
-//    }
-
-    // --------------- by Rewrite filter --------
-//    @Bean
-//    public RouteLocator customRoutes(RouteLocatorBuilder builder) {
-//
-//        return builder.routes()
-//
-//                // USER SERVICE
-//                .route("user-service", r -> r
-//                        .path("/users/**")
-//                        .filters(f -> f
-//                                .rewritePath("/users(?<segment>/?.*)", "/api/users${segment}")
-//                        )
-//                        .uri("lb://user-service")
-//                )
-//
-//
-//                // PRODUCT SERVICE ✅ FIXED
-//                .route("product-service", r -> r
-//                        .path("/products/**")
-//                        .filters(f -> f
-//                                .rewritePath("/products(?<segment>/?.*)", "/api/products${segment}")
-//                        )
-//                        .uri("lb://product-service"))
-//
-//                // ORDER + CART SERVICE
-//                .route("order-service", r -> r
-//                        .path("/orders/**", "/cart/**")
-//                        .filters(f -> f
-//                                .rewritePath("/orders/(?<segment>.*)", "/api/orders/${segment}")
-//                                .rewritePath("/cart/(?<segment>.*)", "/api/cart/${segment}")
-//                        )
-//                        .uri("lb://order-service"))
-//
-//                // EUREKA MAIN PAGE
-//                .route("eureka-server", r -> r
-//                        .path("/eureka/main")
-//                        .filters(f -> f.setPath("/"))
-//                        .uri(eurekaDashboardUrl))
-//
-//                // EUREKA STATIC CONTENT
-//                .route("eureka-server-static", r -> r
-//                        .path("/eureka/**")
-//                        .uri(eurekaDashboardUrl))
-//
-//                .build();
-//    }
-
-    // ========= by  circulte breacker ====
-
-    // for redis
-
+    /** 10 requests/second per client, bursts up to 20. */
     @Bean
-    public RedisRateLimiter redisRateLimiter(){
-        return new RedisRateLimiter(10,20,1);
+    public RedisRateLimiter redisRateLimiter() {
+        return new RedisRateLimiter(10, 20, 1);
     }
 
-//    @Bean
-//    public KeyResolver userKeyResolver() {
-//        return exchange -> Mono.just(exchange.getRequest().getQueryParams().getFirst("user"));
-//    }
-
+    /** Rate-limit key: client IP (raw address, no blocking reverse-DNS lookup). */
     @Bean
-    public KeyResolver HostNameKeyResolver() {
-        return exchange -> Mono.just(exchange.getRequest().
-                getRemoteAddress().getAddress().getHostAddress());
+    public KeyResolver clientIpKeyResolver() {
+        return exchange -> Mono.just(Optional.ofNullable(exchange.getRequest().getRemoteAddress())
+                .map(InetSocketAddress::getAddress)
+                .map(a -> a.getHostAddress())
+                .orElse("unknown"));
     }
-
-
 
     @Bean
     public RouteLocator customRoutes(RouteLocatorBuilder builder) {
-
         return builder.routes()
-
-                // USER SERVICE
                 .route("user-service", r -> r
                         .path("/api/users/**")
-                        .filters(f -> f.circuitBreaker(config -> config
+                        .filters(f -> f.circuitBreaker(c -> c
                                 .setName("userBreaker")
-                                .setFallbackUri("forward:/fallback/users")
-                        ))
+                                .setFallbackUri("forward:/fallback/users")))
                         .uri("lb://user-service"))
-
-                // PRODUCT SERVICE
                 .route("product-service", r -> r
                         .path("/api/products/**")
                         .filters(f -> f
-                                .retry(retryConfig -> retryConfig
-                                        .setRetries(10)
-                                        .setMethods(HttpMethod.GET)
-                                )
-                                .requestRateLimiter(config -> config
+                                .retry(retry -> retry.setRetries(3).setMethods(HttpMethod.GET))
+                                .requestRateLimiter(c -> c
                                         .setRateLimiter(redisRateLimiter())
-                                        .setKeyResolver(HostNameKeyResolver()))
-                                .circuitBreaker(config -> config
+                                        .setKeyResolver(clientIpKeyResolver()))
+                                .circuitBreaker(c -> c
                                         .setName("productBreaker")
-                                        .setFallbackUri("forward:/fallback/products")
-                                )
-                        )
-                        .uri("lb://product-service")
-                )
-
-                // ORDER SERVICE
+                                        .setFallbackUri("forward:/fallback/products")))
+                        .uri("lb://product-service"))
                 .route("order-service", r -> r
                         .path("/api/orders/**")
-                        .filters(f -> f.circuitBreaker(config -> config
+                        .filters(f -> f.circuitBreaker(c -> c
                                 .setName("orderBreaker")
-                                .setFallbackUri("forward:/fallback/orders")
-                        ))
+                                .setFallbackUri("forward:/fallback/orders")))
                         .uri("lb://order-service"))
-
-                // CART SERVICE
                 .route("cart-service", r -> r
                         .path("/api/cart/**")
-                        .filters(f -> f.circuitBreaker(config -> config
+                        .filters(f -> f.circuitBreaker(c -> c
                                 .setName("cartBreaker")
-                                .setFallbackUri("forward:/fallback/cart")
-                        ))
+                                .setFallbackUri("forward:/fallback/cart")))
                         .uri("lb://order-service"))
-
-                // EUREKA MAIN PAGE
+                .route("payment-service", r -> r
+                        .path("/api/payments/**")
+                        .filters(f -> f.circuitBreaker(c -> c
+                                .setName("paymentBreaker")
+                                .setFallbackUri("forward:/fallback/payments")))
+                        .uri("lb://payment-service"))
+                // Eureka dashboard (ADMIN only, see SecurityConfig)
                 .route("eureka-server", r -> r
                         .path("/eureka/main")
                         .filters(f -> f.setPath("/"))
                         .uri(eurekaDashboardUrl))
-
-                // EUREKA STATIC CONTENT
                 .route("eureka-server-static", r -> r
                         .path("/eureka/**")
                         .uri(eurekaDashboardUrl))
-
                 .build();
     }
-
 }

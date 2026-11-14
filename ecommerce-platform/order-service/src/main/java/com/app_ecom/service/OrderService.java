@@ -3,12 +3,15 @@ package com.app_ecom.service;
 import com.app_ecom.dto.*;
 import com.app_ecom.exception.InvalidRequestException;
 import com.app_ecom.exception.ResourceNotFoundException;
+import com.app_ecom.messaging.OrderCreatedEvent;
+import com.app_ecom.messaging.OrderStatusChangedEvent;
+import com.app_ecom.messaging.PaymentResultEvent;
 import com.app_ecom.model.*;
+import com.app_ecom.outbox.OutboxWriter;
 import com.app_ecom.repository.CartItemRepository;
 import com.app_ecom.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,26 +19,38 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Order lifecycle and the order side of the checkout saga:
+ *
+ *   placeOrder        -> stock reserved, order PENDING, OrderCreated (outbox)
+ *   payment COMPLETED -> CONFIRMED, OrderStatusChanged
+ *   payment FAILED    -> CANCELLED, stock released, OrderStatusChanged
+ *   customer cancel   -> CANCELLED, stock released, OrderStatusChanged (payment-service refunds)
+ *   admin             -> SHIPPED -> DELIVERED, OrderStatusChanged
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
 
-    static final String ORDER_CREATED_BINDING = "createOrder-out-0";
+    public static final String ORDER_CREATED_BINDING = "orderCreated-out-0";
+    public static final String ORDER_STATUS_BINDING = "orderStatus-out-0";
 
     private final OrderRepository orderRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductGateway productGateway;
     private final UserGateway userGateway;
-    private final StreamBridge streamBridge;
+    private final OutboxWriter outbox;
     private final TransactionTemplate transactionTemplate;
 
     /**
      * Checkout: validates the cart and the customer profile, re-reads live prices,
-     * reserves stock atomically in product-service, then persists the order.
+     * reserves stock atomically in product-service, then persists the order as PENDING
+     * together with its OrderCreated event (transactional outbox).
      * If persisting fails after stock was reserved, the reservation is released (compensation).
      * Remote calls are made outside the DB transaction so no connection is held during HTTP calls.
      */
@@ -67,12 +82,16 @@ public class OrderService {
             saved = transactionTemplate.execute(tx -> {
                 Order order = new Order();
                 order.setUserId(userId);
-                order.setStatus(OrderStatus.CONFIRMED);
+                order.setStatus(OrderStatus.PENDING);
+                order.setStatusReason("Awaiting payment");
+                order.setCustomerEmail(customer.getEmail());
+                order.setCustomerName(fullName(customer));
                 order.setShippingAddress(toShippingAddress(customer.getAddress()));
                 lines.forEach(order::addItem);
                 order.setTotalAmount(lines.stream().map(OrderItem::getSubTotal).reduce(BigDecimal.ZERO, BigDecimal::add));
                 Order persisted = orderRepository.save(order);
                 cartItemRepository.deleteAllByUserId(userId);
+                outbox.write(aggregateId(persisted), "OrderCreated", ORDER_CREATED_BINDING, toCreatedEvent(persisted));
                 return persisted;
             });
         } catch (RuntimeException e) {
@@ -81,9 +100,37 @@ public class OrderService {
             throw e;
         }
 
-        publishOrderCreated(saved);
-        log.info("Order {} placed by {} for {}", saved.getId(), userId, saved.getTotalAmount());
+        log.info("Order {} placed by {} for {} (awaiting payment)", saved.getId(), userId, saved.getTotalAmount());
         return toResponse(saved);
+    }
+
+    /**
+     * Saga step triggered by payment-service. Idempotent: events for orders that are no
+     * longer PENDING (duplicates, late deliveries) are ignored.
+     */
+    public void handlePaymentResult(PaymentResultEvent event) {
+        boolean success = event.status() == PaymentResultEvent.Status.COMPLETED;
+        OrderStatus target = success ? OrderStatus.CONFIRMED : OrderStatus.CANCELLED;
+        String reason = success ? "Payment received" : "Payment failed: " + event.reason();
+
+        StockRequest toRelease = transactionTemplate.execute(tx -> {
+            Order order = orderRepository.findById(event.orderId()).orElse(null);
+            if (order == null) {
+                log.warn("Payment result for unknown order {} ignored", event.orderId());
+                return null;
+            }
+            if (order.getStatus() != OrderStatus.PENDING) {
+                log.info("Duplicate/late payment result for order {} in status {} ignored",
+                        order.getId(), order.getStatus());
+                return null;
+            }
+            applyStatus(order, target, reason);
+            return success ? null : toStockRequest(order.getItems());
+        });
+
+        if (toRelease != null) {
+            releaseQuietly(toRelease);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -103,15 +150,16 @@ public class OrderService {
 
     /** Customer cancels their own order (only while PENDING/CONFIRMED). Stock goes back to the catalog. */
     public OrderResponse cancelMyOrder(String userId, Long orderId) {
-        return changeStatus(orderId, OrderStatus.CANCELLED, userId);
+        return changeStatus(orderId, OrderStatus.CANCELLED, userId, "Cancelled by customer");
     }
 
     /** Admin moves an order through its lifecycle (e.g. CONFIRMED -> SHIPPED -> DELIVERED). */
     public OrderResponse updateStatus(Long orderId, OrderStatus newStatus) {
-        return changeStatus(orderId, newStatus, null);
+        return changeStatus(orderId, newStatus, null,
+                newStatus == OrderStatus.CANCELLED ? "Cancelled by store" : null);
     }
 
-    private OrderResponse changeStatus(Long orderId, OrderStatus newStatus, String ownerId) {
+    private OrderResponse changeStatus(Long orderId, OrderStatus newStatus, String ownerId, String reason) {
         record Result(OrderResponse response, StockRequest toRelease) {}
 
         Result result = transactionTemplate.execute(tx -> {
@@ -122,8 +170,7 @@ public class OrderService {
                 throw new InvalidRequestException("Invalid Status Change",
                         "Order " + orderId + " cannot move from " + order.getStatus() + " to " + newStatus);
             }
-            order.setStatus(newStatus);
-            orderRepository.saveAndFlush(order);
+            applyStatus(order, newStatus, reason);
             StockRequest release = newStatus == OrderStatus.CANCELLED ? toStockRequest(order.getItems()) : null;
             return new Result(toResponse(order), release);
         });
@@ -131,8 +178,20 @@ public class OrderService {
         if (result.toRelease() != null) {
             releaseQuietly(result.toRelease());
         }
-        log.info("Order {} -> {}", orderId, newStatus);
         return result.response();
+    }
+
+    /** Changes status and records the OrderStatusChanged event in the same transaction. */
+    private void applyStatus(Order order, OrderStatus newStatus, String reason) {
+        OrderStatus previous = order.getStatus();
+        order.setStatus(newStatus);
+        order.setStatusReason(reason);
+        orderRepository.saveAndFlush(order);
+        outbox.write(aggregateId(order), "OrderStatusChanged", ORDER_STATUS_BINDING,
+                new OrderStatusChangedEvent(order.getId(), order.getUserId(), order.getCustomerEmail(),
+                        order.getCustomerName(), newStatus, previous, order.getTotalAmount(), reason,
+                        LocalDateTime.now()));
+        log.info("Order {}: {} -> {}{}", order.getId(), previous, newStatus, reason == null ? "" : " (" + reason + ")");
     }
 
     private Order findOwnOrder(String userId, Long orderId) {
@@ -144,22 +203,26 @@ public class OrderService {
         try {
             productGateway.releaseStock(stock);
         } catch (RuntimeException e) {
-            // Needs manual reconciliation; replaced by an event-driven saga in branch-18-3.
+            // Logged for manual reconciliation; product-service exposes the same release endpoint.
             log.error("Could not release stock {}", stock, e);
         }
     }
 
-    private void publishOrderCreated(Order order) {
-        OrderCreateEvent event = new OrderCreateEvent(order.getId(), order.getUserId(), order.getStatus(),
-                toItemDtos(order.getItems()), order.getTotalAmount(), order.getCreateAt());
-        try {
-            if (!streamBridge.send(ORDER_CREATED_BINDING, event)) {
-                log.warn("Order-created event for order {} was not accepted by the broker", order.getId());
-            }
-        } catch (RuntimeException e) {
-            // The order itself is valid; a missed notification must not fail the checkout.
-            log.error("Publishing order-created event for order {} failed", order.getId(), e);
-        }
+    private OrderCreatedEvent toCreatedEvent(Order order) {
+        return new OrderCreatedEvent(order.getId(), order.getUserId(), order.getCustomerEmail(),
+                order.getCustomerName(), order.getTotalAmount(),
+                order.getItems().stream()
+                        .map(i -> new OrderCreatedEvent.Item(i.getProductId(), i.getProductName(), i.getQuantity(), i.getPrice()))
+                        .toList(),
+                LocalDateTime.now());
+    }
+
+    private static String aggregateId(Order order) {
+        return "order-" + order.getId();
+    }
+
+    private static String fullName(UserResponse u) {
+        return u.getLastName() == null ? u.getFirstName() : u.getFirstName() + " " + u.getLastName();
     }
 
     private StockRequest toStockRequest(List<OrderItem> items) {
@@ -192,6 +255,7 @@ public class OrderService {
                 .id(order.getId())
                 .userId(order.getUserId())
                 .status(order.getStatus())
+                .statusReason(order.getStatusReason())
                 .totalAmount(order.getTotalAmount())
                 .items(toItemDtos(order.getItems()))
                 .shippingAddress(address)

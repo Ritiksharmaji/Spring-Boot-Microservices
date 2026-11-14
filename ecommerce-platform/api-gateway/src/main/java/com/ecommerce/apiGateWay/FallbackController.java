@@ -56,5 +56,12 @@ public class FallbackController {
                         "Cart service is unavailable. Please try later."
                 ));
     }
-}
 
+    @RequestMapping("/payments")
+    public ResponseEntity<List<String>> paymentFallback() {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Collections.singletonList(
+                        "Payment service is unavailable. Please try later."
+                ));
+    }
+}

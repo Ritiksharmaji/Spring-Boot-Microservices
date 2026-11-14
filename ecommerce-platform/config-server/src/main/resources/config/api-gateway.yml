@@ -37,6 +37,8 @@ resilience4j:
         baseConfig: default
       cartBreaker:
         baseConfig: default
+      paymentBreaker:
+        baseConfig: default
 
 info:
   app:
