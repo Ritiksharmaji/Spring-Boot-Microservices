@@ -13,6 +13,13 @@ deployment. **Start here → [ecommerce-platform/README.md](ecommerce-platform/R
 cd ecommerce-platform && docker compose up -d --build
 ```
 
+### 🌐 [`ecommerce-monolith/`](ecommerce-monolith) — the same system as a modular monolith (live)
+
+The identical feature set built as **one Spring Boot application with Spring Modulith modules**
+(identity, catalog, ordering, payment, notification), transactional domain events instead of a
+broker, one PostgreSQL database — running at **https://shop.onekampus.com** for ~380 MB of memory.
+Read the comparison: [MONOLITH-VS-MICROSERVICES.md](ecommerce-monolith/docs/MONOLITH-VS-MICROSERVICES.md).
+
 ### 📚 Learning branches — how it was built
 
 `branch-2` … `branch-17-2` follow a Spring Boot microservices course concept by concept
@@ -34,3 +41,12 @@ The `branch-18-*` series turned that code into the platform above; see
 | 6. CI/CD | `branch-18-6-ci-cd-github-actions` |
 | 7. AWS Lightsail deployment kit | `branch-18-7-deploy-aws-lightsail` |
 | 8. Documentation | `branch-18-8-readme-architecture-docs` |
+
+The `branch-19-*` series built the modular monolith:
+
+| Step | Branch |
+|---|---|
+| 1. Modules, Flyway, JWT auth, catalog | `branch-19-1-monolith-foundation-modules-auth-catalog` |
+| 2. Cart, orders, payments, notifications via Modulith events | `branch-19-2-cart-orders-payments-modulith-events` |
+| 3. Storefront page, Docker, apps-server deploy kit, CI | `branch-19-3-docker-and-apps-server-deploy` |
+| 4. Docs, comparison, Postman | `branch-19-4-docs-monolith-vs-microservices` |

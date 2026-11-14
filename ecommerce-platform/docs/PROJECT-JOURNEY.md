@@ -40,6 +40,19 @@ This repository is both a **learning log** and a **finished product**.
 | `branch-18-7-deploy-aws-lightsail` | production compose, Nginx + TLS, prod realm, server/deploy/backup scripts, CORS |
 | `branch-18-8-readme-architecture-docs` | system design, flows, API reference, events, ADRs, Postman collection, guides |
 
+## Modular monolith series (`branch-19-*`)
+
+The same system rebuilt as one Spring Boot application with Spring Modulith, deployed live on an
+existing small server: see [`ecommerce-monolith/`](../../ecommerce-monolith) and
+[MONOLITH-VS-MICROSERVICES.md](../../ecommerce-monolith/docs/MONOLITH-VS-MICROSERVICES.md).
+
+| Branch | What it added |
+|---|---|
+| `branch-19-1-monolith-foundation-modules-auth-catalog` | Modulith modules with verified boundaries, Flyway, BCrypt + JWT auth, catalog |
+| `branch-19-2-cart-orders-payments-modulith-events` | cart, one-transaction checkout, payments/notifications as event listeners, event registry retries |
+| `branch-19-3-docker-and-apps-server-deploy` | storefront page, Docker images, shared apps-server deploy kit, monolith CI |
+| `branch-19-4-docs-monolith-vs-microservices` | architecture docs, comparison, API, deployment, Postman |
+
 ## Before → after
 
 | Area | Course code (branch-17-2) | Platform (branch-18) |
