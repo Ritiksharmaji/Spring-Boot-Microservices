@@ -61,7 +61,12 @@ expect_status() {
 step "1. Waiting for the platform"
 wait_for "gateway healthy" 420 bash -c "curl -sf $GATEWAY/actuator/health | grep -q UP"
 wait_for "keycloak realm ready" 300 curl -sf "$KEYCLOAK/realms/$REALM/.well-known/openid-configuration"
-wait_for "product-service routed via Eureka" 300 bash -c "curl -sf -o /dev/null $GATEWAY/api/products"
+EUREKA=${EUREKA:-http://localhost:8761}
+wait_for "all services registered in Eureka" 300 bash -c \
+  "curl -sf -H 'Accept: application/json' $EUREKA/eureka/apps | jq -e '[.applications.application[].name] | contains([\"API-GATEWAY\",\"USER-SERVICE\",\"PRODUCT-SERVICE\",\"ORDER-SERVICE\",\"PAYMENT-SERVICE\",\"NOTIFICATION-SERVICE\"])'"
+wait_for "product-service routed via the gateway" 300 bash -c "curl -sf -o /dev/null $GATEWAY/api/products"
+# give every client one more registry/load-balancer refresh (5 s each) so service-to-service calls resolve
+sleep 12
 
 step "2. Authentication & authorization"
 ADMIN=$(token admin 'Admin@123')

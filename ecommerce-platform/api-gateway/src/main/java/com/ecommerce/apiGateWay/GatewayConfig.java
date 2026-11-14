@@ -7,7 +7,6 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import reactor.core.publisher.Mono;
 
 import java.net.InetSocketAddress;
@@ -15,7 +14,9 @@ import java.util.Optional;
 
 /**
  * Routes (resolved through Eureka with lb://) with a circuit breaker per downstream service.
- * The product catalog, the busiest public endpoint, also gets retries for GETs and Redis rate limiting.
+ * The product catalog, the busiest public endpoint, also gets Redis rate limiting.
+ * No retries at the edge: services retry their own downstream reads, and retrying here would
+ * multiply load during an outage (and cannot retry once the fallback response is committed).
  * /internal/** endpoints of the services are intentionally not routed.
  */
 @Configuration
@@ -51,7 +52,6 @@ public class GatewayConfig {
                 .route("product-service", r -> r
                         .path("/api/products/**")
                         .filters(f -> f
-                                .retry(retry -> retry.setRetries(3).setMethods(HttpMethod.GET))
                                 .requestRateLimiter(c -> c
                                         .setRateLimiter(redisRateLimiter())
                                         .setKeyResolver(clientIpKeyResolver()))
