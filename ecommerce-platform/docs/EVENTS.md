@@ -34,6 +34,7 @@ flowchart LR
 | `consumer.max-attempts` | 3 | in-process retries with back-off before giving up |
 | `rabbit…consumer.auto-bind-dlq` + `republish-to-dlq` | true | failed messages go to `<queue>.dlq` with the exception in the headers |
 | `producer.required-groups` | consumer group names | queues exist before the first consumer starts — nothing is dropped |
+| `rabbit…producer.auto-bind-dlq` | true | the producer declares those queues with the same DLQ arguments as the consumer (otherwise RabbitMQ rejects the second declaration) |
 | Content type | `application/json` | records serialized by Jackson |
 | Delivery | at-least-once | consumers are idempotent (see below) |
 

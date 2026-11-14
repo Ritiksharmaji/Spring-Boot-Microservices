@@ -60,3 +60,5 @@ and validation settings under test are the production ones.
 | CORS pre-flight needs Spring Cloud Gateway `globalcors`, not Spring Security CORS | `GatewayCorsTest` |
 | Services cached an empty registry for ~60 s after start-up → 503 on first calls (now 5 s refresh) | end-to-end smoke test in CI |
 | Gateway retry filter crashed on an already-committed 503 fallback (edge retry removed) | end-to-end smoke test in CI |
+| Producer `required-groups` declared queues without the consumers' DLQ arguments → RabbitMQ `PRECONDITION_FAILED` | end-to-end smoke test in CI |
+| Email sender chosen with `@ConditionalOnBean` before mail auto-configuration → emails only logged | end-to-end smoke test in CI (Mailpit check) |

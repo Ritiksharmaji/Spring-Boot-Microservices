@@ -34,7 +34,8 @@ First complete release, built on top of the course code of `branch-17-2`.
 
 ### CI/CD — `branch-18-6`
 - GitHub Actions: build + tests, full-stack end-to-end smoke test, GHCR images, SSH deploy, CodeQL, Dependabot.
-- Fixes found by CI: Mongo auditing in slices, RabbitMQ queue timing in tests, 5 s service-discovery refresh, no edge retries.
+- Fixes found by CI: Mongo auditing in slices, RabbitMQ queue timing in tests, 5 s service-discovery refresh, no edge retries,
+  matching DLQ declarations for producers/consumers, SMTP sender selection.
 
 ### Production — `branch-18-7`
 - Lightsail deployment kit: production compose, Nginx + Let's Encrypt, production realm, setup/deploy/backup/restore scripts.
