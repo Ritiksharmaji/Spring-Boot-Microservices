@@ -9,6 +9,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +34,13 @@ class UserController {
     @PutMapping("/me")
     UserResponse updateMe(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody ProfileRequest request) {
         return identity.updateProfile(CurrentUser.id(jwt), request);
+    }
+
+    @Operation(summary = "Delete my account (password re-checked; personal data removed, orders kept anonymised)")
+    @DeleteMapping("/me")
+    ResponseEntity<Void> deleteMe(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody DeleteAccountRequest request) {
+        identity.deleteAccount(CurrentUser.id(jwt), request.password());
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "All users (ADMIN)")

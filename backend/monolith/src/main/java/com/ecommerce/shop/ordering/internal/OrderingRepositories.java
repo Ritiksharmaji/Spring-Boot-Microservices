@@ -23,6 +23,12 @@ interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
 interface OrderRepository extends JpaRepository<Order, Long> {
 
+    /** Account deletion: past orders keep the delivery details but lose the customer's contact. */
+    @Modifying
+    @Query("UPDATE Order o SET o.customerEmail = :email, o.customerName = 'Deleted user' WHERE o.userId = :userId")
+    int anonymiseCustomer(@Param("userId") Long userId, @Param("email") String email);
+
+
     Page<Order> findByUserId(Long userId, Pageable pageable);
 
     Optional<Order> findByIdAndUserId(Long id, Long userId);

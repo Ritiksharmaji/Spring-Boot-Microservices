@@ -1,10 +1,12 @@
 package com.ecommerce.shop.identity.internal;
 
+import com.ecommerce.shop.identity.AccountDeleted;
 import com.ecommerce.shop.identity.Customer;
 import com.ecommerce.shop.identity.CustomerDirectory;
 import com.ecommerce.shop.identity.Role;
 import com.ecommerce.shop.shared.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.ecommerce.shop.identity.internal.IdentityDtos.*;
 
@@ -24,6 +27,7 @@ class IdentityService implements CustomerDirectory {
     private final TokenService tokens;
     private final LoginAttemptGuard loginGuard;
     private final AddressService addresses;
+    private final ApplicationEventPublisher events;
 
     /** Self-registration always creates a CUSTOMER. */
     @Transactional
@@ -73,6 +77,30 @@ class IdentityService implements CustomerDirectory {
                     request.phone(), a.street(), a.city(), a.state(), a.zipcode(), a.country(), true));
         }
         return response(user);
+    }
+
+    /**
+     * Deletes the customer's account after re-checking the password: personal data is removed and the
+     * user row is anonymised (kept because past orders reference it), so the email can register again.
+     * Admin accounts are not self-deletable (an admin could lock the shop out).
+     */
+    @Transactional
+    public void deleteAccount(long userId, String password) {
+        User user = find(userId);
+        if (password == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw BusinessException.invalid("Wrong Password", "The password is incorrect");
+        }
+        if (user.getRole() == Role.ADMIN) {
+            throw BusinessException.invalid("Admin Account", "Admin accounts cannot be deleted from the app");
+        }
+        addresses.deleteAll(userId);
+        String anonymisedEmail = "deleted-" + userId + "@deleted.invalid";
+        user.setEmail(anonymisedEmail);
+        user.setFirstName("Deleted");
+        user.setLastName("user");
+        user.setPhone(null);
+        user.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
+        events.publishEvent(new AccountDeleted(userId, anonymisedEmail));
     }
 
     @Transactional(readOnly = true)

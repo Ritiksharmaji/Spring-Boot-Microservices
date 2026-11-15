@@ -4,6 +4,7 @@ FROM eclipse-temurin:21-jre-alpine
 RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 COPY --chown=app:app shop.jar shop.jar
+RUN mkdir -p /app/uploads && chown app:app /app/uploads
 USER app
 EXPOSE 8086
 # Lean JVM for the shared 2 GB server (demo traffic): heap 256 MB, capped metaspace/code cache/direct

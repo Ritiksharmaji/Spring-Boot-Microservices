@@ -1,9 +1,14 @@
 package com.ecommerce.shop.wishlist.internal;
 
 import com.ecommerce.shop.catalog.Catalog;
+import com.ecommerce.shop.identity.AccountDeleted;
 import com.ecommerce.shop.shared.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +19,10 @@ interface WishlistRepository extends JpaRepository<WishlistItem, WishlistItem.Ke
     List<WishlistItem> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     long countByUserId(Long userId);
+
+    @Modifying
+    @Query("DELETE FROM WishlistItem w WHERE w.userId = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }
 
 @Service
@@ -48,5 +57,11 @@ class WishlistService {
     public List<Long> remove(long userId, long productId) {
         wishlist.deleteById(new WishlistItem.Key(userId, productId));
         return productIds(userId);
+    }
+
+    /** Account deletion: the saved products go too. */
+    @ApplicationModuleListener
+    void on(AccountDeleted event) {
+        wishlist.deleteAllByUserId(event.userId());
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Duration;
@@ -18,6 +19,10 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -165,5 +170,72 @@ class StorefrontFeaturesTest {
         api.call("POST", "/api/orders/" + cash + "/cancel", customer, null)
                 .andExpect(jsonPath("$.paymentStatus", is("NOT_CHARGED")));
         assertThat(api.read(api.call("GET", "/api/products/" + shirt, null, null)).get("stockQuantity").asInt()).isEqualTo(5);
+    }
+
+    @Test
+    void customerCanDeleteTheirAccount_personalDataGoes_ordersStayAnonymised() throws Exception {
+        String email = "del-" + UUID.randomUUID().toString().substring(0, 8) + "@test.local";
+        String token = api.register(email);
+        api.saveAddress(token);
+        api.call("PUT", "/api/wishlist/" + shirt, token, null);
+        api.call("POST", "/api/cart/items", token, "{\"productId\":" + shirt + ",\"quantity\":1,\"size\":\"S\"}");
+        long orderId = api.read(api.call("POST", "/api/orders", token, "{\"paymentMethod\":\"CASH\"}")).get("id").asLong();
+        api.call("POST", "/api/cart/items", token, "{\"productId\":" + shirt + ",\"quantity\":1,\"size\":\"M\"}");
+
+        api.call("DELETE", "/api/users/me", token, "{\"password\":\"wrong-pass1\"}")
+                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.title", is("Wrong Password")));
+        api.call("DELETE", "/api/users/me", admin, "{\"password\":\"Admin12345\"}")
+                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.title", is("Admin Account")));
+
+        api.call("DELETE", "/api/users/me", token, "{\"password\":\"Passw0rd!\"}").andExpect(status().isNoContent());
+
+        api.call("POST", "/api/auth/login", null, "{\"email\":\"" + email + "\",\"password\":\"Passw0rd!\"}")
+                .andExpect(status().isUnauthorized());
+        api.call("GET", "/api/users/me", token, null)
+                .andExpect(jsonPath("$.email", startsWith("deleted-")))
+                .andExpect(jsonPath("$.phone").doesNotExist());
+        api.call("GET", "/api/addresses", token, null).andExpect(jsonPath("$.length()", is(0)));
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            api.call("GET", "/api/cart", token, null).andExpect(jsonPath("$.items.length()", is(0)));
+            api.call("GET", "/api/wishlist", token, null).andExpect(jsonPath("$.productIds.length()", is(0)));
+        });
+        api.call("GET", "/api/orders/" + orderId, token, null).andExpect(status().isOk());
+        // the email is free again
+        api.register(email);
+    }
+
+    @Test
+    void adminUploadsProductImages_onlyRealImages_servedPublicly() throws Exception {
+        byte[] png = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0x0D, 1, 2, 3};
+        var upload = multipart("/api/products/images")
+                .file(new MockMultipartFile("file", "shirt.jpg", "image/jpeg", png));
+
+        String url = api.read(mvc.perform(upload.header("Authorization", "Bearer " + admin))
+                        .andExpect(status().isCreated())
+                        .andExpect(jsonPath("$.url", matchesPattern("http://localhost/uploads/products/[0-9a-f]{32}\\.png"))))
+                .get("url").asText();
+        String path = url.substring("http://localhost".length());
+        mvc.perform(get(path))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(png))
+                .andExpect(header().string("Cache-Control", containsString("max-age=31536000")));
+
+        // the uploaded URL is a valid product image
+        api.call("PUT", "/api/products/" + shirt, admin, """
+                {"name":"Men Slim Shirt","price":1299.00,"stockQuantity":5,"category":"Men","images":["%s"]}""".formatted(url))
+                .andExpect(jsonPath("$.imageUrl", is(url)));
+
+        mvc.perform(multipart("/api/products/images")
+                        .file(new MockMultipartFile("file", "evil.png", "image/png", "<script>".getBytes()))
+                        .header("Authorization", "Bearer " + admin))
+                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.title", is("Unsupported Image")));
+        mvc.perform(multipart("/api/products/images")
+                        .file(new MockMultipartFile("file", "a.png", "image/png", png))
+                        .header("Authorization", "Bearer " + customer))
+                .andExpect(status().isForbidden());
+        mvc.perform(multipart("/api/products/images").file(new MockMultipartFile("file", "a.png", "image/png", png)))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(multipart("/api/products/images").header("Authorization", "Bearer " + admin))
+                .andExpect(status().isBadRequest());
     }
 }

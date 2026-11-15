@@ -39,4 +39,7 @@ final class ProductDtos {
                     images.isEmpty() ? null : images.getFirst(), images, p.getActive(), p.getCreatedAt(), p.getUpdatedAt());
         }
     }
+
+    record ImageUploadResponse(String url) {
+    }
 }

@@ -48,6 +48,8 @@ public class SecurityConfig {
                         // public
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/", "/index.html", "/favicon.svg", "/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/uploads/products/**").permitAll()
+                        .requestMatchers(HttpMethod.HEAD, "/uploads/products/**").permitAll()
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()

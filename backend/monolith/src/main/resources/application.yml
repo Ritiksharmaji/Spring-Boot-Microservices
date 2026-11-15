@@ -26,6 +26,10 @@ spring:
           time_zone: Asia/Kolkata
   flyway:
     enabled: true
+  servlet:
+    multipart:
+      max-file-size: 5MB          # product images (POST /api/products/images)
+      max-request-size: 6MB
   jackson:
     time-zone: Asia/Kolkata
   modulith:
@@ -58,6 +62,9 @@ app:
   demo:
     # seeds a sample catalog and a public demo customer (for the live demo site)
     enabled: ${DEMO_MODE:false}
+  uploads:
+    # product images uploaded by admins; a Docker volume on the server
+    dir: ${UPLOADS_DIR:./uploads}
   payment:
     max-amount: ${PAYMENT_MAX_AMOUNT:50000.00}
   notification:

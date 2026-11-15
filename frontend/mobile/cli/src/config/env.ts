@@ -6,15 +6,15 @@ import {NativeModules, Platform} from 'react-native';
  * to the deployed API on AWS.
  */
 
-/** Deployed backend (AWS Lambda + CloudFront). */
-export const PRODUCTION_API_URL = 'https://api.shopvra.space';
+/** Deployed Spring Boot API (backend/monolith on the Lightsail apps-server). */
+export const PRODUCTION_API_URL = 'https://shop-api.onekampus.com';
 
-/** Port of the backend when it runs locally (`npm start` in expressJs_ecommerce_backend). */
-const DEV_BACKEND_PORT = 3000;
+/** Port of the Spring Boot API when it runs locally (backend/monolith, `server.port`). */
+const DEV_BACKEND_PORT = 8086;
 
 /**
  * Force one backend in every build, e.g. PRODUCTION_API_URL to test the deployed API from a debug
- * build, or 'http://192.168.1.10:3000'. null = automatic.
+ * build, or 'http://192.168.1.10:8086'. null = automatic.
  */
 const API_URL_OVERRIDE: string | null = null;
 
@@ -38,13 +38,12 @@ const getDevApiUrl = (): string => {
   });
 };
 
-/** Public website (privacy policy and account deletion pages live here). */
-const WEBSITE_URL = 'https://shopvra.space';
+/** Web shop (frontend/web). Also serves the demo product images ("/products/..."). */
+const WEBSITE_URL = 'https://shop.onekampus.com';
 
 export const env = {
   apiUrl: API_URL_OVERRIDE ?? (__DEV__ ? getDevApiUrl() : PRODUCTION_API_URL),
   isProduction: !__DEV__,
   websiteUrl: WEBSITE_URL,
   privacyPolicyUrl: `${WEBSITE_URL}/privacy`,
-  deleteAccountUrl: `${WEBSITE_URL}/delete-account`,
 } as const;

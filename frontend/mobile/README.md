@@ -1,13 +1,11 @@
 > **In this repository:** copied from `Ritiksharmaji/Ecommerce-Application`, branch
-> `branch-14-2-changing-mobileapp-reactexpo-to-cli` (`frontend/mobile_ecommerce_app`). The apps still talk to
-> that project's Express backend (`https://api.shopvra.space`). Connecting them to this repository's Spring Boot
-> API (`https://shop-api.onekampus.com`, the same endpoints the web app uses — see [`../web/src/api`](../web/src/api))
-> is the next step; the **`cli/`** app is the one to carry forward.
+> `branch-14-2-changing-mobileapp-reactexpo-to-cli` (`frontend/mobile_ecommerce_app`). The **`cli/`** app is
+> connected to this repository's Spring Boot API (`https://shop-api.onekampus.com`, `backend/monolith`).
+> The older **`expo/`** app is kept for reference and still points at the original Express backend.
 
 # E-commerce Mobile App
 
-Two versions of the same app (shop + admin panel), both using the Express backend at
-`https://api.shopvra.space`:
+Two versions of the same app (shop + admin panel):
 
 | Folder | Built with | Run | Release build |
 |---|---|---|---|

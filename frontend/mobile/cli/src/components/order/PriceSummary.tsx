@@ -19,7 +19,9 @@ export default function PriceSummary({subtotal, shipping, total}: PriceSummaryPr
       </View>
       <View className="mb-4 flex-row justify-between">
         <Text className="text-secondary">Shipping</Text>
-        <Text className="font-bold text-primary">{formatPrice(shipping)}</Text>
+        <Text className="font-bold text-primary">
+          {shipping > 0 ? formatPrice(shipping) : 'Free'}
+        </Text>
       </View>
       <View className="mb-4 h-px bg-border" />
       <View className="mb-4 flex-row justify-between">

@@ -11,30 +11,32 @@ import {shippingFor} from '@/constants/app';
 import {useAuth} from '@/context/AuthContext';
 import {useCart} from '@/context/CartContext';
 import type {RootStackScreenProps} from '@/navigation/types';
-import {addressApi, orderApi, paymentApi} from '@/services/api';
+import {addressApi, orderApi} from '@/services/api';
 import type {PaymentMethod, ShippingAddress} from '@/types/models';
 import {getErrorMessage} from '@/utils/errors';
+import {splitName} from '@/utils/normalize';
 import PaymentOption from './components/PaymentOption';
-import PaymentWebViewModal, {
-  PAYMENT_CANCEL_URL,
-  PAYMENT_SUCCESS_URL,
-} from './components/PaymentWebViewModal';
 
 const EMPTY_ADDRESS: ShippingAddress = {street: '', city: '', state: '', zipCode: '', country: ''};
 
-export default function CheckoutScreen({navigation}: RootStackScreenProps<'Checkout'>) {
-  const {isSignedIn} = useAuth();
-  const {cartItems, cartTotal, clearCart, flush, refreshCart} = useCart();
+/** Address fields the API requires (state is optional). */
+const REQUIRED: (keyof ShippingAddress)[] = ['street', 'city', 'zipCode', 'country'];
 
+export default function CheckoutScreen({navigation}: RootStackScreenProps<'Checkout'>) {
+  const {isSignedIn, user} = useAuth();
+  const {cartItems, cartTotal, clearCart, flush} = useCart();
+
+  const [recipientName, setRecipientName] = useState(user?.name ?? '');
+  const [phone, setPhone] = useState(user?.phone ?? '');
   const [address, setAddress] = useState<ShippingAddress>(EMPTY_ADDRESS);
   const [hasSavedAddress, setHasSavedAddress] = useState(false);
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [placing, setPlacing] = useState(false);
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
 
   const shipping = shippingFor(cartTotal);
-  const addressComplete = Object.values(address).every(value => value.trim());
+  const addressComplete =
+    !!recipientName.trim() && REQUIRED.every(key => address[key].trim().length > 0);
 
   // Prefill with the default saved address.
   useEffect(() => {
@@ -47,6 +49,10 @@ export default function CheckoutScreen({navigation}: RootStackScreenProps<'Check
         if (saved) {
           const {street, city, state, zipCode, country} = saved;
           setAddress({street, city, state, zipCode, country});
+          setRecipientName(
+            prev => [saved.firstName, saved.lastName].filter(Boolean).join(' ') || prev,
+          );
+          setPhone(prev => saved.phone || prev);
           setHasSavedAddress(true);
         }
       })
@@ -55,11 +61,6 @@ export default function CheckoutScreen({navigation}: RootStackScreenProps<'Check
 
   const updateAddress = (key: keyof ShippingAddress) => (value: string) =>
     setAddress(prev => ({...prev, [key]: value}));
-
-  const finish = (title: string, message: string, type: 'success' | 'error' = 'success') => {
-    Toast.show({type, text1: title, text2: message});
-    navigation.replace('Orders');
-  };
 
   const placeOrder = async () => {
     if (!isSignedIn) {
@@ -79,7 +80,7 @@ export default function CheckoutScreen({navigation}: RootStackScreenProps<'Check
       Toast.show({
         type: 'error',
         text1: 'Address required',
-        text2: 'Please fill in all address fields',
+        text2: 'Please fill in the name and address fields',
       });
       return;
     }
@@ -88,47 +89,46 @@ export default function CheckoutScreen({navigation}: RootStackScreenProps<'Check
     try {
       // The order is built from the server cart: wait for pending cart updates first.
       await flush();
-      const order = await orderApi.create({shippingAddress: address, paymentMethod, notes});
+      const order = await orderApi.create({
+        recipientName,
+        recipientPhone: phone,
+        shippingAddress: address,
+        paymentMethod,
+        notes,
+      });
 
       if (!hasSavedAddress) {
-        addressApi.create({...address, type: 'Home', isDefault: true}).catch(() => undefined);
+        const {firstName, lastName} = splitName(recipientName);
+        addressApi
+          .create({
+            ...address,
+            firstName,
+            lastName: lastName ?? undefined,
+            phone,
+            type: 'Home',
+            isDefault: true,
+          })
+          .catch(() => undefined);
         setHasSavedAddress(true);
       }
 
-      if (paymentMethod === 'stripe') {
-        setPaymentUrl(
-          await paymentApi.createCheckoutSession({
-            orderId: order._id,
-            items: cartItems,
-            shipping: order.shippingCost,
-            successUrl: PAYMENT_SUCCESS_URL,
-            cancelUrl: PAYMENT_CANCEL_URL,
-          }),
-        );
-        return;
-      }
-
-      // Cash orders: the server already cleared the cart.
+      // The API emptied the server cart. Card payments are charged right after the order is
+      // saved; the order screen shows the result (paid, or cancelled when declined).
       clearCart();
-      finish('Order placed', `Order #${order.orderNumber}`);
+      Toast.show({
+        type: 'success',
+        text1: 'Order placed',
+        text2:
+          paymentMethod === 'card'
+            ? `Order #${order.orderNumber}: card payment is being processed`
+            : `Order #${order.orderNumber}: pay cash on delivery`,
+      });
+      navigation.replace('Orders');
     } catch (error) {
       Toast.show({type: 'error', text1: 'Order failed', text2: getErrorMessage(error)});
     } finally {
       setPlacing(false);
     }
-  };
-
-  // The Stripe webhook marks the order paid and clears the server cart.
-  const onPaymentSuccess = () => {
-    setPaymentUrl(null);
-    clearCart();
-    finish('Payment successful', 'Your order is confirmed');
-  };
-
-  const onPaymentCancel = () => {
-    setPaymentUrl(null);
-    refreshCart();
-    finish('Payment cancelled', 'Your order is awaiting payment', 'error');
   };
 
   return (
@@ -144,6 +144,20 @@ export default function CheckoutScreen({navigation}: RootStackScreenProps<'Check
           keyboardShouldPersistTaps="handled">
           <Text className="mb-4 text-lg font-bold text-primary">Shipping Address</Text>
           <FormField
+            label="Full name"
+            autoComplete="name"
+            value={recipientName}
+            onChangeText={setRecipientName}
+          />
+          <FormField
+            label="Phone (optional)"
+            keyboardType="phone-pad"
+            autoComplete="tel"
+            placeholder="e.g. +919876543210"
+            value={phone}
+            onChangeText={setPhone}
+          />
+          <FormField
             label="Street"
             autoComplete="street-address"
             value={address.street}
@@ -157,7 +171,7 @@ export default function CheckoutScreen({navigation}: RootStackScreenProps<'Check
               onChangeText={updateAddress('city')}
             />
             <FormField
-              label="State"
+              label="State (optional)"
               containerClassName="mb-4 flex-1"
               value={address.state}
               onChangeText={updateAddress('state')}
@@ -197,9 +211,9 @@ export default function CheckoutScreen({navigation}: RootStackScreenProps<'Check
           <PaymentOption
             icon="card-outline"
             title="Pay with Card"
-            subtitle="Credit or debit card (Stripe)"
-            selected={paymentMethod === 'stripe'}
-            onPress={() => setPaymentMethod('stripe')}
+            subtitle="Demo payment: approved up to ₹50,000"
+            selected={paymentMethod === 'card'}
+            onPress={() => setPaymentMethod('card')}
           />
         </ScrollView>
 
@@ -208,12 +222,6 @@ export default function CheckoutScreen({navigation}: RootStackScreenProps<'Check
           <PrimaryButton title="Place Order" loading={placing} onPress={placeOrder} />
         </View>
       </KeyboardAvoidingView>
-
-      <PaymentWebViewModal
-        url={paymentUrl}
-        onSuccess={onPaymentSuccess}
-        onCancel={onPaymentCancel}
-      />
     </SafeAreaView>
   );
 }

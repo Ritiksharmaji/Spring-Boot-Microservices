@@ -41,6 +41,10 @@ instance → snapshot → create a larger instance from it, ~USD 24/month); noth
 | `frontend/web/deploy/deploy.sh` | this repo | storefront: `npm run build` (API URL from `.env.production`) + upload to `/opt/apps/sites/shop` |
 | `/opt/apps/.env` | server only | secrets: `SHOP_DB_PASSWORD`, `SHOP_JWT_SECRET`, `SHOP_ADMIN_EMAIL`, `SHOP_ADMIN_PASSWORD`, optional `SHOP_DEMO_MODE` |
 
+Uploaded product images (`POST /api/products/images`) live in the named Docker volume
+`shop-uploads`, mounted at `/app/uploads` (`UPLOADS_DIR`), so they survive redeploys. Back it up
+with the database: `docker run --rm -v apps_shop-uploads:/u -v $PWD:/b alpine tar czf /b/shop-uploads.tgz -C /u .`
+
 The dabba-platform repo is the single source of truth for the shared files; both apps' deploy
 scripts sync them, so neither can remove the other's service.
 

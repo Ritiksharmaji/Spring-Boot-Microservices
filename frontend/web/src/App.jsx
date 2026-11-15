@@ -17,6 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Wishlist from './pages/Wishlist'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
+import Privacy from './pages/Privacy'
 
 const App = () => {
   return (
@@ -36,6 +37,7 @@ const App = () => {
         <Route path='/orders' element={<Orders />} />
         <Route path='/wishlist' element={<Wishlist />} />
         <Route path='/profile' element={<Profile />} />
+        <Route path='/privacy' element={<Privacy />} />
         <Route path='*' element={<NotFound />} />
       </Routes>
       <Footer />
