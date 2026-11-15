@@ -1,11 +1,12 @@
 import React, {useState} from 'react';
-import {FlatList, RefreshControl, TouchableOpacity, View} from 'react-native';
+import {Alert, FlatList, RefreshControl, TouchableOpacity, View} from 'react-native';
 import {Text} from '@/components/ui/Typography';
 import Toast from 'react-native-toast-message';
 import EmptyState from '@/components/common/EmptyState';
 import LoadingView from '@/components/common/LoadingView';
 import {Ionicons} from '@/components/icons';
-import {getOrderStatusStyle} from '@/constants/orderStatus';
+import StatusBadge from '@/components/order/StatusBadge';
+import {getOrderStatusStyle, NEXT_ORDER_STATUSES} from '@/constants/orderStatus';
 import {useAsync} from '@/hooks/useAsync';
 import {orderApi} from '@/services/api';
 import {colors} from '@/theme';
@@ -27,6 +28,8 @@ function AdminOrderCard({order, onEditStatus}: {order: Order; onEditStatus: () =
   const customer = typeof order.user === 'object' ? order.user : undefined;
   const address = order.shippingAddress;
   const statusStyle = getOrderStatusStyle(order.orderStatus);
+  // Delivered and cancelled orders cannot change any more.
+  const isFinal = NEXT_ORDER_STATUSES[order.orderStatus].length === 0;
 
   return (
     <View className="mb-4 rounded-xl border border-border bg-background p-4 shadow-sm">
@@ -65,14 +68,29 @@ function AdminOrderCard({order, onEditStatus}: {order: Order; onEditStatus: () =
         <Text className="text-lg font-bold text-primary">{formatPrice(order.totalAmount)}</Text>
         <TouchableOpacity
           onPress={onEditStatus}
+          disabled={isFinal}
           className={`flex-row items-center rounded-full px-4 py-2 ${statusStyle.container}`}
-          accessibilityLabel={`Status ${order.orderStatus}, change`}>
-          <Text className={`mr-2 text-xs font-bold uppercase tracking-wide ${statusStyle.text}`}>
+          accessibilityLabel={
+            isFinal ? `Status ${order.orderStatus}` : `Status ${order.orderStatus}, change`
+          }>
+          <Text
+            className={`text-xs font-bold uppercase tracking-wide ${statusStyle.text} ${
+              isFinal ? '' : 'mr-2'
+            }`}>
             {order.orderStatus}
           </Text>
-          <Ionicons name="pencil" size={12} color={colors.secondary} />
+          {!isFinal && <Ionicons name="pencil" size={12} color={colors.secondary} />}
         </TouchableOpacity>
       </View>
+      <View className="mt-2 flex-row items-center">
+        <Text className="mr-2 text-xs text-secondary">
+          {order.paymentMethod === 'cash' ? 'Cash on delivery' : 'Card'} ·
+        </Text>
+        <StatusBadge status={order.paymentStatus} kind="payment" />
+      </View>
+      {!!order.statusReason && (
+        <Text className="mt-1 text-xs text-secondary">{order.statusReason}</Text>
+      )}
     </View>
   );
 }
@@ -82,21 +100,49 @@ export default function AdminOrdersScreen() {
   const [selected, setSelected] = useState<Order | null>(null);
   const [updating, setUpdating] = useState(false);
 
-  const updateStatus = async (status: OrderStatus) => {
-    if (!selected) {
-      return;
-    }
+  const applyStatus = async (order: Order, status: OrderStatus) => {
     setUpdating(true);
     try {
-      const updated = await orderApi.updateStatus(selected._id, status);
+      const updated = await orderApi.updateStatus(order._id, status);
       setOrders(prev => (prev ?? []).map(o => (o._id === updated._id ? updated : o)));
-      Toast.show({type: 'success', text1: 'Order updated', text2: `Marked as ${status}`});
+      const refund = status === 'cancelled' && updated.paymentStatus === 'paid';
+      Toast.show({
+        type: 'success',
+        text1: 'Order updated',
+        text2: refund ? 'Cancelled, the card payment is being refunded' : `Marked as ${status}`,
+      });
+      if (status === 'cancelled' || status === 'delivered') {
+        // Refunds and cash collection are recorded by the payment module just after the change.
+        setTimeout(reload, 1500);
+      }
     } catch (error) {
       Toast.show({type: 'error', text1: 'Update failed', text2: getErrorMessage(error)});
     } finally {
       setUpdating(false);
       setSelected(null);
     }
+  };
+
+  const updateStatus = (status: OrderStatus) => {
+    const order = selected;
+    if (!order) {
+      return;
+    }
+    if (status !== 'cancelled') {
+      applyStatus(order, status);
+      return;
+    }
+    // Cancelling returns the stock and refunds a card payment: ask first.
+    Alert.alert(
+      `Cancel order #${order.orderNumber}?`,
+      order.paymentStatus === 'paid'
+        ? "The customer's card payment will be refunded. This cannot be undone."
+        : 'The order will be cancelled. This cannot be undone.',
+      [
+        {text: 'Keep order', style: 'cancel'},
+        {text: 'Cancel order', style: 'destructive', onPress: () => applyStatus(order, status)},
+      ],
+    );
   };
 
   if (loading) {

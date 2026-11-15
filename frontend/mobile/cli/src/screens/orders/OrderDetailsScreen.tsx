@@ -98,8 +98,23 @@ export default function OrderDetailsScreen({route}: RootStackScreenProps<'OrderD
         onPress: async () => {
           setCancelling(true);
           try {
-            setOrder(await orderApi.cancel(orderId));
-            Toast.show({type: 'success', text1: 'Order cancelled'});
+            const cancelled = await orderApi.cancel(orderId);
+            setOrder(cancelled);
+            const refund = cancelled.paymentStatus === 'paid';
+            Toast.show({
+              type: 'success',
+              text1: 'Order cancelled',
+              text2: refund ? 'Your card payment is being refunded' : undefined,
+            });
+            if (refund) {
+              // The refund is recorded by the payment module just after the cancel.
+              setTimeout(() => {
+                orderApi
+                  .getById(orderId)
+                  .then(setOrder)
+                  .catch(() => undefined);
+              }, 1500);
+            }
           } catch (error) {
             Toast.show({type: 'error', text1: 'Could not cancel', text2: getErrorMessage(error)});
           } finally {
