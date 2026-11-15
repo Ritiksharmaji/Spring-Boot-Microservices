@@ -24,11 +24,18 @@ curl -s -X POST https://shop-api.onekampus.com/api/auth/login -H 'Content-Type: 
 |---|---|---|---|
 | GET | `/api/users/me` | signed in | own profile |
 | PUT | `/api/users/me` | signed in | `{firstName, lastName?, phone?, address?{street, city, state?, country, zipcode}}` — email/role not changeable |
+| DELETE | `/api/users/me` | CUSTOMER | `{password}` → 204. Deletes the account (see below); 422 `Wrong Password` / `Admin Account` |
 | GET | `/api/users?page=&size=` | ADMIN | all users |
 | GET | `/api/users/{id}` | ADMIN | one user |
 | PUT | `/api/users/{id}/role` | ADMIN | `{role: "CUSTOMER" | "ADMIN"}` |
 
 `PUT /api/users/me` with `address` creates or updates the **default** entry of the address book.
+
+**Account deletion** (`DELETE /api/users/me`, used by the mobile app's Profile → Delete Account): the
+saved addresses are deleted and the user row is anonymised (`deleted-<id>@deleted.invalid`, random
+password, so the email can register again). An `AccountDeleted` event then clears the cart (ordering),
+the wishlist (wishlist) and the customer name/email on past orders. The orders themselves stay
+(accounting, deliveries in progress) with their delivery details.
 
 ## Address book
 
@@ -57,6 +64,13 @@ curl -s -X POST https://shop-api.onekampus.com/api/auth/login -H 'Content-Type: 
 | POST | `/api/products` | ADMIN | `{name, description?, price > 0, stockQuantity ≥ 0, category?, subCategory?, sizes?[], bestseller?, images?[] (≤ 8) or imageUrl?, active?}` → 201 |
 | PUT | `/api/products/{id}` | ADMIN | same body |
 | DELETE | `/api/products/{id}` | ADMIN | soft delete → 204 |
+| POST | `/api/products/images` | ADMIN | multipart field `file`: JPEG / PNG / WebP ≤ 5 MB → 201 `{url}`; put the url in `images` |
+| GET | `/uploads/products/{name}` | public | uploaded image (cached for a year; names are random) |
+
+**Image upload:** the file type is checked from the file's first bytes (not its name), so only real
+images are stored, under a random name in `UPLOADS_DIR` (`./uploads` locally, the `shop-uploads`
+Docker volume on the server). Upload first, then create/update the product with the returned URLs.
+Errors: 422 `Unsupported Image`, 413 `Image Too Large`, 400 `Image Required`.
 
 ## Cart
 

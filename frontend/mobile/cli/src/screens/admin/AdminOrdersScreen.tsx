@@ -37,7 +37,9 @@ function AdminOrderCard({order, onEditStatus}: {order: Order; onEditStatus: () =
 
       <InfoBlock label="CUSTOMER">
         <Text className="font-medium text-primary">{customer?.name ?? 'Unknown user'}</Text>
-        {!!customer?.email && <Text className="text-xs text-secondary">{customer.email}</Text>}
+        {!!order.recipientPhone && (
+          <Text className="text-xs text-secondary">{order.recipientPhone}</Text>
+        )}
       </InfoBlock>
 
       <InfoBlock label="SHIPPING ADDRESS">
@@ -86,10 +88,8 @@ export default function AdminOrdersScreen() {
     }
     setUpdating(true);
     try {
-      await orderApi.updateStatus(selected._id, status);
-      setOrders(prev =>
-        (prev ?? []).map(o => (o._id === selected._id ? {...o, orderStatus: status} : o)),
-      );
+      const updated = await orderApi.updateStatus(selected._id, status);
+      setOrders(prev => (prev ?? []).map(o => (o._id === updated._id ? updated : o)));
       Toast.show({type: 'success', text1: 'Order updated', text2: `Marked as ${status}`});
     } catch (error) {
       Toast.show({type: 'error', text1: 'Update failed', text2: getErrorMessage(error)});

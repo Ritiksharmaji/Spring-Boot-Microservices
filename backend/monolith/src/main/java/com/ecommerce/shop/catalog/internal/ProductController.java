@@ -11,9 +11,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import static com.ecommerce.shop.catalog.internal.ProductDtos.*;
 
@@ -25,6 +28,15 @@ import static com.ecommerce.shop.catalog.internal.ProductDtos.*;
 class ProductController {
 
     private final CatalogService catalog;
+    private final ProductImageStorage images;
+
+    @Operation(summary = "Upload a product image (ADMIN): JPEG, PNG or WebP up to 5 MB; returns its URL for `images`")
+    @PostMapping(path = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ResponseEntity<ImageUploadResponse> uploadImage(@RequestPart("file") MultipartFile file) {
+        String path = images.store(file);
+        String url = ServletUriComponentsBuilder.fromCurrentContextPath().path(path).toUriString();
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ImageUploadResponse(url));
+    }
 
     @Operation(summary = "List active products (paged, optional category)")
     @GetMapping

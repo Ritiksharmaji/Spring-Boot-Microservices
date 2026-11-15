@@ -44,11 +44,15 @@ export default function AppHeader({
           </TouchableOpacity>
         )}
         {showLogo ? (
-          <Image
-            source={require('@/assets/images/logo.png')}
-            className="h-6 flex-1"
-            resizeMode="contain"
-          />
+          <View
+            className="flex-1 flex-row items-center justify-center"
+            accessibilityRole="header"
+            accessibilityLabel="oneKampus Shop">
+            <Image source={require('@/assets/images/store-icon.png')} className="h-8 w-8" />
+            <Text className="ml-2 text-lg font-semibold text-[#161826]">
+              oneKampus<Text className="font-medium text-[#e46c83]"> Shop</Text>
+            </Text>
+          </View>
         ) : (
           !!title && (
             <Text

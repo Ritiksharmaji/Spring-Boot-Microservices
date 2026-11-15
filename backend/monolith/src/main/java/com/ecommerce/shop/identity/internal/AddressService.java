@@ -61,6 +61,11 @@ class AddressService {
         }
     }
 
+    @Transactional
+    public void deleteAll(long userId) {
+        addresses.deleteAllByUserId(userId);
+    }
+
     @Transactional(readOnly = true)
     public Optional<Address> defaultAddress(long userId) {
         return addresses.findFirstByUserIdAndDefaultAddressTrue(userId);

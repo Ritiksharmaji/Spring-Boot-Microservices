@@ -15,6 +15,7 @@ COPY --from=build --chown=app:app /workspace/extracted/dependencies/ ./
 COPY --from=build --chown=app:app /workspace/extracted/spring-boot-loader/ ./
 COPY --from=build --chown=app:app /workspace/extracted/snapshot-dependencies/ ./
 COPY --from=build --chown=app:app /workspace/extracted/application/ ./
+RUN mkdir -p /app/uploads && chown app:app /app/uploads
 USER app
 EXPOSE 8086
 ENV JAVA_TOOL_OPTIONS="-Xms96m -Xmx256m -XX:MaxMetaspaceSize=160m -XX:ReservedCodeCacheSize=48m -XX:MaxDirectMemorySize=32m -XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Xss512k -XX:+ExitOnOutOfMemoryError" \

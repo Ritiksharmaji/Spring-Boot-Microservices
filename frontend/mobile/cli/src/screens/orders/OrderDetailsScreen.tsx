@@ -1,5 +1,7 @@
-import React from 'react';
-import {Image, ScrollView, View} from 'react-native';
+import React, {useState} from 'react';
+import {Alert, Image, ScrollView, View} from 'react-native';
+import Toast from 'react-native-toast-message';
+import PrimaryButton from '@/components/common/PrimaryButton';
 import {Text} from '@/components/ui/Typography';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AppHeader from '@/components/common/AppHeader';
@@ -12,11 +14,12 @@ import type {RootStackScreenProps} from '@/navigation/types';
 import {orderApi} from '@/services/api';
 import {colors} from '@/theme';
 import type {Order, OrderStatus} from '@/types/models';
+import {getErrorMessage} from '@/utils/errors';
 import {formatDate, formatPrice} from '@/utils/format';
 
 const PROGRESS: {title: string; reachedBy: OrderStatus[]}[] = [
-  {title: 'Order Placed', reachedBy: ['placed', 'processing', 'shipped', 'delivered']},
-  {title: 'Processing', reachedBy: ['processing', 'shipped', 'delivered']},
+  {title: 'Order Placed', reachedBy: ['pending', 'confirmed', 'shipped', 'delivered']},
+  {title: 'Confirmed', reachedBy: ['confirmed', 'shipped', 'delivered']},
   {title: 'Shipped', reachedBy: ['shipped', 'delivered']},
   {title: 'Delivered', reachedBy: ['delivered']},
 ];
@@ -79,7 +82,32 @@ function OrderProgress({order}: {order: Order}) {
 
 export default function OrderDetailsScreen({route}: RootStackScreenProps<'OrderDetails'>) {
   const {orderId} = route.params;
-  const {data: order, loading} = useAsync(() => orderApi.getById(orderId), [orderId]);
+  const {
+    data: order,
+    setData: setOrder,
+    loading,
+  } = useAsync(() => orderApi.getById(orderId), [orderId]);
+  const [cancelling, setCancelling] = useState(false);
+
+  const cancelOrder = () =>
+    Alert.alert('Cancel order', 'Cancel this order? Card payments are refunded.', [
+      {text: 'Keep order', style: 'cancel'},
+      {
+        text: 'Cancel order',
+        style: 'destructive',
+        onPress: async () => {
+          setCancelling(true);
+          try {
+            setOrder(await orderApi.cancel(orderId));
+            Toast.show({type: 'success', text1: 'Order cancelled'});
+          } catch (error) {
+            Toast.show({type: 'error', text1: 'Could not cancel', text2: getErrorMessage(error)});
+          } finally {
+            setCancelling(false);
+          }
+        },
+      },
+    ]);
 
   if (loading) {
     return <LoadingView className="bg-surface" />;
@@ -103,6 +131,17 @@ export default function OrderDetailsScreen({route}: RootStackScreenProps<'OrderD
       <ScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-4">
         <Card title="Order Status">
           <OrderProgress order={order} />
+          {!!order.statusReason && (
+            <Text className="mt-3 text-xs text-secondary">{order.statusReason}</Text>
+          )}
+          {(order.orderStatus === 'pending' || order.orderStatus === 'confirmed') && (
+            <PrimaryButton
+              title="Cancel Order"
+              className="mt-4"
+              loading={cancelling}
+              onPress={cancelOrder}
+            />
+          )}
         </Card>
 
         <Card title="Products">
@@ -134,6 +173,12 @@ export default function OrderDetailsScreen({route}: RootStackScreenProps<'OrderD
         </Card>
 
         <Card title="Shipping Details">
+          {!!order.recipientName && (
+            <Text className="mb-2 font-medium text-primary">
+              {order.recipientName}
+              {order.recipientPhone ? ` · ${order.recipientPhone}` : ''}
+            </Text>
+          )}
           <View className="flex-row items-center">
             <Ionicons name="location-outline" size={20} color={colors.secondary} />
             <Text className="ml-2 flex-1 text-secondary">
@@ -146,15 +191,17 @@ export default function OrderDetailsScreen({route}: RootStackScreenProps<'OrderD
         </Card>
 
         <Card title="Payment Summary">
-          <Row label="Payment Method" value={order.paymentMethod} />
+          <Row
+            label="Payment Method"
+            value={order.paymentMethod === 'cash' ? 'Cash on delivery' : 'Card'}
+          />
           <Row
             label="Payment Status"
             value={<StatusBadge status={order.paymentStatus} kind="payment" />}
           />
           <View className="my-2 h-px bg-border" />
           <Row label="Subtotal" value={formatPrice(order.subtotal)} />
-          <Row label="Shipping" value={formatPrice(order.shippingCost)} />
-          <Row label="Tax" value={formatPrice(order.tax)} />
+          <Row label="Shipping" value="Free" />
           <View className="my-2 h-px bg-border" />
           <Row label="Total" value={formatPrice(order.totalAmount)} bold />
         </Card>

@@ -3,10 +3,10 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 
+/// iOS 27 requires the UIScene lifecycle: the app delegate only builds the React Native factory, and
+/// `SceneDelegate` creates the window for each scene and starts React Native in it.
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
-  var window: UIWindow?
-
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
 
@@ -17,19 +17,36 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
-
     reactNativeDelegate = delegate
     reactNativeFactory = factory
-
-    window = UIWindow(frame: UIScreen.main.bounds)
-
-    factory.startReactNative(
-      withModuleName: "EcommerceApp",
-      in: window,
-      launchOptions: launchOptions
-    )
-
     return true
+  }
+
+  func application(
+    _ application: UIApplication,
+    configurationForConnecting connectingSceneSession: UISceneSession,
+    options: UIScene.ConnectionOptions
+  ) -> UISceneConfiguration {
+    let config = UISceneConfiguration(name: "Default", sessionRole: connectingSceneSession.role)
+    config.delegateClass = SceneDelegate.self
+    return config
+  }
+}
+
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+  var window: UIWindow?
+
+  func scene(
+    _ scene: UIScene,
+    willConnectTo session: UISceneSession,
+    options connectionOptions: UIScene.ConnectionOptions
+  ) {
+    guard let windowScene = scene as? UIWindowScene,
+          let app = UIApplication.shared.delegate as? AppDelegate,
+          let factory = app.reactNativeFactory else { return }
+    let window = UIWindow(windowScene: windowScene)
+    self.window = window
+    factory.startReactNative(withModuleName: "EcommerceApp", in: window, launchOptions: nil)
   }
 }
 

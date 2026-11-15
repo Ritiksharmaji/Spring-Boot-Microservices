@@ -16,10 +16,10 @@ export default function EditProductScreen({
   const {data: product, loading} = useAsync(() => productApi.getById(productId), [productId]);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async ({input, existingImages, newImages}: ProductFormValues) => {
+  const handleSubmit = async ({input, images}: ProductFormValues) => {
     setSubmitting(true);
     try {
-      await productApi.update(productId, input, existingImages, newImages);
+      await productApi.update(productId, input, images);
       Toast.show({type: 'success', text1: 'Product updated'});
       navigation.goBack();
     } catch (error) {

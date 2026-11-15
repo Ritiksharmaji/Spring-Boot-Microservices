@@ -8,10 +8,10 @@ import ProductForm, {type ProductFormValues} from './components/ProductForm';
 export default function AddProductScreen({navigation}: AdminProductsScreenProps<'AddProduct'>) {
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async ({input, newImages}: ProductFormValues) => {
+  const handleSubmit = async ({input, images}: ProductFormValues) => {
     setSubmitting(true);
     try {
-      await productApi.create(input, newImages);
+      await productApi.create(input, images);
       Toast.show({type: 'success', text1: 'Product added'});
       navigation.goBack();
     } catch (error) {

@@ -101,24 +101,16 @@ export default function ProductDetailsScreen({
         <View className="px-5">
           <View className="mb-2 flex-row items-start justify-between">
             <Text className="mr-4 flex-1 text-2xl font-bold text-primary">{product.name}</Text>
-            {product.ratings.count > 0 && (
+            {product.isFeatured && (
               <View className="flex-row items-center">
                 <Ionicons name="star" size={14} color={colors.star} />
-                <Text className="ml-1 text-sm font-bold text-primary">
-                  {product.ratings.average.toFixed(1)}
-                </Text>
-                <Text className="ml-1 text-xs text-secondary">({product.ratings.count})</Text>
+                <Text className="ml-1 text-sm font-bold text-primary">Bestseller</Text>
               </View>
             )}
           </View>
 
           <View className="mb-4 flex-row items-center">
             <Text className="text-2xl font-bold text-primary">{formatPrice(product.price)}</Text>
-            {product.comparePrice != null && product.comparePrice > product.price && (
-              <Text className="ml-2 text-base text-muted line-through">
-                {formatPrice(product.comparePrice)}
-              </Text>
-            )}
           </View>
 
           {product.sizes.length > 0 && (

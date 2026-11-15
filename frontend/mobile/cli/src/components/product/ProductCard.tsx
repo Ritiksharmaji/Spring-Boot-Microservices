@@ -34,28 +34,20 @@ function ProductCard({product}: {product: Product}) {
         </TouchableOpacity>
         {product.isFeatured && (
           <View className="absolute left-2.5 top-2.5 rounded-md bg-primary px-2 py-0.5">
-            <Text className="text-[10px] font-semibold text-white">FEATURED</Text>
+            <Text className="text-[10px] font-semibold text-white">BESTSELLER</Text>
           </View>
         )}
       </View>
 
       <View className="p-3">
-        <View className="mb-1 flex-row items-center">
-          <Ionicons name="star" size={14} color={colors.star} />
-          <Text className="ml-1 text-xs text-secondary">
-            {product.ratings.average ? product.ratings.average.toFixed(1) : 'New'}
-          </Text>
-        </View>
+        <Text numberOfLines={1} className="mb-1 text-xs text-secondary">
+          {[product.category, product.subCategory].filter(Boolean).join(' · ')}
+        </Text>
         <Text numberOfLines={2} className="mb-1.5 text-sm font-semibold text-primary">
           {product.name}
         </Text>
         <View className="flex-row items-center">
           <Text className="text-base font-bold text-primary">{formatPrice(product.price)}</Text>
-          {product.comparePrice != null && product.comparePrice > product.price && (
-            <Text className="ml-1.5 text-xs text-muted line-through">
-              {formatPrice(product.comparePrice)}
-            </Text>
-          )}
         </View>
       </View>
     </TouchableOpacity>

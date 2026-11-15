@@ -45,6 +45,9 @@ final class IdentityDtos {
             @Valid AddressDto address) {
     }
 
+    record DeleteAccountRequest(@NotBlank(message = "password is required") String password) {
+    }
+
     record RoleRequest(Role role) {
     }
 

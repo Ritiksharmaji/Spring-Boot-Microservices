@@ -2,7 +2,7 @@ import React from 'react';
 import {ActivityIndicator, Modal, Pressable, TouchableOpacity, View} from 'react-native';
 import {Text} from '@/components/ui/Typography';
 import {Ionicons} from '@/components/icons';
-import {ORDER_STATUSES} from '@/constants/orderStatus';
+import {NEXT_ORDER_STATUSES, ORDER_STATUSES} from '@/constants/orderStatus';
 import {colors} from '@/theme';
 import type {OrderStatus} from '@/types/models';
 
@@ -40,13 +40,17 @@ export default function OrderStatusSheet({
           ) : (
             ORDER_STATUSES.map(status => {
               const selected = status === current;
+              // Only the next steps of the order flow can be chosen (the API rejects others).
+              const allowed = !!current && NEXT_ORDER_STATUSES[current].includes(status);
               return (
                 <TouchableOpacity
                   key={status}
+                  disabled={!allowed}
+                  accessibilityState={{disabled: !allowed, selected}}
                   onPress={() => onSelect(status)}
                   className={`mb-2 flex-row items-center justify-between rounded-xl p-4 ${
                     selected ? 'bg-primary/10' : 'bg-surface'
-                  }`}>
+                  } ${!allowed && !selected ? 'opacity-40' : ''}`}>
                   <Text
                     className={`capitalize ${
                       selected ? 'font-bold text-primary' : 'font-medium text-secondary'

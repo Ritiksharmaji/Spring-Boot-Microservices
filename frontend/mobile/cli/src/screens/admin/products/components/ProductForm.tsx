@@ -7,6 +7,7 @@ import FormField from '@/components/common/FormField';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import {Ionicons} from '@/components/icons';
 import {MAX_PRODUCT_IMAGES} from '@/constants/app';
+import {env} from '@/config/env';
 import {CATEGORIES} from '@/constants/categories';
 import {colors} from '@/theme';
 import type {ProductInput} from '@/types/api';
@@ -15,11 +16,17 @@ import {parseList} from '@/utils/format';
 
 export interface ProductFormValues {
   input: ProductInput;
-  /** Image URLs already on the server that are kept (edit only). */
-  existingImages: string[];
-  /** Local file URIs picked from the gallery. */
-  newImages: string[];
+  /**
+   * In display order: URLs already on the server (https://... or a site path such as
+   * /products/p_img1.png) and local photos picked from the gallery (file://...), which the screen
+   * uploads before saving the product.
+   */
+  images: string[];
 }
+
+/** Shown images are absolute; the demo catalogue stores site paths. Send those back unchanged. */
+const toStoredUrl = (url: string) =>
+  url.startsWith(`${env.websiteUrl}/`) ? url.slice(env.websiteUrl.length) : url;
 
 interface ProductFormProps {
   initial?: Product;
@@ -38,17 +45,14 @@ export default function ProductForm({
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [price, setPrice] = useState(initial ? String(initial.price) : '');
-  const [comparePrice, setComparePrice] = useState(
-    initial?.comparePrice != null ? String(initial.comparePrice) : '',
-  );
   const [stock, setStock] = useState(initial ? String(initial.stock) : '');
   const [category, setCategory] = useState(initial?.category || CATEGORIES[0].name);
+  const [subCategory, setSubCategory] = useState(initial?.subCategory ?? '');
   const [sizes, setSizes] = useState(initial?.sizes.join(', ') ?? '');
   const [isFeatured, setIsFeatured] = useState(initial?.isFeatured ?? false);
-  const [existingImages, setExistingImages] = useState<string[]>(initial?.images ?? []);
-  const [newImages, setNewImages] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>(initial?.images ?? []);
 
-  const remainingSlots = MAX_PRODUCT_IMAGES - existingImages.length - newImages.length;
+  const remainingSlots = MAX_PRODUCT_IMAGES - images.length;
 
   const pickImages = async () => {
     if (remainingSlots <= 0) {
@@ -59,10 +63,13 @@ export default function ProductForm({
       });
       return;
     }
+    // Resized and re-encoded as JPEG on the phone: small uploads (the API takes up to 5 MB).
     const result = await launchImageLibrary({
       mediaType: 'photo',
       selectionLimit: remainingSlots,
       quality: 0.8,
+      maxWidth: 1600,
+      maxHeight: 1600,
     });
     if (result.errorCode) {
       Toast.show({
@@ -73,7 +80,7 @@ export default function ProductForm({
       return;
     }
     const uris = (result.assets ?? []).map(a => a.uri).filter((uri): uri is string => !!uri);
-    setNewImages(prev => [...prev, ...uris].slice(0, MAX_PRODUCT_IMAGES - existingImages.length));
+    setImages(prev => [...prev, ...uris].slice(0, MAX_PRODUCT_IMAGES));
   };
 
   const handleSubmit = () => {
@@ -93,7 +100,7 @@ export default function ProductForm({
       });
       return;
     }
-    if (existingImages.length + newImages.length === 0) {
+    if (images.length === 0) {
       Toast.show({type: 'error', text1: 'Image required', text2: 'Add at least one image'});
       return;
     }
@@ -102,21 +109,17 @@ export default function ProductForm({
         name: name.trim(),
         description: description.trim(),
         price,
-        comparePrice: comparePrice || undefined,
         stock,
         category,
+        subCategory: subCategory.trim() || undefined,
         sizes: parseList(sizes),
         isFeatured,
       },
-      existingImages,
-      newImages,
+      images: images.map(toStoredUrl),
     });
   };
 
-  const removeImage = (uri: string) => {
-    setExistingImages(prev => prev.filter(u => u !== uri));
-    setNewImages(prev => prev.filter(u => u !== uri));
-  };
+  const removeImage = (uri: string) => setImages(prev => prev.filter(u => u !== uri));
 
   return (
     <ScrollView
@@ -132,7 +135,7 @@ export default function ProductForm({
         />
         <View className="flex-row gap-3">
           <FormField
-            label="Price ($) *"
+            label="Price (₹) *"
             containerClassName="mb-4 flex-1"
             placeholder="0.00"
             keyboardType="decimal-pad"
@@ -140,21 +143,14 @@ export default function ProductForm({
             onChangeText={setPrice}
           />
           <FormField
-            label="Compare Price ($)"
+            label="Stock *"
             containerClassName="mb-4 flex-1"
-            placeholder="Optional"
-            keyboardType="decimal-pad"
-            value={comparePrice}
-            onChangeText={setComparePrice}
+            placeholder="e.g. 50"
+            keyboardType="number-pad"
+            value={stock}
+            onChangeText={setStock}
           />
         </View>
-        <FormField
-          label="Stock *"
-          placeholder="e.g. 50"
-          keyboardType="number-pad"
-          value={stock}
-          onChangeText={setStock}
-        />
 
         <Text className="mb-1 text-xs font-bold uppercase text-secondary">Category</Text>
         <View className="mb-4 flex-row flex-wrap gap-2">
@@ -175,6 +171,13 @@ export default function ProductForm({
         </View>
 
         <FormField
+          label="Sub-category"
+          placeholder="e.g. Topwear, Bottomwear, Winterwear"
+          value={subCategory}
+          onChangeText={setSubCategory}
+        />
+
+        <FormField
           label="Sizes (comma separated)"
           placeholder="e.g. S, M, L, XL"
           autoCapitalize="characters"
@@ -183,10 +186,10 @@ export default function ProductForm({
         />
 
         <Text className="mb-1 text-xs font-bold uppercase text-secondary">
-          Images ({existingImages.length + newImages.length}/{MAX_PRODUCT_IMAGES})
+          Images ({images.length}/{MAX_PRODUCT_IMAGES})
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-          {[...existingImages, ...newImages].map(uri => (
+          {images.map(uri => (
             <View key={uri} className="mr-2">
               <Image source={{uri}} className="h-28 w-28 rounded-lg" />
               <TouchableOpacity
@@ -200,13 +203,13 @@ export default function ProductForm({
           {remainingSlots > 0 && (
             <TouchableOpacity
               onPress={pickImages}
+              accessibilityLabel="Add images from gallery"
               className="h-28 w-28 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-surface">
               <Ionicons name="cloud-upload-outline" size={28} color={colors.secondary} />
               <Text className="mt-1 text-xs text-secondary">Add images</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
-
         <FormField
           label="Description *"
           multiline
@@ -216,7 +219,7 @@ export default function ProductForm({
         />
 
         <View className="mb-6 flex-row items-center justify-between">
-          <Text className="font-bold text-primary">Featured Product</Text>
+          <Text className="font-bold text-primary">Bestseller</Text>
           <Switch
             value={isFeatured}
             onValueChange={setIsFeatured}

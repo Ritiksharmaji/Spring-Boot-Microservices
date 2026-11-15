@@ -6,9 +6,30 @@ with Gradle / Xcode instead of Expo. React Native 0.81.5, React 19.1, New Archit
 | | |
 |---|---|
 | Android package / iOS bundle id | `com.ritikji.clientEcommerce` |
-| App name on the phone | `clientEcommerce` (`android/app/src/main/res/values/strings.xml`, iOS `Info.plist`) |
-| Backend (release builds) | `https://api.shopvra.space` (`src/config/env.ts`) |
-| Backend (debug builds) | port 3000 on the computer running Metro |
+| App name on the phone | `oneKampus Shop` (`android/app/src/main/res/values/strings.xml`, iOS `Info.plist`) |
+| Backend (release builds) | `https://shop-api.onekampus.com` — Spring Boot, `backend/monolith` (`src/config/env.ts`) |
+| Backend (debug builds) | port 8086 on the computer running Metro |
+| Images | demo catalogue images (`/products/...`) load from `https://shop.onekampus.com`; admin uploads from the API |
+
+## How it talks to the Spring Boot API
+
+`src/services/api/*` call the endpoints in [`backend/monolith/docs/API.md`](../../../backend/monolith/docs/API.md);
+`src/utils/normalize.ts` maps the API's JSON to the app's models (same idea as `frontend/web/src/api/mappers.js`).
+
+| App feature | API |
+|---|---|
+| Sign in / sign up / profile | `POST /api/auth/login`, `POST /api/auth/register` (name split into first/last), `GET /api/users/me` |
+| Delete account (Profile) | `DELETE /api/users/me {password}` — customers only |
+| Shop, product, search | `GET /api/products?size=500` (filtered and paged in the app) |
+| Cart (per size) | `/api/cart`, `/api/cart/items/{productId}?size=` |
+| Wishlist | `/api/wishlist` (`PUT` / `DELETE /api/wishlist/{productId}`) |
+| Checkout | `POST /api/orders` with recipient + address; **Cash on delivery** or **Card** (simulated, approved up to ₹50,000) |
+| Orders | `GET /api/orders`, `GET /api/orders/{id}`, `POST /api/orders/{id}/cancel` (pending / confirmed) |
+| Admin dashboard | `GET /api/users`, products and `GET /api/orders/admin` (numbers computed in the app) |
+| Admin orders | `PATCH /api/orders/{id}/status` — only the next steps are offered: pending → confirmed → shipped → delivered, or cancelled |
+| Admin products | gallery photos → `POST /api/products/images` (multipart), then `POST` / `PUT /api/products` with the URLs; delete = hide |
+
+Prices are in ₹ and delivery is free (the API's order total is the sum of the items).
 
 ## Project structure
 
@@ -73,7 +94,9 @@ Conventions: `@/` imports resolve to `src/`; screens never call axios directly (
 
 ## Run in development
 
-1. Start the backend on your computer: `cd backend/expressJs/expressJs_ecommerce_backend && npm start`
+1. Start the Spring Boot API on your computer (port 8086, needs PostgreSQL — see
+   [`backend/monolith/README.md`](../../../backend/monolith/README.md)). With `DEMO_MODE=true` it seeds the
+   catalogue and a demo customer (`customer@shop.demo` / `Customer@123`).
 2. In this folder:
    ```bash
    npm install
@@ -81,7 +104,7 @@ Conventions: `@/` imports resolve to `src/`; screens never call axios directly (
    npm run android           # in a second terminal: builds and opens the app on an emulator / phone
    ```
 3. Phone over USB or emulator: run `npm run android:reverse` once so the app can reach Metro (8081)
-   and the backend (3000) on your computer. A phone on the same Wi-Fi uses your computer's IP
+   and the API (8086) on your computer. iOS simulator: `npm run ios` (run `pod install` in `ios/` first). A phone on the same Wi-Fi uses your computer's IP
    automatically.
 
 To use the deployed backend from a debug build, set `API_URL_OVERRIDE = PRODUCTION_API_URL` in

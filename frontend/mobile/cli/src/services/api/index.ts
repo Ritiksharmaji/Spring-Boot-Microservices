@@ -5,6 +5,6 @@ export {cartApi} from './cartApi';
 export {wishlistApi} from './wishlistApi';
 export {orderApi} from './orderApi';
 export type {CreateOrderInput} from './orderApi';
+export type {AddressInput} from './addressApi';
 export {addressApi} from './addressApi';
 export {adminApi} from './adminApi';
-export {paymentApi} from './paymentApi';

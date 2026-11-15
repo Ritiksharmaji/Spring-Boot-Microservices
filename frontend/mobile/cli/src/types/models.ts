@@ -1,13 +1,18 @@
-/** Domain models returned by expressJs_ecommerce_backend. */
+/**
+ * Domain models used by the screens. The Spring Boot API (backend/monolith) JSON is mapped to these
+ * shapes in utils/normalize.ts.
+ */
 
 export type UserRole = 'user' | 'admin';
 
 export interface User {
   _id: string;
   name: string;
+  firstName: string;
+  lastName?: string;
   email: string;
+  phone?: string;
   role: UserRole;
-  image?: string;
 }
 
 export interface Product {
@@ -15,12 +20,11 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  comparePrice?: number;
   images: string[];
   sizes: string[];
   category: string;
+  subCategory?: string;
   stock: number;
-  ratings: {average: number; count: number};
   isFeatured: boolean;
   isActive: boolean;
   createdAt: string;
@@ -44,14 +48,26 @@ export interface ShippingAddress {
 
 export interface Address extends ShippingAddress {
   _id: string;
+  firstName: string;
+  lastName?: string;
+  phone?: string;
   type: 'Home' | 'Work' | 'Other';
   isDefault: boolean;
   createdAt: string;
 }
 
-export type OrderStatus = 'placed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
-export type PaymentMethod = 'cash' | 'stripe';
+/** API order status (PENDING ...) in lower case. */
+export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+/** API payment status in lower case, `_` replaced by a space. */
+export type PaymentStatus =
+  | 'pending'
+  | 'paid'
+  | 'failed'
+  | 'cash on delivery'
+  | 'refunded'
+  | 'not charged';
+/** CASH = cash on delivery; CARD = simulated card payment (approved up to ₹50,000). */
+export type PaymentMethod = 'cash' | 'card';
 
 export interface OrderItem {
   _id: string;
@@ -65,11 +81,17 @@ export interface OrderItem {
 
 export interface Order {
   _id: string;
-  user: Pick<User, '_id' | 'name' | 'email'> | string;
+  /** Customer id + delivery recipient name. */
+  user: Pick<User, '_id' | 'name'> | string;
   orderNumber: string;
+  /** Recipient of the delivery. */
+  recipientName?: string;
+  recipientPhone?: string;
+  /** Why the order is in its status, e.g. "Payment failed: ...". */
+  statusReason?: string;
   items: OrderItem[];
   shippingAddress: ShippingAddress;
-  paymentMethod: PaymentMethod | string;
+  paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
   subtotal: number;
@@ -77,7 +99,6 @@ export interface Order {
   tax: number;
   totalAmount: number;
   notes?: string;
-  deliveredAt?: string;
   createdAt: string;
 }
 
