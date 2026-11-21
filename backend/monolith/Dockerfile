@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # Self-contained build (CI / local): docker build -t ecommerce-monolith .
-FROM maven:3.9.9-eclipse-temurin-21-alpine AS build
+FROM maven:3.9-eclipse-temurin-26-alpine AS build
 WORKDIR /workspace
 COPY pom.xml ./
 RUN --mount=type=cache,target=/root/.m2 mvn -B -q dependency:go-offline || true
